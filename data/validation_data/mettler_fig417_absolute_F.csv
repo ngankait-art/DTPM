@@ -1,0 +1,13 @@
+# Mettler Fig 4.17: Absolute F density profiles
+# All: 1000W ICP (2MHz), 10mTorr, 100 sccm total, ~1cm above wafer
+# F density in units of 1e20 m-3
+r_cm,90pct_SF6_bias_off,30pct_SF6_bias_off,90pct_SF6_bias_on,30pct_SF6_bias_on
+0,1.70,0.50,2.80,1.05
+1,1.60,0.48,2.70,1.00
+2,1.50,0.42,2.50,0.90
+3,1.35,0.35,2.20,0.80
+4,1.10,0.28,1.80,0.60
+5,0.85,0.22,1.40,0.40
+6,0.65,0.15,1.05,0.28
+7,0.50,0.12,0.75,0.18
+8,0.40,0.10,0.55,0.12
