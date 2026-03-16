@@ -1,0 +1,17 @@
+figure_id,filename,generation,description,physical_question,input_conditions,script_used,csv_source,included_in_report
+fig_01,fig_01_gen1_sf6_profiles.png,Gen-1,2D profiles for pure SF6,ne/Te/P_ind/alpha spatial structure,1500W 10mTorr pure SF6,main_gen1.py,N/A,yes
+fig_02,fig_02_gen1_ar_profiles.png,Gen-1,2D profiles for pure Ar,ne/Te/Ar* spatial structure,1000W 10mTorr pure Ar,main_gen1.py,N/A,yes
+fig_03,fig_03_gen1_composition_sweep.png,Gen-1,Composition sweep 0-100% Ar,ne/Te/alpha/[F] vs Ar fraction,1500W 10mTorr sweep,main_gen1.py,N/A,yes
+fig_04,fig_04_gen1_power_sweep_sf6.png,Gen-1,Power sweep pure SF6,ne/[F]/alpha/Te vs power,500-2000W 10mTorr pure SF6,main_gen1.py,N/A,yes
+fig_05,fig_05_gen1_power_sweep_ar.png,Gen-1,Power sweep pure Ar,ne/Te vs power,200-2000W 10mTorr pure Ar,main_gen1.py,N/A,yes
+fig_06,fig_06_gen1_pressure_sweep.png,Gen-1,Pressure sweep pure Ar,ne/Te vs pressure,1000W 5-50mTorr pure Ar,main_gen1.py,N/A,yes
+fig_07,fig_07_gen2_sf6_profiles.png,Gen-2,2D profiles with neg-ion transport,alpha(rz) stratification and n_neg,1500W 10mTorr pure SF6,main_gen2.py,N/A,yes
+fig_08,fig_08_gen2_ar_profiles.png,Gen-2,2D profiles pure Ar (Gen-2),Identical to Gen-1 for electropositive,1000W 10mTorr pure Ar,main_gen2.py,N/A,yes
+fig_09,fig_09_gen2_mix_profiles.png,Gen-2,2D profiles 50/50 mix,Combined Ar+SF6 spatial physics,1000W 10mTorr 50/50,main_gen2.py,N/A,yes
+fig_10,fig_10_gen2_composition_sweep.png,Gen-2,Composition sweep Gen-2,Confirms 0D anchoring preserves chemistry,1500W 10mTorr sweep,main_gen2.py,N/A,yes
+fig_11,fig_11_gen3_sf6_profiles.png,Gen-3,2D profiles with energy equation,Self-consistent Te and [F],1500W 10mTorr pure SF6,main_gen3.py,N/A,yes
+fig_12,fig_12_gen3_F_radial.png,Gen-3,Radial [F] profile,F profile shape (flat 3% drop),1500W 10mTorr pure SF6,main_gen3.py,N/A,yes
+fig_13,fig_13_gen4_sf6_profiles.png,Gen-4,2D profiles with Robin BCs,Hagelaar transport + Robin BC effect,1500W 10mTorr pure SF6,main_gen4.py,N/A,yes
+fig_14,fig_14_gen4b_final_results.png,Gen-4b,Final model results,73% [F] drop matching Mettler,1500W 10mTorr pure SF6 gamma_wall=0.30,main_gen4b.py,N/A,yes
+fig_v01,fig_v01_gen3_mettler_comparison.png,Gen-3,Mettler validation (Gen-3),1% drop vs 75% experimental,1000W 10mTorr 70/30,validate_mettler.py,N/A,yes
+fig_v02,fig_v02_gen4_mettler_comparison.png,Gen-4,Mettler validation (Gen-4),7% drop vs 75% experimental,1000W 10mTorr 70/30,main_gen4.py,N/A,yes

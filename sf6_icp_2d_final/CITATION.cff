@@ -1,0 +1,13 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+title: "SF6/Ar 2D ICP Plasma Simulator for Digital Twin Applications"
+type: software
+version: 5.0.0
+date-released: 2026-03-16
+keywords:
+  - plasma simulation
+  - inductively coupled plasma
+  - SF6 etching
+  - digital twin
+  - fluorine radical transport
+license: MIT

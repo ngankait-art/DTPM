@@ -1,0 +1,8 @@
+# Mettler Fig 4.9(b): F density in ICP source region vs SF6 flow
+sf6_sccm,nF_20mTorr_600W_m3,nF_40mTorr_700W_m3
+10,1.80e+20,3.50e+20
+20,4.00e+20,7.00e+20
+30,5.50e+20,1.10e+21
+50,8.50e+20,1.60e+21
+70,1.05e+21,2.00e+21
+90,1.20e+21,2.35e+21
