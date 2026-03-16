@@ -1,0 +1,504 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[margin=2.2cm]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage[T1]{fontenc}
+\usepackage{enumitem}
+
+\hypersetup{colorlinks=true,linkcolor=blue!60!black,urlcolor=blue!60!black,citecolor=blue!60!black}
+
+\pagestyle{fancy}
+\fancyhead[L]{\small SF$_6$ Global Plasma Model}
+\fancyhead[R]{\small\thepage}
+\fancyfoot{}
+
+\titleformat{\section}{\large\bfseries}{\thesection}{1em}{}
+\titleformat{\subsection}{\normalsize\bfseries}{\thesubsection}{1em}{}
+
+\newcommand{\species}[1]{\textrm{#1}}
+\newcommand{\reaction}[1]{\textrm{#1}}
+\newcommand{\eunit}{\,\textrm{eV}}
+\newcommand{\munit}{\,\textrm{m}^{-3}}
+\newcommand{\sunit}{\,\textrm{s}^{-1}}
+
+\title{\textbf{SF$_6$ Global Plasma Model}\\[6pt]
+\large Complete Mathematical and Chemical Documentation}
+\author{Based on: Kokkoris et al., \textit{J.\ Phys.\ D: Appl.\ Phys.}\ \textbf{42} (2009) 055209}
+\date{March 2026}
+
+\begin{document}
+\maketitle
+\tableofcontents
+\newpage
+
+%==========================================================================
+\section{Model Overview}
+%==========================================================================
+
+This is a zero-dimensional (global, volume-averaged) model for an SF$_6$ inductively coupled plasma (ICP) discharge. The model solves \textbf{18 coupled ordinary differential equations} for:
+\begin{itemize}[nosep]
+  \item 13 gas-phase species densities (6 neutrals, 4 positive ions, 2 negative ions, electrons)
+  \item 1 electron temperature
+  \item 4 surface coverages
+\end{itemize}
+The system is time-integrated from pre-discharge initial conditions to steady state using the BDF (Backward Differentiation Formula) method.
+
+%==========================================================================
+\section{Species}
+%==========================================================================
+
+\subsection{Gas-Phase Species}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{clll}
+\toprule
+\textbf{Index} & \textbf{Species} & \textbf{Type} & \textbf{Mass (amu)} \\
+\midrule
+0  & SF$_6$   & Parent gas (neutral) & 146 \\
+1  & SF$_5$   & Neutral radical      & 127 \\
+2  & SF$_4$   & Neutral radical      & 108 \\
+3  & SF$_3$   & Neutral radical      & 89 \\
+4  & F$_2$    & Neutral molecule     & 38 \\
+5  & F        & Neutral atom         & 19 \\
+6  & SF$_5^+$ & Positive ion         & 127 \\
+7  & SF$_4^+$ & Positive ion         & 108 \\
+8  & SF$_3^+$ & Positive ion         & 89 \\
+9  & F$_2^+$  & Positive ion         & 38 \\
+10 & SF$_6^-$ & Negative ion         & 146 \\
+11 & F$^-$    & Negative ion         & 19 \\
+12 & e$^-$    & Electron             & $5.486\times10^{-4}$ \\
+\bottomrule
+\end{tabular}
+\caption{Gas-phase species included in the model.}
+\end{table}
+
+\subsection{Surface Species}
+
+The reactor walls are described by four coverage fractions:
+\begin{equation}
+  \theta_\text{F},\quad \theta_\text{SF}_3,\quad \theta_\text{SF}_4,\quad \theta_\text{SF}_5,\quad
+  \theta_\text{bare} = 1 - \theta_\text{F} - \theta_{\text{SF}_3} - \theta_{\text{SF}_4} - \theta_{\text{SF}_5}
+\end{equation}
+
+%==========================================================================
+\section{Reactor Geometry}
+%==========================================================================
+
+The ICP tube (radius 19\,cm, height 21\,cm) and diffusion chamber (radius 19\,cm, height 17\,cm) are modeled as a single equivalent cylinder:
+
+\begin{align}
+  R &= 0.19\,\text{m}, \qquad L = 0.38\,\text{m} \\
+  V &= \pi R^2 L = 0.04309\,\text{m}^3 \\
+  A_\text{ax} &= 2\pi R^2 = 0.2268\,\text{m}^2 \quad\text{(top + bottom)} \\
+  A_\text{rad} &= 2\pi R L = 0.4536\,\text{m}^2 \quad\text{(side wall)} \\
+  A &= A_\text{ax} + A_\text{rad} = 0.6804\,\text{m}^2
+\end{align}
+
+The effective diffusion length is:
+\begin{equation}
+  \Lambda = \left[\left(\frac{\pi}{L}\right)^2 + \left(\frac{2.405}{R}\right)^2\right]^{-1/2} = 0.0661\,\text{m}
+\end{equation}
+
+%==========================================================================
+\section{Gas-Phase Reactions}
+%==========================================================================
+
+\subsection{Electron-Impact Rate Coefficient Formula}
+
+All electron-impact rate coefficients use the parametric form with Druyvesteyn EEDF parameters:
+\begin{equation}\label{eq:krate}
+  \boxed{k(T_e) = \exp\!\left(A + B\ln T_e + \frac{C}{T_e} + \frac{D}{T_e^2} + \frac{E}{T_e^3}\right) \quad [\text{m}^3\,\text{s}^{-1}]}
+\end{equation}
+where $T_e$ is the electron temperature in eV.
+
+\subsection{Neutral Dissociations (G1--G7)}
+
+These reactions break SF$_6$ and its fragments into smaller species by electron impact.
+
+\begin{longtable}{clcrrrrr}
+\toprule
+ & \textbf{Reaction} & $\varepsilon_\text{th}$ (eV) & $A$ & $B$ & $C$ & $D$ & $E$ \\
+\midrule
+\endfirsthead
+\midrule
+ & \textbf{Reaction} & $\varepsilon_\text{th}$ (eV) & $A$ & $B$ & $C$ & $D$ & $E$ \\
+\midrule
+\endhead
+G1 & SF$_6$ + e $\to$ SF$_5$ + F + e          & 9.6  & $-29.35$ & $-0.238$ & $-14.11$ & $-15.25$ & $-1.204$ \\
+G2 & SF$_6$ + e $\to$ SF$_4$ + 2F + e         & 12.1 & $-31.61$ & $-0.259$ & $-10.00$ & $-31.24$ & $-0.713$ \\
+G3 & SF$_6$ + e $\to$ SF$_3$ + 3F + e         & 16.0 & $-40.26$ & $3.135$  & $5.895$  & $-64.68$ & $0.261$ \\
+G4 & SF$_5$ + e $\to$ SF$_4$ + F + e          & 9.6  & \multicolumn{5}{c}{Same as G1} \\
+G5 & SF$_4$ + e $\to$ SF$_3$ + F + e          & 9.6  & \multicolumn{5}{c}{Same as G1} \\
+G6 & F$_2$ + e $\to$ 2F + e                   & 3.16 & $-31.44$ & $-0.699$ & $-5.170$ & $-1.389$ & $-0.065$ \\
+G7 & F$_2$ + e $\to$ 2F + e                   & 4.34 & $-33.44$ & $-0.276$ & $-3.564$ & $-3.946$ & $-0.039$ \\
+\bottomrule
+\end{longtable}
+
+\subsection{Ionizations (G8--G16)}
+
+These reactions produce positive ions and free electrons.
+
+\begin{longtable}{clcrrrrr}
+\toprule
+ & \textbf{Reaction} & $\varepsilon_\text{th}$ & $A$ & $B$ & $C$ & $D$ & $E$ \\
+\midrule
+\endfirsthead
+\midrule
+ & \textbf{Reaction} & $\varepsilon_\text{th}$ & $A$ & $B$ & $C$ & $D$ & $E$ \\
+\midrule
+\endhead
+G8  & SF$_6$ + e $\to$ SF$_5^+$ + F + 2e       & 15.5 & $-33.66$ & $1.212$ & $-4.594$ & $-56.66$ & $-0.323$ \\
+G9  & SF$_6$ + e $\to$ SF$_4^+$ + 2F + 2e      & 18.5 & $-37.14$ & $1.515$ & $-4.829$ & $-80.42$ & $-0.792$ \\
+G10 & SF$_6$ + e $\to$ SF$_3^+$ + 3F + 2e      & 20.0 & $-36.82$ & $1.740$ & $-0.105$ & $-98.18$ & $0.106$ \\
+G11 & SF$_5$ + e $\to$ SF$_5^+$ + 2e           & 11.2 & $-34.92$ & $1.487$ & $-2.377$ & $-29.71$ & $-0.145$ \\
+G12 & SF$_5$ + e $\to$ SF$_4^+$ + F + 2e       & 14.5 & $-36.27$ & $1.892$ & $-1.387$ & $-50.87$ & $-0.076$ \\
+G13 & SF$_4$ + e $\to$ SF$_4^+$ + 2e           & 13.0 & $-32.95$ & $0.876$ & $-10.19$ & $-31.21$ & $-3.989$ \\
+G14 & SF$_4$ + e $\to$ SF$_3^+$ + F + 2e       & 14.5 & $-32.75$ & $0.822$ & $-10.82$ & $-40.59$ & $-4.274$ \\
+G15 & SF$_3$ + e $\to$ SF$_3^+$ + 2e           & 11.0 & $-35.55$ & $1.750$ & $-2.086$ & $-28.70$ & $-0.136$ \\
+G16 & F$_2$ + e $\to$ F$_2^+$ + 2e             & 15.69& $-35.60$ & $1.467$ & $-6.140$ & $-57.14$ & $-0.486$ \\
+\bottomrule
+\end{longtable}
+
+\subsection{Attachments (G17--G19)}
+
+These reactions produce negative ions by capturing an electron.
+
+\begin{longtable}{clcrrrrr}
+\toprule
+ & \textbf{Reaction} & $\varepsilon_\text{th}$ & $A$ & $B$ & $C$ & $D$ & $E$ \\
+\midrule
+G17 & SF$_6$ + e $\to$ SF$_5$ + F$^-$   & 0.1 & $-33.43$ & $-1.173$ & $-0.561$ & $0.180$ & $-0.015$ \\
+G18 & SF$_6$ + e $\to$ SF$_6^-$         & 0.0 & $-33.46$ & $-1.500$ & $0.000$ & $-0.002$ & $0.0$ \\
+G19 & F$_2$ + e $\to$ F + F$^-$         & 0.0 & $-33.31$ & $-1.487$ & $-0.280$ & $0.011$ & $0.0$ \\
+\bottomrule
+\end{longtable}
+
+\subsection{Detachments, Ion--Ion Recombination, Ion--Molecule (G20--G50)}
+
+\textbf{Detachments} (G20--G21): Negative ions release their electron upon collision with any neutral $N$:
+\begin{align}
+  \text{G20:}\quad & \text{F}^- + N \to \text{F} + N + e^-  & k &= e^{-44.39} = 4.77\times10^{-20}\,\text{m}^3/\text{s} \\
+  \text{G21:}\quad & \text{SF}_6^- + N \to \text{SF}_6 + N + e^-  & k &= e^{-44.98} = 2.58\times10^{-20}\,\text{m}^3/\text{s}
+\end{align}
+
+\textbf{Ion--ion recombination} (G42--G49): All positive--negative ion pairs recombine at the same rate:
+\begin{equation}
+  I^+ + J^- \to I + J, \qquad k_{ii} = e^{-29.93} = 1.10\times10^{-13}\,\text{m}^3/\text{s}
+\end{equation}
+
+\textbf{Ion--molecule reaction} (G50):
+\begin{equation}
+  \text{SF}_6 + \text{SF}_5^+ \to \text{SF}_6 + \text{SF}_3^+ + \text{F}_2, \qquad k = e^{-39.65} = 5.42\times10^{-18}\,\text{m}^3/\text{s}
+\end{equation}
+
+\subsection{Neutral Recombinations --- Troe Fall-Off Formula (G35--G41)}
+
+Reactions G35--G37 use the \textbf{pressure-dependent Troe fall-off formula} from Ryan \& Plumb (1990):
+\begin{equation}\label{eq:troe}
+  \boxed{k = \frac{k_0 [M]}{1 + k_0 [M] / k_\infty} \cdot F_c^{\left(1 + \left[\log_{10}\!\left(\frac{k_0[M]}{k_\infty}\right)\right]^2\right)^{-1}}}
+\end{equation}
+where $[M]$ is the total gas number density (in cm$^{-3}$). The parameters for SF$_6$ as third body are:
+
+\begin{table}[h]
+\centering
+\begin{tabular}{clcccc}
+\toprule
+ & \textbf{Reaction} & $k_0$ (cm$^6$/s) & $k_\infty$ (cm$^3$/s) & $F_c$ & \textbf{Regime at $\sim$1\,Pa} \\
+\midrule
+G35 & F + SF$_5$ $\to$ SF$_6$  & $3.4\times10^{-23}$ & $1\times10^{-11}$ & 0.43 & High-pressure limit \\
+G36 & F + SF$_4$ $\to$ SF$_5$  & $3.7\times10^{-28}$ & $5\times10^{-12}$ & 0.46 & Low-pressure limit \\
+G37 & F + SF$_3$ $\to$ SF$_4$  & $2.8\times10^{-26}$ & $2\times10^{-11}$ & 0.47 & Fall-off region \\
+\bottomrule
+\end{tabular}
+\caption{Troe fall-off parameters from Ryan \& Plumb (1990), Table~III.}
+\end{table}
+
+Remaining recombinations use constant rate coefficients:
+\begin{align}
+  \text{G38--G40:} &\quad \text{F}_2 + \text{SF}_x \to \text{SF}_{x+1} + \text{F}  & k &= e^{-46.41} = 6.82\times10^{-21}\,\text{m}^3/\text{s} \\
+  \text{G41:} &\quad \text{SF}_5 + \text{SF}_5 \to \text{SF}_6 + \text{SF}_4  & k &= e^{-41.50} = 9.48\times10^{-19}\,\text{m}^3/\text{s}
+\end{align}
+
+%==========================================================================
+\section{Surface Reactions}
+%==========================================================================
+
+\subsection{Adsorption (S1--S4)}
+
+\begin{tabular}{cll}
+\toprule
+& \textbf{Reaction} & \textbf{Probability} \\
+\midrule
+S1 & F + bare $\to$ F(s)         & 0.150 \\
+S2 & SF$_3$ + bare $\to$ SF$_3$(s)   & 0.080 \\
+S3 & SF$_4$ + bare $\to$ SF$_4$(s)   & 0.080 \\
+S4 & SF$_5$ + bare $\to$ SF$_5$(s)   & 0.080 \\
+\bottomrule
+\end{tabular}
+
+\subsection{Fluorination (S5--S7)}
+
+Gas-phase F reacts with adsorbed SF$_x$. Only SF$_6$ (fully saturated) returns to gas.
+
+\begin{tabular}{cll}
+\toprule
+& \textbf{Reaction} & \textbf{Probability} \\
+\midrule
+S5 & F + SF$_3$(s) $\to$ SF$_4$(s)   & 0.500 \\
+S6 & F + SF$_4$(s) $\to$ SF$_5$(s)   & 0.200 \\
+S7 & F + SF$_5$(s) $\to$ SF$_6$(gas) & 0.025 \\
+\bottomrule
+\end{tabular}
+
+\subsection{Surface Recombinations (S8--S11)}
+
+Gas-phase species recombine with adsorbed F.
+
+\begin{tabular}{cll}
+\toprule
+& \textbf{Reaction} & \textbf{Probability} \\
+\midrule
+S8  & F + F(s) $\to$ F$_2$(gas)       & 0.500 \\
+S9  & SF$_3$ + F(s) $\to$ SF$_4$(gas) & 1.000 \\
+S10 & SF$_4$ + F(s) $\to$ SF$_5$(gas) & 1.000 \\
+S11 & SF$_5$ + F(s) $\to$ SF$_6$(gas) & 1.000 \\
+\bottomrule
+\end{tabular}
+
+\subsection{Ion--Surface Interactions (S12--S31)}
+
+Positive ions arrive at the wall with the Bohm flux and interact depending on surface coverage:
+\begin{align}
+  \text{On bare:}\quad   & \text{SF}_x^+ + \text{bare} \to \text{SF}_x\text{(s)} \\
+  \text{On F(s):}\quad   & \text{SF}_x^+ + \text{F(s)} \to \text{SF}_x\text{(s)} + \text{F(gas)} \\
+  \text{On SF}_y\text{(s):}\quad & \text{SF}_x^+ + \text{SF}_y\text{(s)} \to \text{SF}_x\text{(s)} + \text{SF}_y\text{(gas)}
+\end{align}
+Branching is proportional to $\theta_\text{bare}$, $\theta_\text{F}$, and $\theta_{\text{SF}_y}$.
+
+\subsection{Deposition (S32--S40)}
+
+Gas-phase SF$_x$ deposits on sites covered by SF$_y$, forming a permanent fluoro-sulfur film:
+\begin{equation}
+  \text{SF}_x + \text{SF}_y\text{(s)} \to \text{SF}_x\text{(s)} + P\text{(s)}, \qquad s = 0.030
+\end{equation}
+for $x, y \in \{3, 4, 5\}$ (9 reactions total).
+
+%==========================================================================
+\section{Governing Equations}
+%==========================================================================
+
+\subsection{Neutral Species Mass Balance}
+
+For each neutral species $i$:
+\begin{equation}\label{eq:neutral_balance}
+  \boxed{\frac{dn_i}{dt} = \frac{Q_{f,i}}{V} - k_\text{pump}\,n_i + \sum_j R^\text{gas}_{i,j} + \sum_k R^\text{surf}_{i,k}}
+\end{equation}
+where $Q_{f,i}/V$ is the volumetric feed rate (SF$_6$ only), and:
+\begin{equation}
+  k_\text{pump} = \frac{Q_\text{total}}{n_0 \cdot V}, \qquad n_0 = \frac{p_\text{OFF}}{k_B T_\text{gas}}
+\end{equation}
+
+\textbf{Example --- SF$_6$ balance:}
+\begin{align}
+  \frac{dn_{\text{SF}_6}}{dt} &= \frac{Q_{\text{SF}_6}}{V} - k_\text{pump}\,n_{\text{SF}_6} \notag\\
+  &+ k_\text{G35}\,n_\text{F}\,n_{\text{SF}_5} + k_\text{G38}\,n_{\text{F}_2}\,n_{\text{SF}_5} + k_\text{G41}\,n_{\text{SF}_5}^2 \notag\\
+  &+ R_\text{S7} + R_\text{S11} + k_\text{det}\,n_{\text{SF}_6^-}\,n_N + k_{ii}\,n_{\text{SF}_6^-}\,n_+ \notag\\
+  &- (k_1 + k_2 + k_3 + k_8 + k_9 + k_{10} + k_{17} + k_{18})\,n_e\,n_{\text{SF}_6}
+\end{align}
+
+\subsection{Positive Ion Mass Balance}
+
+\begin{equation}
+  \frac{dn_{i^+}}{dt} = \sum(\text{ionization}) - \nu_\text{wall}\,n_{i^+} - k_{ii}\,n_{i^+}\,n_- - k_\text{pump}\,n_{i^+}
+\end{equation}
+
+\subsection{Negative Ion Mass Balance}
+
+Negative ions do \textbf{not} reach the walls (confined by sheath potential) and are \textbf{not} pumped:
+\begin{equation}
+  \frac{dn_{j^-}}{dt} = \sum(\text{attachment}) - k_\text{det}\,n_{j^-}\,n_N - k_{ii}\,n_{j^-}\,n_+
+\end{equation}
+
+\subsection{Charge Neutrality}
+
+\begin{equation}
+  \boxed{n_e = \sum_i n_{i^+} - \sum_j n_{j^-}}, \qquad \frac{dn_e}{dt} = \sum_i \frac{dn_{i^+}}{dt} - \sum_j \frac{dn_{j^-}}{dt}
+\end{equation}
+
+\subsection{Electron Energy (Power) Balance}
+
+\begin{equation}\label{eq:power}
+  \boxed{\frac{d}{dt}\!\left(\tfrac{3}{2}n_e T_e\right) = \frac{\eta\,P_\text{abs}}{V\,e} - n_e\,\mathcal{P}_\text{coll} - \mathcal{P}_\text{wall} - \mathcal{P}_\text{pump}}
+\end{equation}
+
+Using the product rule, this gives an ODE for $T_e$:
+\begin{equation}
+  \frac{dT_e}{dt} = \frac{2}{3n_e}\left[\frac{\eta\,P_\text{abs}}{Ve} - n_e\,\mathcal{P}_\text{coll} - \mathcal{P}_\text{wall} - \mathcal{P}_\text{pump}\right] - \frac{T_e}{n_e}\frac{dn_e}{dt}
+\end{equation}
+
+\textbf{Power coupling efficiency:} $\eta = 0.50$.
+
+\textbf{Collisional losses} (per electron, in eV\,s$^{-1}$):
+\begin{equation}
+  \mathcal{P}_\text{coll} = \sum_j k_j(T_e)\,n_{\text{target},j}\,\varepsilon_j
+\end{equation}
+where $\varepsilon_j = \varepsilon_\text{threshold}$ for inelastic reactions and $\varepsilon_j = 3(m_e/M_n)T_e$ for elastic collisions.
+
+\textbf{Wall losses} (eV\,m$^{-3}$\,s$^{-1}$):
+\begin{equation}
+  \mathcal{P}_\text{wall} = \sum_{i^+} \Gamma_{i^+}^\text{wall}\left(\tfrac{1}{2}T_e + V_{s,i}\right) + \Gamma_\text{ion}^\text{total}\cdot 2T_e
+\end{equation}
+where the sheath voltage for each ion species is:
+\begin{equation}
+  V_{s,i} = \frac{T_e}{2}\ln\!\left(\frac{M_i}{2\pi m_e}\right)
+\end{equation}
+
+\textbf{Pumping losses:}
+\begin{equation}
+  \mathcal{P}_\text{pump} = k_\text{pump}\left(\tfrac{3}{2}n_e T_e + \tfrac{3}{2}n_+^\text{total}\,T_i\right)
+\end{equation}
+
+\subsection{Surface Coverage Balance}
+
+\begin{equation}
+  \frac{d\theta_X}{dt} = \frac{(\text{production flux} - \text{loss flux})\cdot V}{A \cdot n_\text{sites}}
+\end{equation}
+where $n_\text{sites} = 10^{19}$\,m$^{-2}$ is the surface site density.
+
+%==========================================================================
+\section{Transport Equations}
+%==========================================================================
+
+\subsection{Neutral Wall Loss --- Chantry Formula}
+
+For a neutral species with total effective sticking probability $s_\text{eff}$:
+\begin{equation}\label{eq:chantry}
+  \boxed{\nu_\text{wall} = \left[\frac{1}{\nu_\text{surf}} + \frac{1}{\nu_\text{diff}}\right]^{-1}}
+\end{equation}
+where:
+\begin{align}
+  \nu_\text{surf} &= \frac{s_\text{eff}}{2 - s_\text{eff}}\cdot\frac{v_\text{th}}{4}\cdot\frac{A}{V} & &\text{(surface-limited rate)} \\
+  \nu_\text{diff} &= \frac{D}{\Lambda^2} & &\text{(diffusion-limited rate)}
+\end{align}
+with thermal velocity $v_\text{th} = \sqrt{8k_BT_\text{gas}/(\pi M)}$, free diffusion coefficient $D = (\pi/8)\,\lambda\,v_\text{th}$, and mean free path $\lambda = 1/(n_\text{gas}\,\sigma_\text{coll})$.
+
+\textbf{Competing surface reactions:} When a species participates in multiple surface reactions, compute:
+\begin{equation}
+  s_\text{eff} = \sum_j s_j\,\theta_j, \qquad \text{Rate}_j = \nu_\text{wall}\cdot\frac{s_j\,\theta_j}{s_\text{eff}}\cdot n_i
+\end{equation}
+
+\subsection{Ion Wall Loss --- Lee \& Lieberman h-Factors}
+
+The ion wall loss frequency for species $i$ is:
+\begin{equation}
+  \nu_{i^+}^\text{wall} = u_{B,i}\cdot\frac{h_L\,A_\text{ax} + h_R\,A_\text{rad}}{V}
+\end{equation}
+where $u_{B,i} = \sqrt{eT_e/M_i}$ is the Bohm velocity.
+
+\textbf{Axial h-factor} (Lee \& Lieberman 1995, Eq.~A9):
+\begin{equation}\label{eq:hL}
+  \boxed{h_L = \frac{1 + 3\alpha_\text{avg}/\gamma}{1 + \alpha_\text{avg}} \cdot \frac{0.86}{\sqrt{3 + \dfrac{L}{2\lambda_i} + \left(\dfrac{0.86\,L\,u_B}{\pi D_a}\right)^{\!2}}}}
+\end{equation}
+
+\textbf{Radial h-factor} (Eq.~A10):
+\begin{equation}\label{eq:hR}
+  \boxed{h_R = \frac{1 + 3\alpha_\text{avg}/\gamma}{1 + \alpha_\text{avg}} \cdot \frac{0.80}{\sqrt{4 + \dfrac{R}{\lambda_i} + \left(\dfrac{0.80\,R\,u_B}{2.405\,J_1(2.405)\,D_a}\right)^{\!2}}}}
+\end{equation}
+
+where:
+\begin{align}
+  \alpha_\text{avg} &= n^-/n_e & &\text{(electronegativity ratio)} \\
+  \gamma &= T_e/T_i & &\text{(temperature ratio)} \\
+  \lambda_i &= 1/(n_\text{gas}\,\sigma_\text{ion}) & &\text{(ion mean free path)} \\
+  D_a &= eT_e/(M_\text{ion}\,\nu_i) & &\text{(ambipolar diffusion coefficient)} \\
+  J_1(2.405) &= 0.5191 & &\text{(Bessel function value)}
+\end{align}
+
+\textbf{Physical meaning:}
+\begin{itemize}[nosep]
+  \item The prefactor $(1+3\alpha/\gamma)/(1+\alpha)$ reduces ion wall flux in electronegative plasmas. At $\alpha\gg1$, it approaches $3/\gamma \ll 1$, reflecting negative ion confinement.
+  \item The term $3 + L/(2\lambda_i)$ interpolates between free-streaming and collisional transport.
+  \item The term $(0.86\,L\,u_B/\pi D_a)^2$ adds high-pressure ambipolar diffusion.
+\end{itemize}
+
+\subsection{Ion Temperature}
+
+From Lee \& Lieberman (1995):
+\begin{equation}
+  T_i\,[\text{eV}] = \begin{cases}
+    \dfrac{0.5 - T_\text{gas}/11605}{p\,[\text{mTorr}]} + \dfrac{T_\text{gas}}{11605} & \text{if } p > 1\,\text{mTorr} \\[6pt]
+    0.5 & \text{otherwise}
+  \end{cases}
+\end{equation}
+
+At operating conditions ($p = 6.9$\,mTorr, $T_\text{gas} = 315$\,K): $T_i \approx 0.096\eunit \approx 1110$\,K.
+
+\subsection{Negative Ion Transport}
+
+Negative ions are confined by the sheath potential barrier and \textbf{do not reach the walls}. Their only losses are volume processes: detachment (G20--G21) and ion--ion recombination (G42--G49).
+
+%==========================================================================
+\section{Operating Conditions}
+%==========================================================================
+
+\begin{table}[h]
+\centering
+\begin{tabular}{ll}
+\toprule
+\textbf{Parameter} & \textbf{Value} \\
+\midrule
+SF$_6$ feed & 100\,sccm \\
+Ar feed & 10\,sccm (actinometer only) \\
+Gas temperature & 315\,K \\
+Power range & 100--3500\,W \\
+$p_\text{OFF}$ range & 0.5--4.0\,Pa \\
+Pressure controller & OFF (constant outlet flow) \\
+Power coupling efficiency & 0.50 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{Pressure after ignition:}
+\begin{equation}
+  p = \left(\sum_{i=1}^{N_\text{neutral}} n_i + n_\text{Ar}\right) k_B T_\text{gas}, \qquad \Delta p = p - p_\text{OFF}
+\end{equation}
+
+%==========================================================================
+\section{Solver Method}
+%==========================================================================
+
+The system of 18 ODEs is integrated using \texttt{scipy.integrate.solve\_ivp} with the BDF method.
+
+\textbf{State vector} (18 components):
+\begin{equation}
+  \mathbf{y} = \bigl[\underbrace{n_{\text{SF}_6},\ldots,n_{e^-}}_{13}, \; T_e, \; \underbrace{\theta_\text{F},\ldots,\theta_{\text{SF}_5}}_{4}\bigr]
+\end{equation}
+
+\textbf{Initial conditions:} Pure SF$_6$ at $p_\text{OFF}$, with trace ions ($10^{10}$\,m$^{-3}$), $T_e = 5.0$\,eV, all $\theta = 0.01$.
+
+\textbf{Integration time:} 1.0\,s (sufficient for steady state).
+
+\textbf{Tolerances:} $\text{rtol} = 10^{-8}$, $\text{atol} = 10^{-6}$, max step $= 10^{-3}$\,s.
+
+%==========================================================================
+\section{References}
+%==========================================================================
+
+\begin{enumerate}[nosep]
+  \item Kokkoris et al., \textit{J.\ Phys.\ D: Appl.\ Phys.}\ \textbf{42}, 055209 (2009) --- Target paper
+  \item Kokkoris et al., \textit{J.\ Phys.\ D: Appl.\ Phys.}\ \textbf{41}, 195211 (2008) --- Power balance equations
+  \item Lee \& Lieberman, \textit{J.\ Vac.\ Sci.\ Technol.\ A}\ \textbf{13}, 368 (1995) --- h-factors
+  \item Ryan \& Plumb, \textit{Plasma Chem.\ Plasma Process.}\ \textbf{10}, 207 (1990) --- Troe fall-off formula
+  \item Ryan \& Plumb, \textit{Plasma Chem.\ Plasma Process.}\ \textbf{8}, 281 (1988) --- Experimental rates
+  \item Chantry, \textit{J.\ Appl.\ Phys.}\ \textbf{62}, 1141 (1987) --- Neutral wall loss formula
+  \item Christophorou \& Olthoff, \textit{J.\ Phys.\ Chem.\ Ref.\ Data}\ \textbf{29}, 267 (2000) --- SF$_6$ cross sections
+\end{enumerate}
+
+\end{document}
