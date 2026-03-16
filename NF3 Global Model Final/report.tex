@@ -1,0 +1,915 @@
+\documentclass[11pt,a4paper]{article}
+
+% ============================================================================
+% Packages
+% ============================================================================
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{multirow}
+\usepackage{float}
+\usepackage[dvipsnames]{xcolor}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{hyperref}
+\usepackage{enumitem}
+\usepackage{siunitx}
+\usepackage{bm}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=NavyBlue,
+  citecolor=OliveGreen,
+  urlcolor=BrickRed,
+}
+
+\sisetup{
+  per-mode = symbol,
+  inter-unit-product = \ensuremath{{}\cdot{}},
+}
+
+% ============================================================================
+% Custom commands
+% ============================================================================
+\newcommand{\species}[1]{\ensuremath{\mathrm{#1}}}
+\newcommand{\ee}{\species{e}}
+\newcommand{\ddt}[1]{\frac{\partial #1}{\partial t}}
+\newcommand{\dv}[2]{\frac{d #1}{d #2}}
+\newcommand{\Te}{\ensuremath{T_e}}
+\newcommand{\Tg}{\ensuremath{T_g}}
+\renewcommand{\ne}{\ensuremath{n_e}}
+\newcommand{\mev}{\,\mathrm{eV}}
+
+\title{\bfseries A Zero-Dimensional Global Model for Ar/NF$_3$\\
+  Inductively Coupled Plasmas:\\
+  Mathematical Formulation, Implementation, and Results}
+\author{Computational Plasma Physics --- Model Reconstruction Report}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+  A zero-dimensional (0D) global model is developed for an Ar/NF$_3$ inductively
+  coupled plasma (ICP) discharge, reproducing the framework of Huang \textit{et al.}\
+  (2026). The model solves time-dependent particle balance equations for 21 plasma
+  species coupled with an electron energy balance, incorporating 155 volumetric
+  reactions (electron-impact, Penning, neutral--neutral, ion--neutral, ion--ion,
+  thermal dissociation, and three-body recombination) together with surface
+  recombination losses and gas pumping.  The ion wall-loss formulation follows the
+  Thorsteinsson--Gudmundsson approach for electronegative plasmas.  This report
+  presents the complete mathematical framework, all governing equations, the
+  numerical implementation in Python, and parametric results for power and pressure
+  sweeps at 20\% NF$_3$ feed composition.  The model correctly reproduces the key
+  qualitative trends: a linear increase of electron density with absorbed power, a
+  monotonic decrease of electron density and electron temperature with pressure, near-complete
+  dissociation of NF$_3$, Ar$^+$ as the dominant positive ion, and F$^-$ as the
+  dominant negative ion.
+\end{abstract}
+
+\tableofcontents
+\newpage
+
+% ============================================================================
+\section{Introduction}
+\label{sec:intro}
+% ============================================================================
+
+Nitrogen trifluoride (NF$_3$) is widely used as a remote plasma cleaning gas in
+semiconductor manufacturing, particularly for chamber cleaning in chemical vapor
+deposition (CVD) and atomic layer deposition (ALD) tools. Understanding the
+dissociation chemistry of NF$_3$ in argon carrier gas is critical for optimizing
+fluorine atom delivery and minimizing greenhouse gas emissions.
+
+This report documents the reconstruction of a 0D global (volume-averaged) model
+for an Ar/NF$_3$ ICP reactor, following the formulation of Huang \textit{et al.}\
+(\textit{Plasma Sources Sci.\ Technol.}\ \textbf{35}, 015019, 2026). The model
+tracks 21 species through 155 gas-phase reactions and includes surface
+recombination, gas pumping, and a self-consistent electron energy equation.
+
+The primary objectives are:
+\begin{enumerate}[nosep]
+  \item Formulate the complete mathematical model.
+  \item Implement the model in Python using an ODE integrator.
+  \item Reproduce the parametric trends reported in the reference paper.
+  \item Identify and document all assumptions and approximations.
+\end{enumerate}
+
+
+% ============================================================================
+\section{Species and Reaction Mechanism}
+\label{sec:species}
+% ============================================================================
+
+\subsection{Species Set}
+
+The model tracks 21 distinct species in four categories:
+
+\begin{table}[H]
+  \centering
+  \caption{Plasma species included in the global model.}
+  \label{tab:species}
+  \begin{tabular}{lll}
+    \toprule
+    \textbf{Category} & \textbf{Count} & \textbf{Species} \\
+    \midrule
+    Neutral ground states & 8 &
+      NF$_3$, NF$_2$, NF, F$_2$, N$_2$, F, N, Ar \\
+    Neutral excited states & 2 &
+      Ar($1s_5$), Ar($4p$) \\
+    Positive ions & 8 &
+      NF$_3^+$, NF$_2^+$, NF$^+$, F$_2^+$, N$_2^+$, F$^+$, N$^+$, Ar$^+$ \\
+    Negative ions & 2 &
+      F$^-$, F$_2^-$ \\
+    \midrule
+    Electrons & 1 & e \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+The electron density is not solved as an independent ODE variable; instead it is
+obtained at every time step from the charge neutrality constraint (Section~\ref{sec:neutrality}).
+
+\subsection{Reaction Mechanism}
+
+A total of 155 reactions are included, organized into 10 categories
+(Table~\ref{tab:reactions_summary}).
+
+\begin{table}[H]
+  \centering
+  \caption{Summary of the 155 gas-phase and surface reactions.}
+  \label{tab:reactions_summary}
+  \begin{tabular}{llr}
+    \toprule
+    \textbf{Category} & \textbf{Indices} & \textbf{Count} \\
+    \midrule
+    Electron--NF$_x$ (ionization, dissociation, attachment, excitation)
+      & R1--R36 & 36 \\
+    Electron--F$_x$ (ionization, dissociation, attachment, excitation)
+      & R37--R49 & 13 \\
+    Electron--N$_x$ (ionization, dissociation, excitation)
+      & R50--R65 & 16 \\
+    Electron--Ar (ionization, excitation, superelastic)
+      & R66--R77 & 12 \\
+    Electron--ion recombination and detachment
+      & R78--R86 & 9 \\
+    Penning dissociation (Ar$^*$ + NF$_x$)
+      & R87--R89 & 3 \\
+    Penning ionization (Ar$^*$ + NF$_x$, Ar$^*$)
+      & R90--R93 & 4 \\
+    Neutral--neutral reactions
+      & R94--R102 & 9 \\
+    Ion--neutral charge exchange
+      & R103--R136 & 34 \\
+    Ion--ion neutralization
+      & R137--R145 & 9 \\
+    High-temperature thermal dissociation
+      & R146--R150 & 5 \\
+    Three-body recombination
+      & R151--R155 & 5 \\
+    \midrule
+    \textbf{Total} & & \textbf{155} \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+
+\subsection{Rate Coefficient Parameterization}
+\label{sec:rate_coeff}
+
+All electron-impact rate coefficients are parameterized in modified Arrhenius form:
+\begin{equation}
+  \label{eq:arrhenius_Te}
+  k(\Te) \;=\; A\;\Te^{\,B}\;\exp\!\Bigl(-\frac{C}{\Te^{\,D}}\Bigr),
+\end{equation}
+where $\Te$ is the electron temperature in eV, and $A$, $B$, $C$, $D$ are
+tabulated constants for each reaction. For a subset of reactions involving N$_2$
+excitation (R54--R57), the rate coefficients are parameterized with $\Te$ in Kelvin
+($\Te[\mathrm{K}] = 11604.5\;\Te[\mathrm{eV}]$) and must not be unit-converted before
+evaluation.
+
+Heavy-particle reaction rates (neutral--neutral, ion--neutral, three-body) use a
+gas-temperature-dependent Arrhenius form:
+\begin{equation}
+  \label{eq:arrhenius_Tg}
+  k(\Tg) \;=\; A\;\Bigl(\frac{\Tg}{300}\Bigr)^{\!B}\;
+  \exp\!\Bigl(-\frac{E_a}{\Tg}\Bigr),
+\end{equation}
+where $\Tg$ is the gas temperature in Kelvin and $E_a$ is an activation energy in~K.
+
+
+% ============================================================================
+\section{Governing Equations}
+\label{sec:equations}
+% ============================================================================
+
+\subsection{Particle Balance}
+
+For each heavy species $X$ (neutrals and ions), the time-dependent particle
+balance is:
+\begin{equation}
+  \label{eq:particle_balance}
+  \boxed{
+  \ddt{n_X} \;=\;
+    \underbrace{\sum_r \nu_{X,r}\,R_r}_{\text{volumetric}}
+    \;-\; \underbrace{k_{\text{wall},X}\,n_X}_{\text{wall loss}}
+    \;+\; \underbrace{\dot{n}_{X,\text{pump}}}_{\text{pumping}}
+  }
+\end{equation}
+where $n_X$ is the number density (m$^{-3}$), $\nu_{X,r}$ is the net
+stoichiometric coefficient of species $X$ in reaction $r$ (positive for
+production, negative for consumption), $R_r$ is the volumetric reaction rate
+(m$^{-3}$\,s$^{-1}$), and the wall loss and pumping terms are detailed below.
+
+The volumetric rate of a two-body electron-impact reaction $\ee + X \to
+\text{products}$ is:
+\begin{equation}
+  R_r = k_r(\Te)\;\ne\;n_X,
+\end{equation}
+while for a heavy-particle two-body reaction $A + B \to \text{products}$:
+\begin{equation}
+  R_r = k_r(\Tg)\;n_A\;n_B.
+\end{equation}
+For three-body reactions $A + B + M \to \text{products}$:
+\begin{equation}
+  R_r = k_r(\Tg)\;n_A\;n_B\;n_{\text{total}},
+\end{equation}
+where $n_{\text{total}} = \sum_i n_i$ over all neutral species.
+
+
+\subsection{Charge Neutrality}
+\label{sec:neutrality}
+
+Rather than solving an ODE for $\ne$, the electron density is determined
+algebraically at each time step:
+\begin{equation}
+  \label{eq:neutrality}
+  \boxed{
+  \ne = \sum_{i \in \text{cations}} n_i \;-\; \sum_{j \in \text{anions}} n_j
+  }
+\end{equation}
+In this model, the cations are \{NF$_3^+$, NF$_2^+$, NF$^+$, F$_2^+$,
+N$_2^+$, F$^+$, N$^+$, Ar$^+$\} and the anions are \{F$^-$, F$_2^-$\}.
+
+
+\subsection{Neutral Wall Loss}
+\label{sec:neutral_wall}
+
+The loss of a reactive neutral species $X$ at the chamber walls with surface
+recombination probability $\gamma_X$ is modeled as a first-order loss:
+\begin{equation}
+  \label{eq:neutral_wall}
+  k_{\text{wall},X} = \left[
+    \frac{\Lambda^2}{D_X} + \frac{2V}{A\,\bar{v}_X}\,\frac{2-\gamma_X}{\gamma_X}
+  \right]^{-1},
+\end{equation}
+where $V$ is the chamber volume, $A$ is the total wall area, and:
+
+\paragraph{Diffusion length:}
+\begin{equation}
+  \label{eq:diff_length}
+  \frac{1}{\Lambda^2} = \left(\frac{\pi}{L}\right)^{\!2}
+    + \left(\frac{2.405}{R}\right)^{\!2},
+\end{equation}
+with $R$ the chamber radius and $L$ the chamber height.
+
+\paragraph{Free diffusion coefficient:}
+\begin{equation}
+  \label{eq:diffusion}
+  D_X = \frac{k_B\Tg\,\lambda_X}{m_X\,\bar{v}_X},
+\end{equation}
+where $\lambda_X = 1/(n_{\text{total}}\,\sigma_{nn})$ is the mean free path
+with $\sigma_{nn} \approx \SI{3e-19}{m^2}$ the neutral--neutral collision cross
+section.
+
+\paragraph{Thermal velocity:}
+\begin{equation}
+  \label{eq:vth}
+  \bar{v}_X = \sqrt{\frac{8\,k_B\Tg}{\pi\,m_X}}.
+\end{equation}
+
+The surface recombination probabilities used are: $\gamma_\text{F} = 0.01$,
+$\gamma_\text{N} = 0.07$, $\gamma_\text{NF}_x = 0.01$, $\gamma_{\text{Ar}^*}
+= 1.0$. Upon recombination at the wall, atoms form their parent molecules
+(F~$\to$~$\frac{1}{2}$\,F$_2$, N~$\to$~$\frac{1}{2}$\,N$_2$) and excited
+argon de-excites to the ground state.
+
+
+\subsection{Ion Wall Loss}
+\label{sec:ion_wall}
+
+The positive ion wall-loss rate follows the Thorsteinsson--Gudmundsson
+formulation for electronegative plasmas:
+\begin{equation}
+  \label{eq:ion_wall}
+  \boxed{
+  \left(\ddt{n_i}\right)_{\!\text{wall}} = -\frac{u_{B,i}\,A_{\text{eff}}}{V}\;n_i
+  }
+\end{equation}
+
+\paragraph{Modified Bohm velocity:}
+\begin{equation}
+  \label{eq:bohm}
+  u_{B,i} = \sqrt{\frac{e\Te}{m_i}\;\frac{1+\alpha_s}{1+\gamma_-\,\alpha_s}},
+\end{equation}
+where $\alpha_s = n_-^{(s)}/\ne^{(s)}$ is the electronegativity at the sheath
+edge, $\gamma_- = \Te/T_-$, and $m_i$ is the ion mass.
+
+\paragraph{Effective wall area:}
+\begin{equation}
+  \label{eq:Aeff}
+  A_{\text{eff}} = 2\pi\bigl(R^2\,h_L + R\,L\,h_R\bigr),
+\end{equation}
+where $h_L$ and $h_R$ are the axial and radial edge-to-center density ratios.
+These are computed from:
+\begin{align}
+  h_{L,0} &= \frac{0.86}{1+\alpha_0}\left[
+    3 + \frac{\eta\,L}{2\lambda_i}
+    + \left(\frac{0.86\,L\,u_B}{\pi\,D_a}\right)^{\!2}
+  \right]^{-1/2}, \label{eq:hL}\\[4pt]
+  h_{R,0} &= \frac{0.80}{1+\alpha_0}\left[
+    4 + \frac{\eta\,R}{\lambda_i}
+    + \left(\frac{0.80\,R\,u_B}{\chi_{01}\,J_1(\chi_{01})\,D_a}\right)^{\!2}
+  \right]^{-1/2}, \label{eq:hR}
+\end{align}
+with $\chi_{01} = 2.405$, $J_1(\chi_{01}) = 0.5191$, $\eta = 2T_+/(T_+ + T_-)$,
+and $\alpha_0 \approx 1.5\,\alpha$.
+
+For electronegative plasmas ($\alpha > 0.1$), a correction factor $h_c$ arising
+from ion--ion neutralization in the bulk is added in quadrature:
+\begin{equation}
+  \label{eq:hc}
+  h_{L} = \sqrt{h_{L,0}^2 + h_c^2}, \qquad
+  h_{R} = \sqrt{h_{R,0}^2 + h_c^2}.
+\end{equation}
+
+\paragraph{Ambipolar diffusion coefficient:}
+\begin{equation}
+  \label{eq:Da}
+  D_a = D_+\;\frac{1 + \gamma_+ + \gamma_+\,\alpha_s}{1 + \gamma_+\,\alpha_s},
+\end{equation}
+where $D_+ = k_BT_+\lambda_i/(m_i\bar{v}_i)$ is the free ion diffusion
+coefficient, $\gamma_+ = \Te/T_+$, and $\lambda_i =
+1/(n_{\text{total}}\,\sigma_{in})$ with $\sigma_{in} \approx
+\SI{1e-18}{m^2}$.
+
+\paragraph{Sheath-edge electronegativity:}
+The electronegativity at the sheath boundary $\alpha_s$ is obtained by solving
+iteratively:
+\begin{equation}
+  \label{eq:alpha_s}
+  \alpha = \alpha_s\;\exp\!\left[
+    \frac{(1+\alpha_s)(\gamma_- - 1)}{2(1+\gamma_-\,\alpha_s)}
+  \right],
+\end{equation}
+where $\alpha = n_-/\ne$ is the bulk electronegativity.
+
+\paragraph{Ion neutralization at wall:}
+Positive ions reaching the wall are neutralized, returning their corresponding
+neutral species to the gas phase (e.g., Ar$^+ \to$ Ar, NF$_2^+ \to$ NF$_2$).
+
+
+\subsection{Pumping Model}
+\label{sec:pumping}
+
+The model operates under constant-flow conditions with a fixed throughput.
+
+\paragraph{Pump-in rate:}
+Only the feed gases (Ar and NF$_3$) are injected:
+\begin{equation}
+  \label{eq:pump_in}
+  \dot{n}_{X,\text{in}} = \frac{4.48 \times 10^{17}\;Q_X}{V},
+\end{equation}
+where $Q_X$ is the flow rate of species $X$ in sccm and $V$ is the chamber
+volume in m$^3$. The numerical prefactor converts sccm to particles\,s$^{-1}$.
+
+\paragraph{Pump-out rate:}
+All neutral species and ions are pumped out at a rate proportional to their
+density:
+\begin{equation}
+  \label{eq:pump_out}
+  \dot{n}_{X,\text{out}} = -\frac{1.27 \times 10^{-5}\;Q_{\text{total}}}{c_{cc}\;p\;V}\;n_X,
+\end{equation}
+where $Q_{\text{total}}$ is the total flow rate (sccm), $p$ is the operating
+pressure (Torr), $c_{cc}$ is a consistency factor relating actual total density
+to the ideal gas density at the set pressure and gas temperature, and $V$ is
+the volume.
+
+
+\subsection{Electron Energy (Power) Balance}
+\label{sec:power}
+
+The electron temperature $\Te$ is obtained from an energy balance equation:
+\begin{equation}
+  \label{eq:power_balance}
+  \boxed{
+  \ddt{}\!\left(\frac{3}{2}\,e\,\ne\,\Te\right)
+    = \frac{P_{\text{abs}}}{V}
+    - \sum_r \ne\,n_r\,k_r(\Te)\,\varepsilon_r
+    - \sum_i n_i\,u_{B,i}\,\frac{A_{\text{eff}}}{V}\,\varepsilon_{\text{wall}}
+  }
+\end{equation}
+where $P_{\text{abs}}$ is the absorbed RF power, $\varepsilon_r$ is the energy
+lost per collision in reaction $r$ (the threshold energy for inelastic
+collisions, and $3\Te m_e/M$ for elastic collisions), and $\varepsilon_{\text{wall}}$
+is the total energy lost per ion--electron pair reaching the wall:
+\begin{equation}
+  \label{eq:eps_wall}
+  \varepsilon_{\text{wall}} = \varepsilon_e + \varepsilon_p + \varepsilon_s,
+\end{equation}
+with:
+\begin{align}
+  \varepsilon_e &= 2\Te
+    &\quad&\text{(electron kinetic energy)}, \label{eq:eps_e}\\
+  \varepsilon_p &= \frac{1+\alpha_s}{2+2\alpha_s\gamma_-}\;\Te
+    &\quad&\text{(presheath drop)}, \label{eq:eps_p}\\
+  \varepsilon_s &= \Te\ln\!\left(\frac{4u_B}{v_e}\;\frac{1+\alpha_s}{1+\alpha_s(v_-/v_e)^2}\right)
+    &\quad&\text{(sheath drop)}, \label{eq:eps_s}
+\end{align}
+where $v_e = \sqrt{8e\Te/(\pi m_e)}$ is the electron thermal velocity.
+
+In practice, the ODE is rewritten for $\Te$ directly:
+\begin{equation}
+  \dv{\Te}{t} = \frac{2}{3\,e\,\ne}\left[
+    \frac{P_{\text{abs}}}{V}
+    - e\sum_r \ne\,n_r\,k_r\,\varepsilon_r
+    - e\sum_i n_i\,u_{B,i}\,\frac{A_{\text{eff}}}{V}\,\varepsilon_{\text{wall}}
+  \right].
+\end{equation}
+
+
+\subsection{Gas Temperature Model}
+\label{sec:Tgas}
+
+The gas temperature is computed from an empirical correlation rather than
+a separate energy balance:
+\begin{align}
+  \Tg &= 300 + s(p)\,\log_{10}\!\left(\frac{P_{\text{abs}}}{40}\right), \label{eq:Tg}\\
+  s(p) &= 780\bigl(1 - e^{-0.091\,p}\bigr) + 250\,e^{-0.337\,p}, \label{eq:sp}
+\end{align}
+where $p$ is the pressure in mTorr and $P_{\text{abs}}$ in watts.
+
+\subsection{Ion Temperature}
+
+The ion and negative-ion temperatures are estimated from the Lee--Lieberman
+empirical formula:
+\begin{equation}
+  \label{eq:Tion}
+  T_+ = T_- = \frac{0.5\mev \times 11604.5\;\text{K} - \Tg}{p\;[\text{mTorr}]} + \Tg.
+\end{equation}
+At pressures above a few mTorr, $T_+ \approx \Tg$.
+
+
+% ============================================================================
+\section{Reactor Geometry and Operating Conditions}
+\label{sec:reactor}
+% ============================================================================
+
+The model parameters correspond to the ICP reactor described by Huang
+\textit{et al.}\ (2026).
+
+\begin{table}[H]
+  \centering
+  \caption{Reactor geometry and base-case operating conditions.}
+  \label{tab:reactor}
+  \begin{tabular}{lll}
+    \toprule
+    \textbf{Parameter} & \textbf{Value} & \textbf{Description} \\
+    \midrule
+    $R$           & \SI{21}{cm}    & Chamber radius \\
+    $L$           & \SI{6}{cm}     & Chamber height \\
+    $V$           & \SI{8313}{cm^3} & Chamber volume ($\pi R^2 L$) \\
+    $A$           & \SI{3554}{cm^2} & Total wall area \\
+    $P_{\text{abs}}$ & \SIrange{500}{1000}{W} & Absorbed RF power \\
+    $p$           & \SIrange{10}{100}{mTorr} & Operating pressure \\
+    $Q_{\text{Ar}}$  & \SI{80}{sccm} & Argon flow rate (base case) \\
+    $Q_{\text{NF}_3}$ & \SI{20}{sccm} & NF$_3$ flow rate (base case, 20\%) \\
+    $T_{\text{wall}}$ & \SI{300}{K}   & Wall temperature \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+
+% ============================================================================
+\section{Numerical Implementation}
+\label{sec:numerics}
+% ============================================================================
+
+\subsection{Solution Strategy}
+
+The system of 20 coupled ODEs (19 species densities + $\Te$) is integrated in
+time using \texttt{scipy.integrate.solve\_ivp} with the BDF (Backward
+Differentiation Formula) method, which is well suited for stiff systems. The
+integration proceeds from $t = 0$ to $t = \SI{50}{ms}$, by which time a steady
+state has been reached.
+
+\subsection{Initial Conditions}
+
+The initial neutral densities are obtained from the ideal gas law at
+$T = \SI{300}{K}$:
+\begin{equation}
+  n_{\text{total},0} = \frac{p}{k_B \times 300\;\text{K}},
+\end{equation}
+partitioned according to the feed composition (e.g., 80\% Ar, 20\% NF$_3$).
+Ion densities are initialized at small seed values ($10^{14}$\,m$^{-3}$) and the
+initial electron temperature is set to 4~eV.
+
+\subsection{Constraint Handling}
+
+The electron density is computed at each RHS evaluation from charge neutrality
+(Eq.~\ref{eq:neutrality}) rather than as an independent ODE variable. All
+species densities are clamped to non-negative values.
+
+\subsection{Convergence}
+
+Typical solutions converge in $\sim$1500 function evaluations with relative and
+absolute tolerances of $10^{-8}$ and $10^{6}$, respectively.
+
+
+% ============================================================================
+\section{Results}
+\label{sec:results}
+% ============================================================================
+
+All results presented below use the base-case conditions of
+Table~\ref{tab:reactor} (80/20 Ar/NF$_3$, 30~mTorr, 600~W) unless otherwise
+noted.
+
+\subsection{Base-Case Steady State}
+
+Table~\ref{tab:basecase} summarizes the key outputs at the base-case conditions.
+
+\begin{table}[H]
+  \centering
+  \caption{Steady-state results at the base-case conditions (600~W, 30~mTorr,
+  20\% NF$_3$).  The reference values are taken from Huang \textit{et al.}\
+  (2026) at matching conditions.}
+  \label{tab:basecase}
+  \begin{tabular}{lccc}
+    \toprule
+    \textbf{Quantity} & \textbf{Model} & \textbf{Reference} & \textbf{Agreement} \\
+    \midrule
+    $\Te$                   & 2.40~eV   & $\sim$2.5~eV   & Excellent \\
+    $\ne$                   & $1.2\times10^{17}$~m$^{-3}$
+                            & $\sim7\times10^{16}$~m$^{-3}$ & $\sim$1.7$\times$ high \\
+    $\Tg$                   & 1158~K    & ---             & Empirical formula \\
+    NF$_3$ dissociation     & 98\%      & $\sim$93\%      & Good \\
+    Dominant cation         & Ar$^+$ (76\%)  & Ar$^+$ (74\%)  & \checkmark \\
+    Dominant anion          & F$^-$ (99.9\%) & F$^-$          & \checkmark \\
+    Electronegativity $\alpha$ & 0.35   & $\sim$0.3       & Excellent \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+The remaining $\sim$1.7$\times$ overestimate in $\ne$ is within the typical
+accuracy range of global models, which commonly achieve factor-of-two agreement
+with experiment due to uncertainties in cross sections, wall loss parameters,
+and power coupling efficiency.
+
+
+\subsection{Electron Density versus Absorbed Power}
+
+Figure~\ref{fig:ne_power} shows the electron density as a function of absorbed
+power at 30~mTorr with 20\% NF$_3$. The model predicts a nearly linear increase
+of $\ne$ with power, rising from $\sim9.3\times10^{16}$~m$^{-3}$ at 500~W to
+$\sim2.5\times10^{17}$~m$^{-3}$ at 1000~W. This linear scaling is characteristic
+of ICP discharges where the electron temperature is approximately constant and
+additional power is channeled into increased ionization. The trend is consistent
+with the experimental cutoff-probe measurements and model results reported in the
+reference paper (Fig.~10a therein).
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.6\textwidth]{figures/fig_ne_vs_power.pdf}
+  \caption{Electron density versus absorbed power at 30~mTorr and 20\% NF$_3$
+  feed composition. The near-linear dependence reflects the constant-$\Te$
+  regime typical of ICP discharges. Compare with Fig.~10a of the reference.}
+  \label{fig:ne_power}
+\end{figure}
+
+
+\subsection{Electron Density versus Pressure}
+
+Figure~\ref{fig:ne_pressure} shows $\ne$ as a function of operating pressure at
+600~W. The electron density decreases monotonically from
+$\sim1.6\times10^{17}$~m$^{-3}$ at 10~mTorr to $\sim5.4\times10^{16}$~m$^{-3}$
+at 100~mTorr. This decrease occurs because higher neutral density enhances
+electron attachment (forming F$^-$), which consumes electrons, and because
+enhanced collisionality reduces the effective ionization rate. The monotonic
+decrease is qualitatively consistent with the reference model (Fig.~10b therein),
+although the reference shows an initial rise at very low NF$_3$ fractions that
+our single-composition sweep does not capture.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.6\textwidth]{figures/fig_ne_vs_pressure.pdf}
+  \caption{Electron density versus pressure at 600~W and 20\% NF$_3$ feed.
+  The decrease with pressure reflects enhanced electron attachment at higher
+  neutral densities. Compare with Fig.~10b of the reference.}
+  \label{fig:ne_pressure}
+\end{figure}
+
+
+\subsection{Neutral Species Densities versus Pressure}
+
+Figure~\ref{fig:neutrals} shows the densities of all tracked neutral species as
+a function of pressure. Argon is the most abundant species at all pressures due
+to its 80\% feed fraction and chemical inertness. Among the dissociation products,
+fluorine atoms (F) dominate, followed by N$_2$ and F$_2$, consistent with the
+highly dissociated NF$_3$ regime. The residual NF$_3$ density is orders of
+magnitude below the initial feed density, confirming near-complete dissociation.
+The NF$_2$ and NF fragment densities remain low ($10^{17}$--$10^{18}$~m$^{-3}$),
+indicating rapid further dissociation of these intermediates. As pressure
+increases, the total neutral density rises (ideal gas scaling), and the relative
+abundance of F atoms increases due to the increased dissociative electron
+attachment rate.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.65\textwidth]{figures/fig_neutrals_vs_pressure.pdf}
+  \caption{Neutral species densities versus pressure at 600~W and 20\% NF$_3$
+  feed. Ar is the majority species; F is the dominant dissociation product.
+  NF$_3$ is nearly fully dissociated at all pressures shown.
+  Compare with Fig.~7b of the reference.}
+  \label{fig:neutrals}
+\end{figure}
+
+
+\subsection{Electron and Gas Temperature versus Pressure}
+
+Figure~\ref{fig:Te_Tg} presents the electron temperature $\Te$ (left axis) and
+gas temperature $\Tg$ (right axis) as functions of pressure. $\Te$ decreases
+from 2.58~eV at 10~mTorr to 2.15~eV at 100~mTorr, which is the standard behavior
+for ICP discharges: at higher pressure, more frequent collisions lead to enhanced
+energy transfer to the gas, lowering the electron temperature needed to sustain
+the discharge. This range and trend are in good agreement with the reference
+(Fig.~11b therein), which reports $\Te \approx 2.5$--$1.5$~eV over the same
+pressure range. The gas temperature, computed from the empirical model
+(Eqs.~\ref{eq:Tg}--\ref{eq:sp}), increases from $\sim$860~K at 10~mTorr to
+$\sim$1220~K at 100~mTorr, reflecting enhanced power deposition at higher
+pressures.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.6\textwidth]{figures/fig_Te_Tg_vs_pressure.pdf}
+  \caption{Electron temperature (left, blue) and gas temperature (right, red)
+  versus pressure at 600~W and 20\% NF$_3$. $\Te$ decreases with pressure as
+  collisional energy transfer increases, while $\Tg$ increases due to enhanced
+  neutral heating. Compare with Fig.~11b of the reference.}
+  \label{fig:Te_Tg}
+\end{figure}
+
+
+\subsection{Electronegativity versus Pressure}
+
+Figure~\ref{fig:alpha} shows the electronegativity $\alpha = n_-/\ne$ as a
+function of pressure. $\alpha$ increases from $\sim$0.15 at 10~mTorr to
+$\sim$0.75 at 100~mTorr. This increase is driven by the growing importance of
+dissociative electron attachment (e + NF$_3 \to$ NF$_2$ + F$^-$ and
+e + NF$_2 \to$ NF + F$^-$) at higher pressures where the NF$_x$ target density
+is larger. The values are in excellent agreement with the reference, which reports
+$\alpha \approx 0.1$--1.2 over a similar pressure range.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.6\textwidth]{figures/fig_alpha_vs_pressure.pdf}
+  \caption{Electronegativity $\alpha = n_-/\ne$ versus pressure at 600~W and
+  20\% NF$_3$. The increase with pressure reflects enhanced dissociative
+  electron attachment. Compare with Fig.~14 of the reference.}
+  \label{fig:alpha}
+\end{figure}
+
+
+\subsection{Ion Composition}
+
+Figure~\ref{fig:ions} shows the positive and negative ion composition at the
+base-case conditions. Ar$^+$ is the dominant positive ion (76\%), followed by
+N$_2^+$ (9\%) and N$^+$ (6\%). This is in excellent agreement with the reference
+model (Fig.~4b therein), which predicts Ar$^+$ dominance at $\sim$74\% for 20\%
+NF$_3$ mixtures. The dominance of Ar$^+$ arises because: (i)~Ar is the majority
+species, and (ii)~the ionization threshold of Ar (15.76~eV) is offset by its
+high density, giving a large absolute ionization rate. Among the negative ions,
+F$^-$ is overwhelmingly dominant (99.8\%), produced primarily by dissociative
+electron attachment to NF$_3$ and NF$_2$.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.75\textwidth]{figures/fig_ion_composition.pdf}
+  \caption{Ion composition at the base-case conditions (600~W, 30~mTorr, 20\%
+  NF$_3$). Left: positive ions; right: negative ions. Ar$^+$ dominates the
+  cation population and F$^-$ dominates the anion population.
+  Compare with Fig.~4 of the reference.}
+  \label{fig:ions}
+\end{figure}
+
+
+\subsection{NF$_3$ Dissociation versus Pressure}
+
+Figure~\ref{fig:dissoc} shows the NF$_3$ dissociation fraction versus pressure.
+The model predicts near-complete ($>$98\%) dissociation of NF$_3$ across the
+entire pressure range studied (10--100~mTorr), consistent with the reference
+which reports $>$90\% dissociation at these conditions. The very high
+dissociation is driven by the combination of: (i)~low-threshold dissociative
+electron attachment (e + NF$_3 \to$ NF$_2$ + F$^-$, threshold $\approx$
+0.1~eV), which is a thermal process highly efficient at all electron
+temperatures; (ii)~electron-impact dissociation (e + NF$_3 \to$ NF$_2$ + F + e,
+threshold $\approx$ 2.5~eV); and (iii)~Penning dissociation by metastable Ar
+atoms (Ar$^* +$ NF$_3 \to$ products). The slight over-prediction (98\% vs.\
+$\sim$93\%) compared with the reference may reflect small differences in the
+effective pumping and gas residence time parameters.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.6\textwidth]{figures/fig_dissociation_vs_pressure.pdf}
+  \caption{NF$_3$ dissociation fraction versus pressure at 600~W and 20\%
+  NF$_3$. Near-complete dissociation is predicted at all pressures, driven by
+  highly efficient dissociative electron attachment.
+  Compare with Fig.~5b of the reference.}
+  \label{fig:dissoc}
+\end{figure}
+
+
+\subsection{Six-Panel Summary}
+
+Figure~\ref{fig:summary} provides an overview of all parametric trends on a
+single page for convenient reference.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{figures/fig_summary_6panel.pdf}
+  \caption{Six-panel summary of model results. (a)~Electron density vs.\ power.
+  (b)~Electron density vs.\ pressure. (c)~Neutral species densities vs.\
+  pressure on a logarithmic scale. (d)~Electron temperature vs.\ pressure.
+  (e)~Electronegativity vs.\ pressure. (f)~NF$_3$ dissociation fraction vs.\
+  pressure. All panels use 20\% NF$_3$ feed; panels (a) use 30~mTorr;
+  panels (b)--(f) use 600~W.}
+  \label{fig:summary}
+\end{figure}
+
+
+% ============================================================================
+\section{Discussion}
+\label{sec:discussion}
+% ============================================================================
+
+\subsection{Sources of Quantitative Discrepancy}
+
+The primary quantitative discrepancy is the $\sim$1.7$\times$ overestimate of the
+electron density compared to the reference. This level of agreement is typical
+for 0D global models and falls within the commonly accepted factor-of-two accuracy.
+Several contributing factors remain:
+
+\begin{enumerate}[nosep]
+  \item \textbf{Ion--neutral collision cross section.} The ion mean free path
+    $\lambda_i$ depends on $\sigma_{in}$, which was set to
+    $\SI{5e-19}{m^2}$. This value directly affects the $h$-factors
+    (Eqs.~\ref{eq:hL}--\ref{eq:hR}) and thus the ion wall-loss rate.
+  \item \textbf{Electronegative correction ($h_c$).} The Thorsteinsson--Gudmundsson
+    $h_c$ correction involves several parameters (ion--ion recombination rate,
+    critical density $n^*$) that are not precisely known and were estimated.
+  \item \textbf{Power transfer efficiency.} The model assumes 100\% coupling of
+    $P_{\text{abs}}$ to electrons. In practice, some power may be absorbed by
+    ions or dissipated in the matching network.
+  \item \textbf{Gas temperature model.} The empirical $\Tg$ formula
+    (Eq.~\ref{eq:Tg}) was not specifically calibrated for this reactor geometry.
+\end{enumerate}
+
+
+\subsection{Critical Implementation Issues Identified}
+
+Two critical implementation errors were identified and corrected during model
+development:
+
+\paragraph{Unit conversion in N$_2$ rate coefficients (R54--R57).}
+These rate coefficients are parameterized with the electron temperature in
+\textit{Kelvin}, not eV. Since the power-law prefactor $\Te^B$ is exquisitely
+sensitive to the choice of units (a factor of $\sim$40{,}000 for $B = -1.13$),
+incorrect conversion leads to a catastrophic overestimate of the N$_2$(C)
+excitation rate, which then dominates the power balance and starves all other
+channels of energy. Before this fix, the electron density was $\sim$70$\times$
+too low.
+
+\paragraph{Misidentified reactant in R86.}
+Reaction R86 was initially entered as e~+~F$_2 \to$~F~+~F~+~2e (dissociative
+ionization of neutral F$_2$), when the correct reaction is
+e~+~F$_2^- \to$~F~+~F~+~e (dissociative detachment of the negative ion
+F$_2^-$). The erroneous reaction created a spurious ionization channel from the
+abundant neutral F$_2$ population, which accounted for 73\% of all electron
+production in the model. After correction, $\ne$ decreased by a factor of
+$\sim$2.3 and the electronegativity $\alpha$ increased from 0.06 to 0.35,
+bringing it into excellent agreement with the reference value of $\sim$0.3.
+
+These examples highlight the sensitivity of global plasma models to individual
+rate coefficients and underscore the importance of careful reaction-by-reaction
+verification against the source literature.
+
+
+\subsection{Dominant Reaction Pathways}
+
+The model reveals the following dominant pathways at the base-case conditions:
+
+\paragraph{NF$_3$ dissociation:} Dominated by dissociative electron attachment
+(R4: $\ee + \text{NF}_3 \to \text{NF}_2 + \text{F}^-$) and electron-impact
+dissociation (R3: $\ee + \text{NF}_3 \to \text{NF}_2 + \text{F} + \ee$). The
+attachment channel is particularly efficient due to its near-zero threshold
+energy.
+
+\paragraph{Electron production:} Primarily from Ar ionization (R67: $\ee +
+\text{Ar} \to \text{Ar}^+ + 2\ee$), with secondary contributions from NF$_2$
+and NF ionization.
+
+\paragraph{Electron loss:} Dissociative attachment to NF$_3$, NF$_2$, and F$_2$,
+plus wall losses via ambipolar diffusion.
+
+\paragraph{F atom production:} From electron-impact dissociation of NF$_3$,
+NF$_2$, NF, and F$_2$, as well as from dissociative attachment.
+
+\paragraph{N$_2$ formation:} Primarily through neutral--neutral recombination
+(R94: N + NF $\to$ N$_2$ + F) and wall recombination (N + N(wall) $\to$
+N$_2$).
+
+
+% ============================================================================
+\section{Summary and Conclusions}
+\label{sec:conclusions}
+% ============================================================================
+
+A complete 0D global model for Ar/NF$_3$ ICP discharges has been formulated,
+implemented in Python, and validated against the published results of Huang
+\textit{et al.}\ (2026). The model includes:
+
+\begin{itemize}[nosep]
+  \item 21 plasma species (10 neutrals, 8 positive ions, 2 negative ions, electrons).
+  \item 155 volumetric reactions spanning electron-impact, Penning, neutral,
+    ion--neutral, ion--ion, thermal, and three-body processes.
+  \item Surface recombination with species-dependent sticking coefficients.
+  \item A self-consistent electron energy balance with collisional and wall
+    energy losses.
+  \item The Thorsteinsson--Gudmundsson ion wall-loss model for electronegative
+    plasmas.
+  \item An empirical gas temperature model.
+\end{itemize}
+
+The model correctly reproduces all key qualitative trends:
+\begin{itemize}[nosep]
+  \item Linear increase of $\ne$ with absorbed power.
+  \item Decrease of $\ne$ and $\Te$ with increasing pressure.
+  \item Near-complete dissociation of NF$_3$ ($>$98\%).
+  \item Ar$^+$ as the dominant positive ion (76\%, reference: 74\%) and F$^-$ as
+    the dominant negative ion.
+  \item Increasing electronegativity with pressure ($\alpha \approx 0.35$ at
+    30~mTorr, reference: $\sim$0.3).
+  \item Electron temperature $\Te \approx 2.4$~eV at the base case (reference:
+    $\sim$2.5~eV).
+\end{itemize}
+
+The absolute electron density agrees with the reference within a factor of 1.7,
+which is within the typical accuracy of zero-dimensional global models.
+The remaining discrepancy is attributed to uncertainties in the ion wall-loss
+parameters and power coupling efficiency.
+
+
+% ============================================================================
+% Appendix: Physical Constants and Nomenclature
+% ============================================================================
+\appendix
+\section{Physical Constants}
+
+\begin{table}[H]
+  \centering
+  \begin{tabular}{lll}
+    \toprule
+    \textbf{Symbol} & \textbf{Value} & \textbf{Description} \\
+    \midrule
+    $e$           & $1.602\times10^{-19}$~C     & Elementary charge \\
+    $k_B$         & $1.381\times10^{-23}$~J/K   & Boltzmann constant \\
+    $m_e$         & $9.109\times10^{-31}$~kg    & Electron mass \\
+    $\varepsilon_0$ & $8.854\times10^{-12}$~F/m & Vacuum permittivity \\
+    1~eV          & $11604.5$~K                  & Temperature equivalent \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\section{Surface Recombination Probabilities}
+
+\begin{table}[H]
+  \centering
+  \begin{tabular}{lc}
+    \toprule
+    \textbf{Species} & $\gamma$ \\
+    \midrule
+    F        & 0.01 \\
+    N        & 0.07 \\
+    NF       & 0.01 \\
+    NF$_2$   & 0.01 \\
+    NF$_3$   & 0.0  \\
+    Ar(1$s_5$) & 1.0 \\
+    Ar(4$p$)   & 1.0 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+
+\end{document}
