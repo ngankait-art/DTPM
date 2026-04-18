@@ -1,0 +1,5 @@
+{
+  "winner": "E3_separate_heads",
+  "selected_at": "2026-04-17 01:23:47",
+  "reason": "Lowest nF RMSE mean across 3 seeds in architecture sweep"
+}

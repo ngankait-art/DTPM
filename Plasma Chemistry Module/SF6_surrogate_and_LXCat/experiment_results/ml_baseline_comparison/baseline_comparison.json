@@ -1,0 +1,66 @@
+{
+  "polynomial_deg3": {
+    "method": "Polynomial regression (degree 3) + Ridge",
+    "train_time_s": 0.3599069118499756,
+    "n_train": 120696,
+    "metrics": {
+      "nF": {
+        "rmse": 0.051003601402044296,
+        "mae": 0.0389692559838295,
+        "max_err": 0.2053241729736328
+      },
+      "nSF6": {
+        "rmse": 0.03911830857396126,
+        "mae": 0.029703110456466675,
+        "max_err": 0.167144775390625
+      }
+    }
+  },
+  "polynomial_deg4": {
+    "method": "Polynomial regression (degree 4) + Ridge",
+    "train_time_s": 4.225234031677246,
+    "n_train": 120696,
+    "metrics": {
+      "nF": {
+        "rmse": 0.039406005293130875,
+        "mae": 0.028995957225561142,
+        "max_err": 0.16208648681640625
+      },
+      "nSF6": {
+        "rmse": 0.01958724856376648,
+        "mae": 0.015228139236569405,
+        "max_err": 0.10002899169921875
+      }
+    }
+  },
+  "gaussian_process": {
+    "method": "Gaussian Process (RBF kernel)",
+    "train_time_s": 8049.174769163132,
+    "n_train": 3000,
+    "note": "Subsampled to 3000 for O(n^3) feasibility",
+    "metrics": {
+      "nF": {
+        "rmse": 0.006290971910565768,
+        "mae": 0.003927747683539071,
+        "max_err": 0.08504341492939815
+      },
+      "nSF6": {
+        "rmse": 0.002248187587075367,
+        "mae": 0.001284502456712568,
+        "max_err": 0.031148763645827415
+      }
+    }
+  },
+  "references": {
+    "surrogate_lxcat_v3": {
+      "nF_rmse": 0.0112,
+      "nSF6_rmse": 0.0081,
+      "method": "5-model Fourier MLP ensemble (no phys reg)"
+    },
+    "surrogate_v4": {
+      "nF_rmse": 0.0029,
+      "nSF6_rmse": 0.0027,
+      "method": "5-model Fourier MLP ensemble (phys reg, legacy data)"
+    }
+  }
+}

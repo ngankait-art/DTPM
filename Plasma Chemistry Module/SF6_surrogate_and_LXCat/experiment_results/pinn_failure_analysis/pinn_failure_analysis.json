@@ -1,0 +1,67 @@
+{
+  "title": "PINN Training Failure Analysis for Coupled SF6 Reaction-Diffusion",
+  "system": {
+    "equations": "2D axisymmetric reaction-diffusion (F, SF6, Te) + 54-reaction chemistry",
+    "domain": "T-shaped ICP reactor geometry",
+    "BCs": "Robin (wall recombination), Neumann (axis symmetry), Dirichlet (Te walls)"
+  },
+  "data_only_training": {
+    "description": "MLP trained on FD solver output (supervised regression)",
+    "result": "CONVERGES",
+    "loss_reduction": "23000x (from initial to final)",
+    "final_loss": "O(1e-4)",
+    "notes": "Standard supervised learning works well \u2014 this became the surrogate approach"
+  },
+  "pde_constrained_training": {
+    "description": "PINN with autograd spatial derivatives enforcing PDE residual",
+    "result": "DIVERGES",
+    "failure_modes": [
+      {
+        "name": "Stiff Arrhenius chemistry",
+        "description": "Rate coefficients span 15+ orders of magnitude (k ~ exp(-E/Te)). Autograd gradients through these rates are numerically unstable.",
+        "severity": "Critical"
+      },
+      {
+        "name": "Second-derivative instability",
+        "description": "The diffusion operator requires d\u00b2n/dr\u00b2 and d\u00b2n/dz\u00b2. Second derivatives through neural networks amplify noise.",
+        "severity": "High"
+      },
+      {
+        "name": "Axis singularity (1/r term)",
+        "description": "Cylindrical coordinates have 1/r * dn/dr at r=0. Even with L'Hopital fix (replacing with d\u00b2n/dr\u00b2), the gradient is ill-conditioned near the axis.",
+        "severity": "Medium"
+      },
+      {
+        "name": "Energy equation coupling",
+        "description": "Te PDE is coupled to species through collisional energy loss. The coupled system creates circular gradient dependencies.",
+        "severity": "High"
+      },
+      {
+        "name": "Multi-scale loss competition",
+        "description": "PDE residual, BC loss, data loss, and energy loss operate at different scales. No single loss weighting allows all terms to converge simultaneously.",
+        "severity": "Critical"
+      }
+    ]
+  },
+  "attempted_fixes": [
+    "L'Hopital rule for 1/r singularity at axis",
+    "BC residual normalization by characteristic scales (D*N_ref/R_ref)",
+    "Gradient clipping (max norm 1.0)",
+    "Learning rate reduction (1e-3 to 1e-5)",
+    "Curriculum training (data-only first, then add PDE)",
+    "Loss weighting sweeps (PDE weight 0.001 to 1.0)",
+    "Separate optimizers for different loss terms"
+  ],
+  "conclusion": {
+    "summary": "Pure PDE-constrained PINN is not feasible for this system. The combination of stiff chemistry, coupled equations, and cylindrical geometry creates an optimization landscape that standard PINN training cannot navigate.",
+    "pivot": "Pivoted to supervised hybrid spatial surrogate with physics regularization (smoothness + bounded density + wafer smoothness). This preserves physical priors without requiring PDE residual evaluation.",
+    "lesson": "Physics-informed regularization (soft constraints) succeeds where physics-informed neural networks (hard PDE constraints) fail, for stiff multi-scale reaction-diffusion systems."
+  },
+  "figure_recommendation": {
+    "type": "Two-panel loss curve",
+    "panel_a": "Data-only training: loss vs epoch showing 23000x reduction",
+    "panel_b": "PDE-constrained: loss vs epoch showing divergence after initial descent",
+    "note": "If raw training logs are not available, a schematic figure with the key qualitative behavior is acceptable for the paper."
+  },
+  "available_logs": []
+}

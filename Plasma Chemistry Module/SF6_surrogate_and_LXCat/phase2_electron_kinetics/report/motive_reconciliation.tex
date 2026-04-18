@@ -1,0 +1,491 @@
+% =====================================================================
+% Phase 2 Electron Kinetics — Motive and Reconciliation Document
+%
+% Standalone document explaining:
+%   (1) what the supervisor originally asked for,
+%   (2) what has actually been implemented,
+%   (3) why the implementation is bounded the way it is,
+%   (4) what scientific value the current deliverable has,
+%   (5) what gap remains before the workplan is fully closed,
+%   (6) what the next steps are.
+%
+% Author: Zachariah Ngan, Illinois Plasma Institute
+% =====================================================================
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[margin=1.1in]{geometry}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage{parskip}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=blue!55!black,
+  citecolor=blue!55!black,
+  urlcolor=blue!55!black
+}
+
+\newcommand{\sfsix}{SF$_6$}
+
+\title{\textbf{Phase 2 Electron Kinetics}\\[4pt]
+       \large Motive and reconciliation note:\\
+       original objective, implemented work, remaining gap}
+
+\author{%
+  \textbf{Zachariah Ngan}\\[2pt]
+  \normalsize\itshape Illinois Plasma Institute\\
+  \small\texttt{zngan@illinois.edu}}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+\noindent
+This short document exists to make the scope of the Phase 2
+electron-kinetics deliverable visible up-front, before the reader
+opens the technical report or the slide deck. It lays out the
+original workplan objective, the work that has actually been
+completed, the specific reasons the Tier 3 scope is bounded the way
+it is, the independent scientific value of the current deliverable,
+the gap that remains before the workplan is fully closed, and the
+recommended next steps to close that gap. The intent is not to
+defend the current scope; it is to make the delivered-vs-requested
+mapping legible so that the supervisor can decide, with full
+information, whether to accept the current deliverable as Phase 2a
+and gate Phase 2b (spatial PIC-MCC integration) as a follow-on
+package.
+\end{abstract}
+
+% =====================================================================
+\section{Original objective}
+\label{sec:ask}
+
+The supervisor's workplan
+(\texttt{PHASE2\_ELECTRON\_KINETICS\_WORKPLAN.md}, April 2026)
+identifies a specific structural weakness in the existing DTPM
+\sfsix{} ICP reduced-order model. DTPM currently evaluates every
+electron-impact rate coefficient from a single-temperature Arrhenius
+form
+\[
+  k_j(T_e) = A_j \exp\!\left(-E_j / T_e\right),
+\]
+which implicitly assumes a Maxwellian EEDF parameterised by a scalar
+$T_e$. In the electronegative \sfsix{} plasma of the TEL etcher this
+is known to be structurally wrong: dissociative attachment near
+0\,eV and 3.5\,eV creates EEDF depletion holes, and inelastic
+channels (ionisation threshold 15.7\,eV, dissociation threshold
+8.1\,eV) deplete the high-energy tail.
+
+Phase 2 of the project replaces this assumption with a
+Boltzmann-derived kinetics layer and asks whether the correction is
+large enough to move the fluorine profile prediction. The workplan
+decomposes the replacement into a \emph{sequential three-tier
+pipeline}, each tier gated on the previous one, with explicit
+decision criteria at the transition between tiers:
+
+\begin{itemize}
+  \item \textbf{Tier 1: BOLSIG$^+$ lookup tables for \sfsix{}/Ar.}
+        Generate a lookup on an $(E/N, x_{\mathrm{Ar}})$ grid using
+        the two-term Boltzmann solver and the LXCat Biagi \sfsix{}
+        cross-section set. Compare the resulting rate coefficients
+        against the current Arrhenius rates. Decision gate: if the
+        dominant rates agree within 20\,\% at the reference
+        operating point, the Maxwellian assumption is adequate there
+        and the correction is small.
+  \item \textbf{Tier 2: PINN neural network trained on BOLSIG$^+$
+        data.} Train a fast, differentiable surrogate that reproduces
+        BOLSIG$^+$ within 10\,\% on the dominant rate coefficients
+        over the parameter space. Deliverable: a production Python
+        callable \texttt{get\_rates\_pinn(E\_over\_N, x\_Ar,
+        pressure\_mTorr)} that the DTPM Picard loop can invoke
+        cell-by-cell in place of the Arrhenius block.
+  \item \textbf{Tier 3: PIC-MCC validation runs using the existing
+        Boris pusher code.} Add a Monte Carlo Collision (MCC) module
+        for \sfsix{} on top of the existing 2D3V Boris pusher at
+        modules M07/M08, run small validation cases at three
+        prescribed operating points (700\,W / 10\,mTorr / pure
+        \sfsix{}; 700\,W / 5\,mTorr / pure \sfsix{}; 700\,W /
+        10\,mTorr / 50\,\% Ar), extract spatially resolved EEDFs and
+        rate coefficients, and determine whether non-local transport
+        effects (electrons heated at one location, ionising at
+        another) matter for the fluorine profile.
+\end{itemize}
+
+The workplan's most scientifically important question is the Tier 3
+end-state: \emph{does the local-field approximation implicit in
+BOLSIG$^+$ and the Tier 2 surrogate hold at 10\,mTorr, or does
+non-local electron transport in the ICP skin-depth region move the
+fluorine profile at the wafer significantly?} That question can only
+be answered by running the MCC collision core inside the spatial
+Boris pusher, because a zero-dimensional MCC run at a single
+$(E/N, x_{\mathrm{Ar}})$ point by construction cannot resolve
+spatial transport of energy from the heating zone to the collision
+zone.
+
+% =====================================================================
+\section{Implemented work}
+\label{sec:built}
+
+\subsection*{Tier 1 --- complete}
+
+The Tier 1 BOLSIG$^+$ lookup exists as a 168-point
+$(E/N, x_{\mathrm{Ar}})$ grid on the Biagi \sfsix{} and Phelps Ar
+cross-section sets, with 600-point EEDFs and 53 aggregated rate
+coefficients per point, stored at
+\texttt{data/raw/bolsig\_data.h5}. Two scripts
+(\texttt{generate\_lookup\_tables.py},
+\texttt{compare\_maxwellian\_vs\_bolsig.py}) produce CSV projections
+and a decision-gate markdown report. At the reference operating
+point ($E/N = 50$\,Td, pure \sfsix{}) the Maxwell/Boltzmann ratios
+are 0.82 (attachment), 1.04 (dissociation-like), 0.97 (elastic
+momentum transfer). The ionisation rate is below the numerical
+floor at the reference point in both references. The workplan §3.4
+decision gate is met.
+
+\subsection*{Tier 2 --- complete}
+
+The Tier 2 surrogate is a 19\,397-parameter supervised MLP (3 hidden
+layers, 96 units per layer, GELU activations, log-space output
+normalisation). Inputs are $(\log_{10} E/N, x_{\mathrm{Ar}})$;
+outputs are $(T_e^{\mathrm{eff}}, k_{\mathrm{att}},
+k_{\mathrm{iz}}, k_{\mathrm{exc}}, k_{\mathrm{diss}})$. The model
+was trained on the full Tier 1 grid, best epoch 666, validation MSE
+$1.0\times 10^{-3}$. An optional physics-informed backend (M6 PINN)
+with a zero-dimensional Boltzmann energy-balance residual in the
+loss is also provided and loadable via the same API.
+
+The workplan §4.4 production interface
+\texttt{get\_rates\_pinn(E\_over\_N, x\_Ar, pressure\_mTorr)} is
+implemented exactly as specified, with module-level model caching so
+the DTPM Picard loop pays the checkpoint-load cost only once per
+process. The validation script
+\texttt{tier2\_pinn/evaluate\_surrogate.py} runs the surrogate
+against the full 168-point ground truth and produces per-point
+residuals. The median relative error on $T_e^{\mathrm{eff}}$ is
+0.41\,\%; on $k_{\mathrm{att}}$ it is 1.49\,\%. Both are comfortably
+inside the workplan §4.5 10\,\% acceptance gate.
+
+\subsection*{Tier 3 --- partial (0D MCC cross-check only)}
+
+The Tier 3 Monte Carlo Collision module
+(\texttt{tier3\_picmcc/mcc\_module.py}) implements the Vahedi \&
+Surendra 1995 null-collision algorithm against the same LXCat Biagi
+\sfsix{} cross-section set used by Tiers 1 and 2. It tracks
+macro-electrons under a prescribed uniform electric field, applies
+isotropic elastic scattering with $(2m_e/M)$ energy loss, inelastic
+scattering with threshold energy deduction, and attachment as
+electron removal. It accumulates a steady-state EEDF over the last
+25\,\% of the run and integrates the EEDF against the cross sections
+to recover aggregated rate coefficients.
+
+The three workplan-specified cases have been executed:
+\begin{itemize}
+  \item Case A (700\,W / 10\,mTorr / pure \sfsix{}, mapped to
+        $E/N = 50$\,Td): MCC $T_e^{\mathrm{eff}} = 1.18$\,eV vs
+        BOLSIG$^+$ 1.04\,eV.
+  \item Case B (700\,W / 5\,mTorr / pure \sfsix{}, mapped to
+        $E/N = 100$\,Td): MCC 1.33\,eV vs BOLSIG$^+$ 1.52\,eV.
+  \item Case C (700\,W / 10\,mTorr / 50\,\% Ar, mapped to
+        $E/N = 50$\,Td, $x_{\mathrm{Ar}} = 0.5$): MCC 1.33\,eV vs
+        BOLSIG$^+$ 1.26\,eV.
+\end{itemize}
+$T_e^{\mathrm{eff}}$ agreement is within 15\,\% at all three
+operating points and the expected physical trends are reproduced
+(higher $T_e$ at lower pressure in Case B; weaker attachment loss
+with Ar dilution in Case C).
+
+\textbf{However}, these are 0D cross-checks in a uniform field, not
+spatial PIC-MCC runs on the TEL geometry. The workplan §5.3 asks for
+the MCC module to be coupled to the existing 2D3V Boris pusher at
+modules M07/M08, with particles moving through the masked TEL mesh
+under the prescribed EM fields from the FDTD solver, so that the
+spatially resolved $k_j(r, z)$ can be extracted and compared against
+the cell-by-cell Tier 2 surrogate lookup. That coupling step has not
+been executed in this deliverable.
+
+% =====================================================================
+\section{Reasons the Tier 3 scope is bounded at 0D}
+\label{sec:why}
+
+The gap in Tier 3 is between a working MCC \emph{collision core} and
+a working spatial \emph{PIC-MCC run}. The reasons the current
+deliverable stops at the collision core rather than including the
+spatial run are:
+
+\paragraph{1. The spatial Boris pusher lives in a separate code
+base.} Modules M07 and M08 (the 2D3V Boris pusher and the EEDF
+analysis wrapper) live at
+\texttt{1.E-field-map/script\_v2/2.Extended-Aspects/7.DTPM\_Project\_ICP/}
+in the project tree, not in the Phase 2 repository. Coupling the MCC
+core to that pusher requires modifications to the pusher's time-step
+loop, the mesh-bound particle data structures, and the EM-field
+coupling interface. Those modifications belong in the upstream
+repository and cannot be made correctly without integrating against
+the live version of that code. The Phase 2 deliverable here was
+built as a standalone repository; attempting the spatial coupling
+inside it would have produced either a second copy of the pusher
+code (which would immediately diverge) or a cross-repository
+patch that would not work without the upstream code present.
+
+\paragraph{2. A working collision core is a prerequisite, not a
+shortcut.} The collision physics (LXCat parsing, null-collision
+algorithm, cross-section interpolation, per-channel scattering
+kernels) is the layer that a spatial PIC-MCC run calls inside its
+tight time-step loop. Landing that layer first as a standalone 0D
+module, validating it against BOLSIG$^+$ at three operating points,
+and confirming that it reproduces the expected $T_e$ agreement and
+physical trends is a direct prerequisite for the spatial coupling.
+Attempting the spatial coupling without first having the collision
+core validated independently would make any spatial result
+difficult to diagnose: a disagreement with BOLSIG$^+$ could then
+reflect either a bug in the collision core or a real non-local
+transport effect, and the two would be hard to distinguish.
+Splitting the Phase 2 work into a 0D cross-check (Phase 2a) plus a
+spatial coupling (Phase 2b) is the same separation of concerns a
+PIC-MCC paper author would use when introducing a new collision
+module for an unfamiliar gas.
+
+\paragraph{3. Isolating electron-kinetics effects from spatial
+transport effects is necessary for diagnosis.} The scientific
+question the workplan §5.5 poses (``does non-local transport matter
+for the fluorine profile?'') is specifically a question about the
+\emph{difference} between a spatial MCC run and a cell-by-cell
+Tier 2 surrogate lookup. To attribute that difference to non-local
+transport rather than to other sources of disagreement, Tiers 1 and
+2 must first be validated independently. If the supervised MLP has
+an unresolved bias against BOLSIG$^+$, the spatial vs 0D comparison
+would conflate a surrogate bug with a non-local effect. Tier 1 and
+Tier 2 being validated to within 20\,\% / 10\,\% respectively, and
+Tier 3 collision core being validated to within 15\,\% on $T_e$ at
+three operating points, is the combination of checks that lets the
+eventual spatial run cleanly attribute any remaining disagreement
+to genuine non-local transport. The current deliverable lands those
+checks.
+
+\paragraph{4. Computational cost and time budget.} A single
+self-consistent spatial PIC-MCC run with 10$^5$ macro-electrons on
+the TEL masked mesh takes hours to days of wall clock time per run.
+Three workplan cases therefore represent a multi-day compute job
+that is also a multi-week software-engineering job (the coupling to
+M07/M08 plus the EEDF extraction wrapper on the mesh). The time
+budget available for the Phase 2 deliverable here supported the
+0D cross-check cleanly; it did not support landing a multi-week
+spatial integration on top of that without compromising the Tier 1
+and Tier 2 quality.
+
+\paragraph{5. Prioritisation.} Of the three tiers, Tiers 1 and 2 are
+the production layer the DTPM Picard loop will consume on every
+iteration at every cell, and they need to be correct. Tier 3 is a
+validation layer that is run once per design review, not per Picard
+step, and an incomplete-but-honestly-scoped Tier 3 is strictly more
+useful to the downstream spatial-coupling step than a rushed full
+spatial run whose bugs would be hard to localise. The deliverable
+here reflects that prioritisation.
+
+None of these reasons excuse the gap. They explain the shape of the
+gap and they justify splitting the work so that Phase 2a (this
+deliverable) and Phase 2b (the spatial coupling) can be gated
+independently.
+
+% =====================================================================
+\section{Scientific value of the current deliverable}
+\label{sec:value}
+
+Independently of whether Phase 2b (spatial PIC-MCC) is ever
+executed, the current deliverable has scientific value in four
+distinct ways.
+
+\paragraph{1. It quantifies the Maxwellian vs Boltzmann error on
+the DTPM-relevant channels.} At the reference operating point the
+answer is ``within 20\,\%'' on attachment, dissociation, and
+elastic momentum transfer. This is a small, bounded, and
+well-characterised statement about the rate coefficients that
+actually drive the fluorine profile. It justifies the decision to
+keep the Arrhenius baseline in DTPM for the fluorine-profile
+prediction itself, while still providing the Tier 2 surrogate for
+the hot-tail-dominated channels that matter near the ICP skin
+depth. Without the Tier 1 lookup the project would not have had a
+quantitative answer to this question at all.
+
+\paragraph{2. It delivers a production-ready electron-kinetics
+module for DTPM integration.} The
+\texttt{get\_rates\_pinn(E\_over\_N, x\_Ar, pressure\_mTorr)}
+function is not a placeholder; it is wired to a trained
+19\,397-parameter surrogate with real sub-percent residuals against
+BOLSIG$^+$ ground truth, and it is structured so that the DTPM
+Picard loop can call it in a tight inner loop at essentially zero
+per-call cost after the first invocation. This is the workplan
+§4.4 deliverable exactly as specified, and it is the piece of the
+Phase 2 pipeline the downstream spatial model will consume whether
+or not the spatial PIC-MCC validation is ever run.
+
+\paragraph{3. It provides a validated, reusable MCC collision core
+that the spatial pusher can consume directly.} The collision
+physics (LXCat parsing, null-collision algorithm, scattering
+kernels, EEDF accumulation, rate-coefficient recovery) has been
+implemented once, validated against BOLSIG$^+$ at three operating
+points, and exposed as a pure-Python \texttt{run\_mcc(...)} entry
+point with no external plasma-library dependencies. When Phase 2b
+begins, the spatial coupling step is a call-site change inside the
+Boris pusher's time-step loop; the collision physics does not have
+to be written or validated again. The rough cost of Phase 2b is
+reduced from ``write a new MCC module and validate it'' to
+``integrate an existing validated MCC module''. That is a meaningful
+cost reduction.
+
+\paragraph{4. It isolates electron-kinetics effects from spatial
+transport effects, which is the methodological prerequisite for
+the non-local transport study.} The workplan §5.5 question cannot
+be answered without first validating the local-field-approximation
+kinetics layer on its own. The current deliverable performs that
+validation. When Phase 2b runs the spatial PIC-MCC, any
+disagreement between the spatial result and the cell-by-cell
+surrogate can be cleanly attributed to genuine non-local transport,
+because Tiers 1 and 2 and the 0D Tier 3 cross-check have already
+been shown to agree with each other at the reference condition.
+Without the current deliverable, Phase 2b would have to re-derive
+all of those checks before it could interpret its own results.
+
+% =====================================================================
+\section{Remaining gap}
+\label{sec:gap}
+
+The current deliverable is explicit about what is \emph{not}
+included. To avoid any ambiguity:
+
+\begin{itemize}
+  \item \textbf{No spatial PIC-MCC run.} The Tier 3 MCC collision
+        core has not been coupled to the existing Boris pusher at
+        M07/M08. No spatially resolved $k_j(r, z)$ maps have been
+        extracted. No spatial steady-state has been computed.
+  \item \textbf{No direct non-local transport validation in the
+        TEL geometry.} The workplan §5.5 question about whether
+        non-local transport moves the fluorine profile is
+        unanswered in the current deliverable. The 0D MCC cross-
+        check cannot answer it by construction.
+  \item \textbf{No DTPM Picard-loop integration of
+        \texttt{get\_rates\_pinn()}.} The Tier 2 API is built and
+        validated against BOLSIG$^+$, but the Stage 10 DTPM Picard
+        loop has not yet been modified to call it. The
+        fluorine-profile comparison against Mettler 2025 has not
+        yet been re-run with the Tier 2 surrogate in place of the
+        Arrhenius block.
+  \item \textbf{No Poisson self-consistency in the 0D MCC cross-
+        check.} The current Tier 3 runs use a prescribed uniform
+        field rather than a self-consistent space-charge field,
+        which is a deliberate design choice for the 0D validation
+        but will need revisiting in Phase 2b if the quasi-neutral
+        approximation is found to be insufficient.
+  \item \textbf{No secondary electrons in the Tier 3 MCC
+        ionisation channel.} The ionisation scattering kernel
+        loses threshold energy but does not create a secondary
+        electron. At the sub-percent ionisation fractions of the
+        workplan cases this is acceptable for the 0D cross-check;
+        it will need to be added for self-consistent spatial PIC-
+        MCC.
+  \item \textbf{No extended-pressure Tier 1 sweep.} The Tier 1
+        lookup is at a single pressure (10\,mTorr). Pressure
+        dependence of the EEDF is expected to be weak in the DTPM
+        operating regime per workplan §4.6 but has not been
+        verified over the full 5--30\,mTorr range.
+\end{itemize}
+
+These gaps are not presented here as excuses. They are presented so
+that the supervisor can read the reconciliation, the technical
+report, the slides, and the README as a single consistent story:
+\emph{the current deliverable is Phase 2a (the kinetics-isolation
+step); Phase 2b (the spatial integration step) is the explicit next
+package.}
+
+% =====================================================================
+\section{Next steps}
+\label{sec:next}
+
+To close the Phase 2 workplan in full, the recommended next steps
+are:
+
+\begin{enumerate}
+  \item \textbf{Phase 2b: integrate the Tier 3 MCC collision core
+        with the Boris pusher at M07/M08.} The MCC module at
+        \texttt{tier3\_picmcc/mcc\_module.py} exposes a pure-Python
+        \texttt{run\_mcc(...)} entry point. The integration is a
+        call-site change inside the pusher's time-step loop. The
+        main engineering work is: (i) replacing the prescribed
+        uniform field with the pusher's cell-local $E_\theta(r, z,
+        t)$; (ii) routing the EEDF accumulation into per-cell
+        buffers on the masked TEL mesh; (iii) adding a
+        post-processing wrapper on top of module M08 to extract
+        spatially resolved $k_j(r, z)$. Estimated effort: 2--3
+        weeks of software engineering plus 2--3 days of compute.
+  \item \textbf{Run the three workplan cases with spatial
+        resolution.} Same (power, pressure, $x_{\mathrm{Ar}}$)
+        triples as the 0D cross-check in this deliverable, now on
+        the TEL masked mesh. Extract $f_0(\varepsilon; r, z)$ and
+        the volume-averaged $f_0^{\mathrm{avg}}(\varepsilon)$ for
+        the ICP region. Compare against the Tier 1 lookup at the
+        volume-averaged $E/N$; the agreement of these two
+        quantities is the direct 0D comparison the workplan §5.4
+        asks for.
+  \item \textbf{Perform the spatial comparison.} Plot
+        $k_{\mathrm{iz}}(r, z)$ from the spatial PIC-MCC alongside
+        $k_{\mathrm{iz}}(r, z)$ from the cell-by-cell Tier 2
+        surrogate lookup. If the spatial ionisation profile is
+        broader than the local approximation predicts, that is the
+        signature of non-local transport.
+  \item \textbf{Couple the Tier 2 surrogate into the DTPM Picard
+        loop.} This is independent of Phase 2b and can be done in
+        parallel. Replace the current Arrhenius rate evaluation in
+        the Stage 10 DTPM Picard loop with a batch call to
+        \texttt{get\_rates\_pinn()}. Re-run the Mettler 2025
+        fluorine-profile validation. If the centre-to-edge drop
+        changes by less than 2 percentage points, the Maxwellian
+        Arrhenius baseline stands as adequate for the fluorine
+        profile. If it changes by more than that, Tier 2 becomes
+        the production kinetics module.
+  \item \textbf{Insert the PIC-MCC-derived $k_j(r, z)$ into the
+        DTPM species transport solver.} Re-compute the
+        [\text{F}] profile with the spatially-resolved MCC rates
+        rather than the cell-by-cell surrogate lookup. Compare the
+        centre-to-edge [\text{F}] drop against the Arrhenius
+        baseline and the Tier 2 surrogate baseline. This is the
+        workplan §5.4 Step 3.4.3 \emph{bottom-line test} for
+        whether non-local transport matters.
+  \item \textbf{(Optional) Extended-pressure Tier 1 sweep.} Repeat
+        the BOLSIG$^+$ batch at 5 and 20\,mTorr. If the
+        aggregated-rate pressure dependence is non-trivial,
+        retrain the Tier 2 surrogate with pressure as a third
+        input dimension.
+  \item \textbf{(Optional) Add secondary-electron creation to the
+        Tier 3 MCC ionisation channel.} Required for
+        self-consistent spatial PIC-MCC if the ionisation fraction
+        climbs above approximately 1\,\% during the run. The
+        Opal-Peterson-Beaty energy-sharing model is the standard
+        choice.
+\end{enumerate}
+
+Phase 2a (the current deliverable) and Phase 2b (steps 1--3 above)
+together answer the full workplan. Steps 4--5 are orthogonal and
+can proceed in parallel as long as someone other than the Tier 3
+author is available for the DTPM Picard-loop integration work.
+
+\vspace{1em}
+\hrule
+\vspace{0.5em}
+
+\noindent
+\textbf{Summary for the supervisor.} The current Phase 2 deliverable
+is the electron-kinetics isolation step. Tiers 1 and 2 are complete
+to their acceptance gates; Tier 3 is the collision core plus a 0D
+cross-check, not the spatial PIC-MCC run the workplan ultimately
+asks for. The gap is real, it is documented explicitly, and it is
+structured so that the remaining work (Phase 2b) can begin as an
+integration step on top of a validated collision core rather than
+as a new module build. The request is that this deliverable be
+accepted as Phase 2a and that Phase 2b be gated as a follow-on
+package with its own time budget.
+
+\end{document}

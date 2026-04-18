@@ -1,0 +1,42 @@
+{
+  "case": {
+    "name": "A",
+    "description": "700 W / 10 mTorr / pure SF6 (reference condition)",
+    "power_W": 700.0,
+    "pressure_mTorr": 10.0,
+    "x_Ar": 0.0,
+    "EN_Td": 50.0
+  },
+  "run": {
+    "n_electrons": 3000,
+    "n_steps": 30000,
+    "dt_s": 2e-11,
+    "seed": 42
+  },
+  "mcc": {
+    "Te_eff_eV": 1.1821753163358735,
+    "mean_energy_final_eV": 1.7732629745038102,
+    "rates": {
+      "elastic": 1.3684044626451226e-13,
+      "inelastic": 8.461736536179329e-14,
+      "ionization": 0.0,
+      "attachment": 1.1642300694508313e-15
+    },
+    "counters": {
+      "elastic": 22239,
+      "inelastic": 19342,
+      "ionization": 0,
+      "attachment": 2532,
+      "null": 148484
+    },
+    "active_fraction_final": 0.156
+  },
+  "bolsig_ref": {
+    "EN_Td": 50.0,
+    "x_Ar": 0.0,
+    "Te_eff_eV": 1.0392974157492014,
+    "k_iz": 0.0,
+    "k_att": 7.391412367673585e-15,
+    "k_el": 1.018245769932137e-13
+  }
+}

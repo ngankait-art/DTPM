@@ -1,0 +1,28 @@
+{
+  "title": "Fair comparison: surrogate_lxcat_v3 vs surrogate_v4",
+  "conditions": {
+    "both_221_cases": true,
+    "same_architecture": "Fourier + 4x128 GELU MLP",
+    "same_hyperparameters": "1500 epochs, lr=1e-3, cosine schedule",
+    "same_ensemble_size": 5,
+    "same_val_split": "15% (seed=42)",
+    "difference": "rate_mode: legacy vs lxcat"
+  },
+  "surrogate_v4": {
+    "dataset": "pinn_dataset_v4 (legacy Arrhenius)",
+    "n_cases": 221,
+    "nF_rmse": 0.0029211651999503374,
+    "nSF6_rmse": 0.0027009835466742516,
+    "ens_mean": 9.68e-05
+  },
+  "surrogate_lxcat_v3": {
+    "dataset": "pinn_dataset_lxcat_v3 (LXCat Biagi)",
+    "n_cases": 221,
+    "nF_rmse": 0.011243894696235657,
+    "nSF6_rmse": 0.008103406056761742,
+    "ens_mean": 0.0019711383618414404
+  },
+  "nF_ratio": 3.84911291440375,
+  "nSF6_ratio": 3.0001686114450967,
+  "interpretation": "LXCat-backed surrogate shows significant accuracy degradation. The strong physics shift (Te +56%, ne -69%) may require architecture tuning or more training data in the LXCat regime."
+}

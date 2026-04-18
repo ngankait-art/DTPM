@@ -1,0 +1,169 @@
+{
+  "n_total": 88,
+  "n_train": 75,
+  "n_val": 13,
+  "n_unique_train": 75,
+  "n_unique_val": 13,
+  "exact_overlap": 0,
+  "overlap_tuples": [],
+  "near_duplicates": 4,
+  "near_duplicate_pairs": [
+    {
+      "val": [
+        300,
+        20,
+        0.0
+      ],
+      "train": [
+        300,
+        18,
+        0.0
+      ],
+      "dP%": 0.0,
+      "dp%": 10.0,
+      "dAr": 0
+    },
+    {
+      "val": [
+        1000,
+        15,
+        0.2
+      ],
+      "train": [
+        1000,
+        15,
+        0.25
+      ],
+      "dP%": 0.0,
+      "dp%": 0.0,
+      "dAr": 0.04999999999999999
+    },
+    {
+      "val": [
+        1000,
+        15,
+        0.4
+      ],
+      "train": [
+        1000,
+        15,
+        0.35
+      ],
+      "dP%": 0.0,
+      "dp%": 0.0,
+      "dAr": 0.050000000000000044
+    },
+    {
+      "val": [
+        1000,
+        20,
+        0.0
+      ],
+      "train": [
+        1000,
+        18,
+        0.0
+      ],
+      "dP%": 0.0,
+      "dp%": 10.0,
+      "dAr": 0
+    }
+  ],
+  "val_indices": [
+    0,
+    4,
+    10,
+    12,
+    18,
+    22,
+    26,
+    53,
+    65,
+    67,
+    68,
+    76,
+    85
+  ],
+  "val_cases": [
+    {
+      "idx": 0,
+      "P_rf": 200,
+      "p_mTorr": 3,
+      "frac_Ar": 0.0
+    },
+    {
+      "idx": 4,
+      "P_rf": 200,
+      "p_mTorr": 20,
+      "frac_Ar": 0.0
+    },
+    {
+      "idx": 10,
+      "P_rf": 300,
+      "p_mTorr": 15,
+      "frac_Ar": 0.0
+    },
+    {
+      "idx": 12,
+      "P_rf": 300,
+      "p_mTorr": 20,
+      "frac_Ar": 0.0
+    },
+    {
+      "idx": 18,
+      "P_rf": 500,
+      "p_mTorr": 3,
+      "frac_Ar": 0.0
+    },
+    {
+      "idx": 22,
+      "P_rf": 500,
+      "p_mTorr": 20,
+      "frac_Ar": 0.0
+    },
+    {
+      "idx": 26,
+      "P_rf": 600,
+      "p_mTorr": 15,
+      "frac_Ar": 0.0
+    },
+    {
+      "idx": 53,
+      "P_rf": 1000,
+      "p_mTorr": 20,
+      "frac_Ar": 0.0
+    },
+    {
+      "idx": 65,
+      "P_rf": 700,
+      "p_mTorr": 10,
+      "frac_Ar": 0.2
+    },
+    {
+      "idx": 67,
+      "P_rf": 1000,
+      "p_mTorr": 15,
+      "frac_Ar": 0.2
+    },
+    {
+      "idx": 68,
+      "P_rf": 700,
+      "p_mTorr": 10,
+      "frac_Ar": 0.25
+    },
+    {
+      "idx": 76,
+      "P_rf": 1000,
+      "p_mTorr": 15,
+      "frac_Ar": 0.4
+    },
+    {
+      "idx": 85,
+      "P_rf": 1200,
+      "p_mTorr": 20,
+      "frac_Ar": 0.5
+    }
+  ],
+  "leakage_found": false,
+  "verdict": "NO LEAKAGE"
+}

@@ -1,0 +1,109 @@
+\section{Introduction}
+\label{sec:intro}
+
+Inductively coupled plasma (ICP) reactors are central to the
+fabrication of semiconductor and microelectromechanical devices,
+where they enable the controlled removal of material by reactive
+neutrals generated in low-pressure electronegative discharges. The
+design and operation of such reactors increasingly rely on
+predictive models, both for early-stage process development and for
+run-time control. Fully kinetic simulations---particle-in-cell,
+hybrid Monte~Carlo, or two-dimensional fluid---remain too
+computationally expensive to embed in optimization loops, digital
+twins, or supervisory controllers, and the practical workhorse is
+therefore a reduced-order model in which the chamber is described
+by a zero- or one-dimensional set of balance equations supplemented
+by phenomenological transport coefficients calibrated against a
+small number of experimental observables
+\citep{lieberman2005,chabert2011}.
+
+The reduced-order modeling paradigm depends on a parameter
+estimation step that is, in practice, an identification problem in
+disguise. Fitted constants---wall recombination probabilities,
+effective sticking coefficients, etch yields, residence times,
+gas-heating coefficients---are adjusted to reproduce one or two
+measured etch rates, and the resulting values are subsequently
+interpreted as physical quantities and extrapolated to other
+operating conditions. The interpretation implicitly assumes that
+each fitted parameter has been pinned down by the data on its own
+merits. In reality the parameters are coupled through the model
+equations, and the data may constrain only certain combinations of
+them, leaving directions in parameter space along which the fit is
+degenerate. When the model also contains systematic errors---for
+example, in the electron-impact rate coefficients used in the source
+term---the degeneracies become a route by which those errors are
+absorbed into the fitted values, distorting their physical
+interpretation without producing any visible misfit at the
+calibration points.
+
+Sulfur hexafluoride (\sfsix{}) plasmas illustrate this difficulty in
+a particularly sharp form. Their dominant low-energy electron loss
+channel is dissociative attachment, which depletes the high-energy
+tail of the electron energy distribution function (EEDF) below a
+Maxwellian distribution at the same mean energy. Rate coefficients
+for dissociative excitation and ionization, which are integrals of
+the cross section against the EEDF tail, are therefore strongly
+sensitive to the EEDF model adopted. Reduced ICP simulations
+routinely substitute a Maxwellian distribution at an effective
+electron temperature for the true EEDF when computing rate
+coefficients from cross-section libraries. For \sfsix{} this
+substitution is known to be poor, but what has not been
+characterized quantitatively is how the resulting bias propagates
+through a full calibration to the fitted depletion or transport
+parameters of a reduced model, and in particular whether the bias is
+observable through the calibration data themselves.
+
+This work addresses that gap. We report a reduced-order \sfsix{} ICP
+model in which the absorbed power, the electron density, the
+dissociation source, and the radial fluorine transport are coupled
+through a one-parameter feedstock-depletion correction with a
+characteristic timescale $\beta$. The model is calibrated against
+two literature etch-rate anchors at 200\,W and 2000\,W
+\citep{mansano1999,panduranga2019}. With Maxwellian rate
+coefficients computed from the Biagi \sfsix{} cross-section set
+\citep{biagi}, the calibration returns $\beta \approx 14$\,ms,
+almost two orders of magnitude shorter than any plausible gas
+residence time for the target reactor class. We show that this is
+not a failure of the depletion mechanism but a structural feature
+of the calibration: through an analytical identifiability argument
+we prove in the isothermal limit, and extend numerically under gas
+heating, that two-anchor calibration constrains only the product
+$\beta \cdot \kdiss \cdot \nel(P_{\mathrm{high}})$, and we verify
+the result numerically by demonstrating that artificial rescaling
+of $\kdiss$ shifts the fitted $\beta$ by exactly the inverse factor
+while leaving every observable prediction unchanged. We then
+exploit the identifiability theorem to make a falsifiable
+prediction: replacing the Maxwellian rate coefficients with two-term
+Boltzmann coefficients from BOLSIG$^+$ \citep{hagelaar2005} should
+rescale $\beta$ by the ratio of the rate-source-dependent invariant.
+The predicted shift,
+$\beta_{\mathrm{Bolt}}/\beta_{\mathrm{Max}} \approx 35.7$, agrees
+with the actual refit to better than $0.5\,\%$ once the secondary
+shift in $\nel$ from the modified power balance is included. The
+Boltzmann-calibrated $\beta = 509$\,ms lies within a nominal
+geometric residence-time band for typical 10\,mTorr ICP chambers.
+
+We further show that the same identifiability theorem implies a
+strong observability constraint on EEDF inference from etch-rate
+data. At the calibration $E/N$, the Maxwellian- and
+Boltzmann-calibrated models yield etch-rate predictions
+indistinguishable to the tolerance of the numerical fit across the
+entire power sweep, while off the calibration $E/N$ the predictions
+diverge by up to 85\,\%. A single etch-rate measurement at one
+non-anchor $(E/N, x_{\mathrm{Ar}})$ configuration would distinguish
+the two EEDF assumptions and lift the calibration degeneracy, with
+implications for the design of multi-condition calibration
+campaigns.
+
+The remainder of the paper is organized as follows.
+Section~\ref{sec:model} summarizes the reduced model and the
+calibration framework. Section~\ref{sec:baseline} reports the
+Maxwellian baseline calibration and the resulting $\beta$.
+Section~\ref{sec:identifiability} contains the central
+identifiability analysis and its numerical verification.
+Section~\ref{sec:boltzmann} reports the Boltzmann-corrected
+calibration and the comparison with the identifiability prediction.
+Section~\ref{sec:observability} develops the observability result
+and the corresponding experimental-design recommendations.
+Section~\ref{sec:discussion} discusses the limits of the methodology
+and the conclusions.

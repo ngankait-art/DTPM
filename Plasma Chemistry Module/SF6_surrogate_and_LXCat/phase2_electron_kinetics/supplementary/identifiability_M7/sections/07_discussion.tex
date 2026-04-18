@@ -1,0 +1,158 @@
+\section{Discussion and conclusion}
+\label{sec:discussion}
+
+The central technical result of this work is that two etch-rate
+anchors at a single $(E/N, x_{\mathrm{Ar}})$ operating condition
+constrain exactly one scalar combination of the depletion and
+rate-coefficient parameters of a reduced \sfsix{} ICP model. The
+identifiable invariant is the product
+$\beta\,\kdiss\,\nel(P_{\mathrm{high}})$, with the electron density
+computed self-consistently from the power balance and the overall
+magnitude absorbed by the etch yield $\varepsilon$. This
+identifiability structure, derived analytically in the isothermal
+limit and verified numerically in the heated model
+(Section~\ref{sec:identifiability}), explains why a
+Maxwellian-calibrated reduced model can simultaneously reproduce
+the calibration anchors to machine precision and produce a fitted
+depletion timescale that cannot be interpreted as a physical
+residence time: the Maxwellian rate-coefficient convolution
+overestimates $\kdiss$ in attachment-dominated \sfsix{} at the
+operating electron temperature, and the error is absorbed into
+the single fitted parameter that participates in the identifiable
+product alongside $\kdiss$. Replacing the Maxwellian rates with
+two-term Boltzmann rates from BOLSIG$^+$ shifts the fitted
+depletion parameter by the factor predicted analytically from the
+identifiability invariant (Section~\ref{sec:boltzmann}), into
+order-of-magnitude agreement with a nominal geometric
+residence-time range. At the calibration operating condition, the
+Maxwellian- and Boltzmann-calibrated models are observationally
+indistinguishable for any set of absorbed-power measurements; off
+the calibration axis, their predictions diverge by up to $85\,\%$
+along the reduced-field axis and $47\,\%$ along the Ar-dilution
+axis, with a well-defined observability maximum at intermediate Ar
+fraction $\approx\!30\,\%$ (Section~\ref{sec:observability}).
+
+The methodological contribution is a three-stage workflow that we
+propose as a minimum standard for assigning physical
+interpretation to fitted parameters in reduced
+electronegative-plasma models. The first stage is an identifiability
+analysis of the calibration problem, carried out analytically where
+possible and numerically where the model structure resists
+closed-form manipulation; its goal is to determine which scalar
+combinations of the model parameters are actually constrained by
+the data. The second stage is a rate-source validation, in which
+the sensitivity of the fitted parameters to the rate-coefficient
+computation method is quantified by recalibrating against the same
+data with an alternative rate source; a parameter whose fitted
+value shifts between rate sources by an amount predicted by the
+identifiability invariant is not a physical quantity but a proxy
+for the rate-source assumption. The third stage is an off-axis
+observability characterization that maps operating-condition
+configurations at which competing rate sources predict measurably
+different outcomes, so that experimental campaigns can be targeted
+at observationally useful perturbations. None of the three stages
+is novel in isolation; the contribution is the claim that all
+three are necessary and that omitting any one produces fitted
+parameters whose physical interpretation is at best uncontrolled.
+
+Several limitations of the present study bound the generality of
+the conclusions, and we state them explicitly. First, the work
+contains no independent experimental validation. The
+\citet{mansano1999} and \citet{panduranga2019} etch-rate anchors
+are drawn from different reactors, and the agreement between the
+Boltzmann-calibrated depletion timescale and a nominal geometric
+residence-time range is a self-consistency check against a
+textbook mass-balance estimate, not a direct measurement against
+an observed residence time in the calibrated reactor. The paper
+should therefore be read as a methodology paper with a worked
+example: the identifiability theorem of
+Section~\ref{sec:identifiability} and the rate-source-swap test of
+Section~\ref{sec:boltzmann} are methodological results whose
+validity does not depend on the specific numerical value of the
+fitted $\beta$, while the physical interpretability claim is a
+consistency check that the experimental follow-up recommended in
+Section~\ref{sec:observability} remains necessary to close.
+
+Second, we treat the two-term Boltzmann solution from BOLSIG$^+$ as
+the rate-source comparison target, but this is itself an
+approximation of the electron kinetic equation, valid to lowest
+order in the angular expansion and specific to the chosen
+cross-section library \citep{biagi}. The claim of this work is
+specifically that the Maxwellian-to-Boltzmann shift captures the
+dominant EEDF bias in the attachment-dominated regime; residual
+biases from higher-order EEDF effects (multi-term Boltzmann,
+anisotropy, particle-in-cell corrections) would propagate through
+the same identifiability invariant \eqref{eq:invariant-full} and
+shift the fitted $\beta$ by an additional factor predictable from
+equation~\eqref{eq:beta-shift}. The identifiability analysis is
+therefore agnostic to the specific rate source used beyond the
+Maxwellian; what it requires is a rate source that is closer to
+the true EEDF than a Maxwellian at the same mean energy.
+
+Third, the reduced model itself makes structural assumptions that
+our methodology does not probe: one-dimensional radial diffusion
+with Robin wall boundary conditions, a single-channel power
+balance retaining only ionization and attachment losses, a
+one-parameter feedstock-depletion correction, and a linear
+gas-heating coefficient fitted to the calibration data. Errors in
+any of these assumptions are orthogonal to the EEDF error
+identified here and would require a separate analysis.
+
+Fourth, the two literature anchors used to calibrate the model are
+from chambers operated at different pressures
+(\citet{mansano1999} at $10\,$mTorr with a $150\,$W cathode bias,
+\citet{panduranga2019} at $30\,$mTorr with zero bias). The
+identifiability theorem of
+Section~\ref{sec:identifiability} is pressure-independent and the
+rate-source-swap prediction test is unaffected, but the absolute
+numerical value of $\beta$ (and hence its order-of-magnitude
+comparison to geometric residence time in
+Section~\ref{sec:boltzmann}) is specific to the $10\,$mTorr
+nominal operating condition into which we absorbed the systematic.
+A future validation experiment in a single chamber at a single
+pressure, with at least three power levels and optional Ar
+dilution, would remove this systematic and is the natural next
+step. The observability analysis of
+Section~\ref{sec:observability} identifies Ar dilution at
+$x_{\mathrm{Ar}} \approx 0.3$ and $200\,$W as the operating point
+with highest Maxwell--Boltzmann discrimination and therefore the
+most informative single experiment.
+
+The methodology generalizes to other electronegative-plasma reduced
+models in which the source term for a reactive neutral is governed
+by electron-impact dissociation of a strongly attaching feedstock.
+The attachment-induced depletion of the EEDF tail responsible for
+the large Maxwellian bias in \sfsix{} rate coefficients appears
+with different magnitudes but identical structure in Cl$_2$,
+BCl$_3$, CF$_4$, and NF$_3$ plasmas, and the identifiability
+analysis depends only on the functional form of the depletion
+correction and not on the specific gas. A reduced model calibrated
+against etch-rate data for any of these gases with Maxwellian rate
+coefficients should therefore be expected to produce a fitted
+depletion timescale whose literal value inherits a multiplicative
+bias of the same form as the \sfsix{} case. The broader message
+for reduced-order plasma modeling is that parameter identifiability
+is a prerequisite for physical interpretation, not a diagnostic to
+run afterwards.
+
+This paper establishes three results. The two-anchor depletion
+calibration of a reduced \sfsix{} ICP model is structurally
+degenerate in the rate-coefficient source, and the fitted
+depletion parameter acquires a multiplicative EEDF-dependent bias
+that cannot be diagnosed from the calibration data alone. The
+Maxwellian-EEDF assumption is responsible for the discrepancy
+between the fitted depletion timescale and a plausible residence
+time for the target reactor class, as demonstrated by a controlled
+rate-source swap whose outcome is quantitatively predicted by the
+identifiability invariant to better than $0.5\,\%$. The calibration
+degeneracy is structural at the anchor operating condition but
+opens up operationally at off-anchor configurations, with a
+practical experimental handle (Ar dilution at $\sim\!30\,\%$) that
+can distinguish the two competing EEDF hypotheses in a single
+additional measurement. The significance of the work is not in the
+updated numerical value of the fitted parameter, but in the
+demonstration that reduced-order plasma models require
+identifiability analysis and rate-source validation before their
+fitted parameters can carry physical interpretation, and that both
+steps are tractable with the same computational apparatus used for
+the calibration itself.

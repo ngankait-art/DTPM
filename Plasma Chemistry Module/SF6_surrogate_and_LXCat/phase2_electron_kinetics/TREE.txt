@@ -1,0 +1,131 @@
+phase2_electron_kinetics/
+  .gitignore  (341B)
+  LICENSE  (1K)
+  README.md  (17K)
+  TREE.txt  (3K)
+  requirements.txt  (61B)
+  data/
+    processed/
+    raw/
+      SF6_biagi_lxcat.txt  (87K)
+      bolsig_data.h5  (1.3M)
+  outputs/
+    figures_300dpi/
+    final_zip/
+    logs/
+  paper/
+    manuscript.pdf  (116K)
+    manuscript.tex  (5K)
+    figures/
+      fig1_pipeline_schematic.pdf  (102K)
+      fig2_rate_ratios.pdf  (21K)
+      fig3_etch_comparison.pdf  (20K)
+      fig4_nu_comparison.pdf  (18K)
+      fig5_beta_validation.pdf  (19K)
+      fig6_prediction_residual.pdf  (18K)
+      fig7_observability_sweep.pdf  (24K)
+    sections/
+  report/
+    motive_reconciliation.pdf  (201K)
+    motive_reconciliation.tex  (24K)
+    references.bib  (2K)
+    technical_report.pdf  (1.7M)
+    technical_report.tex  (39K)
+    figures/
+      case_A_mcc.png  (198K)
+      case_B_mcc.png  (178K)
+      case_C_mcc.png  (181K)
+      case_comparison.png  (121K)
+      m5_pred_vs_true.png  (123K)
+      rate_ratio_SF6.pdf  (31K)
+      ratio_vs_EN.png  (106K)
+      surrogate_error_plot.png  (704K)
+    sections/
+  slides/
+    slides.pdf  (1.1M)
+    slides.tex  (15K)
+    speaker_notes.md  (11K)
+    figures/
+  supplementary/
+    SI.pdf  (188K)
+    SI.tex  (7K)
+    derivations/
+    identifiability_M7/
+      README.md  (6K)
+      manuscript_or_note.tex  (3K)
+      references.bib  (3K)
+      figures/
+        fig1_pipeline_schematic.pdf  (102K)
+        fig2_rate_ratios.pdf  (21K)
+        fig3_etch_comparison.pdf  (20K)
+        fig4_nu_comparison.pdf  (18K)
+        fig5_beta_validation.pdf  (19K)
+        fig6_prediction_residual.pdf  (18K)
+        fig7_observability_sweep.pdf  (24K)
+      memos/
+        ADMINISTRATIVE_BUNDLE.md  (10K)
+        PRESSURE_CORRECTION_MEMO.md  (12K)
+      outputs/
+      sections/
+        01_introduction.tex  (6K)
+        02_model.tex  (7K)
+        03_baseline.tex  (5K)
+        04_identifiability.tex  (10K)
+        05_boltzmann.tex  (12K)
+        06_observability.tex  (7K)
+        07_discussion.tex  (9K)
+  tier1_bolsig/
+    README.md  (2K)
+    compare_maxwellian_vs_bolsig.py  (6K)
+    generate_lookup_tables.py  (5K)
+    outputs/
+      lookup_summary.txt  (1K)
+      m1_rate_ratios.csv  (3K)
+      maxwell_vs_bolsig_report.md  (1K)
+      rates_boltzmann_pure_SF6.csv  (2K)
+      rates_maxwell_pure_SF6.csv  (2K)
+      transport_pure_SF6.csv  (888B)
+    plots/
+      eedf_100Td.pdf  (25K)
+      eedf_50Td.pdf  (25K)
+      rate_ratio_SF6.pdf  (31K)
+      ratio_vs_EN.png  (106K)
+  tier2_pinn/
+    README.md  (3K)
+    __init__.py  (50B)
+    evaluate_surrogate.py  (6K)
+    get_rates_pinn.py  (7K)
+    evaluation/
+      m5_loss_history.png  (62K)
+      m5_pred_vs_true.png  (123K)
+      m6_loss_history.png  (70K)
+      m6_preview_eedf.png  (126K)
+      surrogate_error_summary.md  (761B)
+      surrogate_vs_bolsig.csv  (23K)
+    models/
+      __init__.py  (136B)
+      mlp.py  (2K)
+    outputs/
+      surrogate_error_plot.png  (704K)
+    weights/
+      m5_surrogate.pt  (80K)
+      m6_pinn.pt  (274K)
+  tier3_picmcc/
+    README.md  (5K)
+    __init__.py  (46B)
+    analyze_cases.py  (8K)
+    lxcat_parser.py  (5K)
+    mcc_module.py  (14K)
+    run_case_A.py  (5K)
+    run_case_B.py  (4K)
+    run_case_C.py  (4K)
+    outputs/
+      case_A_mcc.png  (198K)
+      case_B_mcc.png  (178K)
+      case_C_mcc.png  (181K)
+      case_comparison.png  (121K)
+    results/
+      case_A_result.json  (927B)
+      case_B_result.json  (944B)
+      case_C_result.json  (946B)
+      tier3_summary.md  (4K)

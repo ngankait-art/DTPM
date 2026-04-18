@@ -1,0 +1,90 @@
+% =====================================================================
+% What two etch-rate measurements constrain:
+% identifiability and EEDF sensitivity of a reduced SF6 ICP model
+%
+% Path A consolidated manuscript.
+% Build with:  pdflatex manuscript && bibtex manuscript && pdflatex manuscript && pdflatex manuscript
+% =====================================================================
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{natbib}
+\usepackage{hyperref}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning,shapes.geometric,fit}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=blue!50!black,
+  citecolor=blue!50!black,
+  urlcolor=blue!60!black,
+}
+
+% --- macros ---
+\newcommand{\sfsix}{SF$_6$}
+\newcommand{\vth}{\bar v_{\mathrm{th}}}
+\newcommand{\kdiss}{k_{\mathrm{diss}}}
+\newcommand{\kiz}{k_{\mathrm{iz}}}
+\newcommand{\katt}{k_{\mathrm{att}}}
+\newcommand{\nel}{n_e}
+\newcommand{\nSFsix}{n_{\mathrm{SF}_6,0}}
+
+\title{What two etch-rate measurements constrain:\\
+       identifiability and EEDF sensitivity of a reduced \sfsix{}
+       ICP model}
+
+\author{Zachariah Ngan\thanks{%
+  Correspondence: \texttt{zngan@illinois.edu}}\\[2pt]
+  \normalsize\itshape Illinois Plasma Institute}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+Reduced-order models of inductively coupled plasma (ICP) etching
+reactors rely on calibrated parameters that are routinely interpreted
+as physical quantities. Using a one-parameter \sfsix{}
+feedstock-depletion model calibrated against two literature etch-rate
+anchors at 200\,W and 2000\,W, we prove in the isothermal limit, and
+extend numerically under gas heating, that the calibration constrains
+only the rate-source-dependent product
+$\beta\,\kdiss\,\ne(P_{\mathrm{high}})$, not the fitted depletion
+timescale $\beta$ alone. The Maxwellian-EEDF rate coefficients used
+by default in such models overestimate $\kdiss$ by a factor of 29 at
+the operating point, and the identifiable invariant absorbs the
+error into $\beta$ to produce a fitted value (14\,ms) that cannot
+represent any physical residence time. Replacing the rate source
+with two-term Boltzmann coefficients shifts $\beta$ to 509\,ms, in
+the middle of a nominal geometric residence-time band, with the
+shift quantitatively predicted by the identifiability invariant to
+better than 0.5\,\%. The Maxwellian and Boltzmann calibrations
+produce predictions indistinguishable to numerical tolerance at the
+calibration condition but diverge by up to 85\,\% off-anchor,
+motivating Ar-dilution multi-condition campaigns for EEDF inference.
+\end{abstract}
+
+\input{sections/01_introduction}
+\input{sections/02_model}
+\input{sections/03_baseline}
+\input{sections/04_identifiability}
+\input{sections/05_boltzmann}
+\input{sections/06_observability}
+\input{sections/07_discussion}
+
+\section*{Data and code availability}
+The reduced-model simulation code, Boltzmann rate tables, and all
+figure-generation scripts used in this work are available at the
+project repository. The two literature etch-rate anchor values used
+for calibration are reproduced from \citet{mansano1999} and
+\citet{panduranga2019}; no new experimental data were generated.
+
+\bibliographystyle{plainnat}
+\bibliography{references}
+
+\end{document}

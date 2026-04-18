@@ -1,0 +1,42 @@
+{
+  "case": {
+    "name": "B",
+    "description": "700 W / 5 mTorr / pure SF6 (low-pressure variant)",
+    "power_W": 700.0,
+    "pressure_mTorr": 5.0,
+    "x_Ar": 0.0,
+    "EN_Td": 100.0
+  },
+  "run": {
+    "n_electrons": 3000,
+    "n_steps": 30000,
+    "dt_s": 2e-11,
+    "seed": 43
+  },
+  "mcc": {
+    "Te_eff_eV": 1.333054260707026,
+    "mean_energy_final_eV": 1.999581391060539,
+    "rates": {
+      "elastic": 1.505856971957666e-13,
+      "inelastic": 8.701937101936376e-14,
+      "ionization": 0.0,
+      "attachment": 1.1627386290984887e-15
+    },
+    "counters": {
+      "elastic": 17881,
+      "inelastic": 14991,
+      "ionization": 0,
+      "attachment": 1728,
+      "null": 116827
+    },
+    "active_fraction_final": 0.424
+  },
+  "bolsig_ref": {
+    "EN_Td": 100.0,
+    "x_Ar": 0.0,
+    "Te_eff_eV": 1.5218305087309334,
+    "k_iz": 9.305126466180669e-26,
+    "k_att": 4.278696753003051e-15,
+    "k_el": 1.2081578750080754e-13
+  }
+}

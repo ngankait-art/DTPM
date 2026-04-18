@@ -1,0 +1,42 @@
+{
+  "case": {
+    "name": "C",
+    "description": "700 W / 10 mTorr / 50% Ar / 50% SF6 (mixture variant)",
+    "power_W": 700.0,
+    "pressure_mTorr": 10.0,
+    "x_Ar": 0.5,
+    "EN_Td": 50.0
+  },
+  "run": {
+    "n_electrons": 3000,
+    "n_steps": 30000,
+    "dt_s": 2e-11,
+    "seed": 44
+  },
+  "mcc": {
+    "Te_eff_eV": 1.327149965057833,
+    "mean_energy_final_eV": 1.9907249475867494,
+    "rates": {
+      "elastic": 7.617857337692857e-14,
+      "inelastic": 4.313138465369801e-14,
+      "ionization": 0.0,
+      "attachment": 5.966699112437351e-16
+    },
+    "counters": {
+      "elastic": 18221,
+      "inelastic": 15017,
+      "ionization": 0,
+      "attachment": 1677,
+      "null": 118773
+    },
+    "active_fraction_final": 0.441
+  },
+  "bolsig_ref": {
+    "EN_Td": 50.0,
+    "x_Ar": 0.5,
+    "Te_eff_eV": 1.262887980771347,
+    "k_iz": 3.968307413471686e-41,
+    "k_att": 5.441385539583458e-15,
+    "k_el": 1.1064745577092498e-13
+  }
+}

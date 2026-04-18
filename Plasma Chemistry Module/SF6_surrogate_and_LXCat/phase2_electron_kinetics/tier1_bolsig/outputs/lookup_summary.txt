@@ -1,0 +1,21 @@
+Tier 1 BOLSIG+ lookup — summary
+================================
+Source HDF5         : data/raw/bolsig_data.h5
+E/N grid (Td)       : 28 points, 1 to 1000
+x_Ar grid           : 6 points, [np.float64(0.0), np.float64(0.1), np.float64(0.2), np.float64(0.3), np.float64(0.5), np.float64(0.67)]
+Energy grid (eV)    : 600 points, 0.05 to 59.95
+Aggregated rates    : 5
+
+Pure-SF6 reference row (x_Ar = 0):
+  E/N (Td)                 1         20         80        120        160        250        400
+  Te_eff (eV)          0.533      0.652      1.377      1.618      1.961      2.853      3.690
+  k_iz Bolt         0.00e+00   0.00e+00   1.10e-28   4.79e-24   7.80e-22   3.69e-19   1.25e-17
+  k_iz Maxwell      2.29e-28   6.79e-26   6.58e-20   4.60e-19   3.34e-18   7.23e-17   3.68e-16
+  k_att Bolt        1.72e-14   1.35e-14   5.01e-15   3.80e-15   2.81e-15   1.65e-15   1.11e-15
+  k_att Maxwell     1.44e-14   1.11e-14   4.14e-15   3.34e-15   2.60e-15   1.61e-15   1.18e-15
+
+Interpretation:
+- k_iz ratio (Maxwell/Bolt) is the EEDF-tail sensitivity metric.
+- k_att ratio is insensitive because attachment is below 1 eV.
+- Ratios driven well above 1 signify Maxwellian bias in
+  subsequent fluid-model rate tables.

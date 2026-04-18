@@ -1,0 +1,116 @@
+% =====================================================================
+% paper/manuscript.tex
+%
+% Phase 2 electron kinetics — short paper note
+%
+% This file is intentionally a one-page redirection note rather than a
+% full manuscript. The primary Phase 2 deliverable is the technical
+% report at report/technical_report.pdf. A separate exploratory
+% identifiability side-study exists at
+% supplementary/identifiability_M7/ with its own manuscript.
+%
+% Author: Zachariah Ngan, Illinois Plasma Institute
+% =====================================================================
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[margin=1.1in]{geometry}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{hyperref}
+\usepackage{parskip}
+
+\hypersetup{colorlinks=true, linkcolor=blue!55!black, urlcolor=blue!55!black}
+
+\title{\textbf{Phase 2 Electron Kinetics Pipeline}\\[4pt]
+       \large Paper note}
+\author{Zachariah Ngan\\[2pt]
+        \normalsize\itshape Illinois Plasma Institute\\
+        \small\texttt{zngan@illinois.edu}}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\section*{About this file}
+
+This \texttt{paper/} directory is \emph{not} the primary deliverable of
+the Phase 2 electron-kinetics work for the Illinois Plasma Institute
+SF$_6$ ICP modelling project. It is retained in the repository for
+completeness, but a reader interested in Phase 2 itself should go
+directly to the technical report.
+
+\subsection*{Where the actual Phase 2 deliverable lives}
+
+\begin{itemize}
+  \item \textbf{Primary technical report:} \texttt{report/technical\_report.pdf}.
+        Organised as Tier 1 (BOLSIG$^+$ lookup and Maxwellian
+        comparison), Tier 2 (supervised MLP surrogate and the
+        \texttt{get\_rates\_pinn()} production API), Tier 3 (Monte
+        Carlo collision module and three workplan-specified
+        validation cases). Matches the April 2026 workplan
+        structure one-to-one.
+  \item \textbf{Production code:} \texttt{tier1\_bolsig/},
+        \texttt{tier2\_pinn/}, \texttt{tier3\_picmcc/} at the
+        repository root. Each directory has its own README and
+        runnable scripts.
+  \item \textbf{Slide deck for supervisor presentation:}
+        \texttt{slides/slides.pdf}.
+  \item \textbf{Top-level orientation:} \texttt{README.md} at the
+        repository root explains which directory contains what and
+        how to reproduce the results.
+\end{itemize}
+
+\subsection*{Where the exploratory identifiability side-study lives}
+
+An earlier analytical side-study on two-anchor etch-rate calibration
+identifiability exists at
+\texttt{supplementary/identifiability\_M7/}. That work is a separate
+analytical note that addresses a different question from Phase 2 (it
+asks what two-anchor calibration constrains; Phase 2 asks how much the
+EEDF replacement moves the fluorine profile). It was built in an
+earlier session before the supervisor's workplan was loaded into
+context.
+
+The side-study's main result --- that two etch-rate anchors constrain
+only the product $\mathcal{I} = \beta\,k_{\mathrm{diss}}\,n_e(P_H)$
+--- is internally consistent and potentially publishable on its own as
+a short methodological note. It is \emph{not} the Phase 2 deliverable
+and should not be cited as such. Its own manuscript
+(\texttt{manuscript\_or\_note.tex}), figures, and reframing README are
+preserved in \texttt{supplementary/identifiability\_M7/}.
+
+\subsection*{Why this file exists as a stub}
+
+When the Phase 2 repository was finalised against the supervisor's
+workplan, the main question was whether the earlier exploratory
+paper should be deleted, kept as the primary narrative, or moved to
+supplementary material. The honest answer is none of the three:
+
+\begin{itemize}
+  \item Deleting it would discard internally-consistent analytical
+        work that may still have value as a standalone methodological
+        note.
+  \item Keeping it as the primary narrative would misrepresent the
+        Phase 2 deliverable, which is a three-tier production
+        kinetics pipeline, not an identifiability theorem.
+  \item Moving it silently to supplementary without leaving a pointer
+        at \texttt{paper/} would disorient a reader who landed there
+        from an external reference.
+\end{itemize}
+
+The compromise is this short stub: the \texttt{paper/} directory still
+exists and still compiles, but its contents are a clearly-labelled
+redirection note that tells the reader where to look for the actual
+Phase 2 work and where to look for the analytical side-study. The
+figures from the original paper are preserved in
+\texttt{paper/figures/} so that the supplementary manuscript at
+\texttt{supplementary/identifiability\_M7/} can share them without
+duplication.
+
+\vspace{2em}
+\begin{center}
+\textit{For the Phase 2 deliverable proper, open
+\texttt{report/technical\_report.pdf}.}
+\end{center}
+
+\end{document}

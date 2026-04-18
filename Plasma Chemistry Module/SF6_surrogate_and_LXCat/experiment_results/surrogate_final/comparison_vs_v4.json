@@ -1,0 +1,11 @@
+{
+  "v4_nF_rmse": 0.0029211651999503374,
+  "final_nF_rmse": 0.0131135955452919,
+  "v4_nSF6_rmse": 0.0027009835466742516,
+  "final_nSF6_rmse": 0.009095469489693642,
+  "final_Te_rmse": 0.008074402809143066,
+  "v4_ens_mean": 9.68e-05,
+  "final_ens_mean": 0.003075045230798423,
+  "recommendation": "CAUTION \u2014 significant nF degradation",
+  "nF_degradation_ratio": 4.489166016873967
+}

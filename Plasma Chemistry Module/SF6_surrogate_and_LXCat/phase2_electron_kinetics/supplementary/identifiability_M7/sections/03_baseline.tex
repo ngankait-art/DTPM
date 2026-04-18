@@ -1,0 +1,91 @@
+\section{Maxwellian baseline calibration}
+\label{sec:baseline}
+
+We calibrate the reduced model of Section~\ref{sec:model} against
+two literature etch-rate anchors for \sfsix{} ICP etching of
+silicon. The low-power anchor is taken from \citet{mansano1999}, who
+report a mean silicon etch rate of
+$1.4\,\mu\mathrm{m\,min^{-1}}$ (i.e.\ $1400\,$nm\,min$^{-1}$) at an
+ICP antenna power of $P_L = 200$\,W in pure \sfsix{} at
+$10\,$mTorr. The high-power anchor is taken from
+\citet{panduranga2019}, who report a mean silicon etch rate of
+$2.27\,\mu\mathrm{m\,min^{-1}}$ ($2270\,$nm\,min$^{-1}$) at
+$P_H = 2000\,$W in pure \sfsix{} at $30\,$mTorr, zero substrate
+bias, 50\,sccm flow, in an Oxford PlasmaPro 100 Cobra300 reactor.
+The two anchors span one decade in absorbed power and lie
+approximately a factor of 1.6 apart in measured etch rate, the
+sub-linear power scaling qualitatively consistent with the onset of
+feedstock depletion at the high-power end.
+
+We note two chamber-condition differences between the two anchor
+measurements that the model absorbs into its fitted parameters
+rather than treating as independent degrees of freedom. First, the
+\citet{mansano1999} measurement was made with a $200$\,W ICP
+antenna power \emph{and} a $150$\,W RF bias applied to the
+cathode, while our model assumes zero bias; the additional
+ion-energy-driven wafer contribution is absorbed into the fitted
+wafer coupling $\varepsilon$. Second, \citet{panduranga2019}
+reports their $2.27\,\mu\mathrm{m\,min^{-1}}$ rate at a chamber
+pressure of $30\,$mTorr, whereas the \citet{mansano1999}
+measurement and the nominal operating condition of our model are
+both at $10\,$mTorr. The identifiability theorem of
+Section~\ref{sec:identifiability} is insensitive to this pressure
+difference because the invariant
+$\mathcal{I} \equiv \beta\,\kdiss\,\nel(P_H)$ is preserved when
+pressure-dependent factors move $\nel(P_H)$ and $\beta$ in
+compensating directions. We calibrate both anchors at the nominal
+$10\,$mTorr gas density, treating the $\sim\!3\times$ pressure
+difference as a systematic absorbed into the fitted $\varepsilon$
+and $\beta$, and we flag in Section~\ref{sec:discussion} that the
+absolute numerical value of $\beta$ should not be read as a literal
+gas residence time for any specific reactor.
+
+The calibration procedure follows the two-stage protocol of
+Section~\ref{sec:model:calibration}. The first stage sets
+$\beta = 0$ and fits $\varepsilon$ against the \citet{mansano1999}
+anchor by a single analytical division. The second stage
+reintroduces $\beta$ and refits $(\varepsilon,\beta)$ jointly so
+that both anchors are reproduced exactly. The two-stage procedure
+returns fitted values
+$\beta_{\mathrm{Max}} = 14.27\,$ms and
+$\varepsilon_{\mathrm{Max}} = 7.73\times10^{-30}$\,m\,atom$^{-1}$.
+The subscript denotes the use of Maxwell-convolved rate coefficients
+in equations \eqref{eq:power-balance}--\eqref{eq:source},
+anticipating the alternative rate source introduced in
+Section~\ref{sec:boltzmann}. Both anchors are reproduced to machine
+precision: $1400.00\,$nm\,min$^{-1}$ and
+$2270.00\,$nm\,min$^{-1}$, respectively. Across the full
+intermediate power range from 50 to $3000$\,W, the calibrated model
+interpolates smoothly between the two anchors with a sub-linear
+power dependence and saturation at the high-power end characteristic
+of the depletion correction in equation~\eqref{eq:depletion}. The
+numerical behavior of the calibration is as expected for a
+one-parameter fit against a two-point dataset, and no
+ill-conditioning is detected during the root-finding stage.
+
+The fitted parameters reproduce the calibration data exactly, but
+the numerical value of the depletion timescale is not consistent
+with any simple physical interpretation. The nominal identification
+of $\beta$ with the gas residence time of the chamber implies that
+a fitted $\beta = 14.27\,$ms should correspond to a residence time
+of the same magnitude. For a cylindrical ICP reactor at
+$10\,$mTorr with volume $5$--$20\,$L and inflow
+$10$--$100\,$sccm, the geometric residence time
+$\tau_{\mathrm{res}} = \nSFsix V / \dot N_{\mathrm{in}}$ lies in the
+range $[36,\,1438]\,$ms. The fitted $\beta_{\mathrm{Max}}$ is
+smaller than the shortest plausible value by a factor of 2.5 and
+smaller than the longest by a factor of more than 100. No
+reasonable choice of reactor volume and flow rate at the nominal
+calibration condition produces a residence time as short as the
+fitted value, and the identification of $\beta$ as a gas residence
+time in the Maxwell-calibrated model is therefore untenable.
+
+This discrepancy is the point of departure for the remainder of the
+paper. Several explanations are in principle available: the
+depletion model may be misspecified, the rate coefficients may be
+in error, the reduced model may contain a structural multiplicative
+bias, or the calibration procedure may be determining a quantity
+different from the one we are interpreting. The next section
+analyzes the structure of the two-anchor calibration and establishes
+which combinations of parameters are actually constrained by the
+anchor data.

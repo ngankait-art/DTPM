@@ -1,0 +1,243 @@
+\section{Identifiability analysis}
+\label{sec:identifiability}
+
+The Maxwellian baseline calibration of Section~\ref{sec:baseline}
+returns a depletion timescale $\beta = 14.27\,$ms that cannot be
+reconciled with any reasonable estimate of the gas residence time.
+Before drawing physical conclusions from this discrepancy, we
+establish what the calibration procedure can and cannot determine
+from two etch-rate anchors. We show that two-anchor calibration
+constrains only one scalar combination of the model parameters,
+that the choice of rate-coefficient source enters this combination
+through both $\kdiss$ and the self-consistent electron density
+$\nel$, and that the model's entire $r(P)$ curve at the calibration
+$E/N$ is determined by two scalars regardless of how the underlying
+parameters are distributed.
+
+\subsection{Reduction to a single identifiable scalar}
+\label{sec:identifiability:reduction}
+
+Substituting \eqref{eq:power-balance}--\eqref{eq:source} into
+\eqref{eq:etch} gives the explicit pipeline relation in the
+isothermal limit $\alpha_T \to 0$:
+\begin{equation}
+  \overline{r}_{\mathrm{etch}}(P)
+  \;=\;
+  A_\varepsilon\,
+  \frac{\kdiss\,\nel(P)\,\nSFsix}
+       {1 + \beta\,\kdiss\,\nel(P)},
+  \label{eq:etch-explicit}
+\end{equation}
+where
+$A_\varepsilon \equiv \varepsilon\,\gamma_{\mathrm{wafer}}\,
+(\vth/4)\,\mathcal{G}\,\nu$ collects everything proportional to
+$\varepsilon$. It is convenient to absorb the rate-source
+dependence into a single power-independent quantity
+\begin{equation}
+  \alpha
+  \;\equiv\;
+  \frac{\kdiss\,\nel(P)}{P}
+  \;=\;
+  \frac{\kdiss}
+       {\nSFsix\,V\,\varepsilon_{\mathrm{loss}}\,q_e},
+  \label{eq:alpha}
+\end{equation}
+which is independent of $P$ at fixed $E/N$ because the power balance
+\eqref{eq:power-balance} makes $\nel$ linear in $P$. The depletion
+factor reduces to $1 + \beta\alpha P$, and
+\eqref{eq:etch-explicit} becomes
+\begin{equation}
+  \overline{r}_{\mathrm{etch}}(P)
+  \;=\;
+  A_\varepsilon\,\nSFsix\,\alpha\,
+  \frac{P}{1 + \beta\alpha\,P}.
+  \label{eq:etch-alpha}
+\end{equation}
+Equation~\eqref{eq:etch-alpha} expresses the entire $r(P)$ curve as
+a function of exactly two effective scalars: the prefactor
+$A_\varepsilon\,\nSFsix\,\alpha$ and the depletion product
+$\beta\alpha$.
+
+Taking the ratio of \eqref{eq:etch-alpha} at the two anchors
+cancels the prefactor:
+\begin{equation}
+  \frac{r_H}{r_L}
+  \;=\;
+  \frac{P_H}{P_L}\cdot
+  \frac{1 + \beta\alpha\,P_L}{1 + \beta\alpha\,P_H}.
+  \label{eq:ratio-constraint}
+\end{equation}
+This is one scalar equation in the single unknown $\beta\alpha$.
+Cross-multiplying and collecting terms yields the closed-form
+solution
+\begin{equation}
+  \beta\alpha
+  \;=\;
+  \frac{P_H\,r_L - P_L\,r_H}{P_H\,P_L\,(r_H - r_L)}.
+  \label{eq:beta-alpha}
+\end{equation}
+Substituting the anchor values
+$(P_L,r_L) = (200,1400)$ and $(P_H,r_H) = (2000,2270)$ in units of
+$(\mathrm{W},\mathrm{nm\,min^{-1}})$ gives
+$\beta\alpha = 6.7414\times10^{-3}\,$W$^{-1}$. Once $\beta\alpha$
+is fixed, the prefactor in \eqref{eq:etch-alpha} is determined by
+either anchor in one division,
+\begin{equation}
+  A_\varepsilon\,\nSFsix\,\alpha
+  \;=\;
+  \frac{r_L\,(1 + \beta\alpha\,P_L)}{P_L},
+  \label{eq:A-eps}
+\end{equation}
+and equations~\eqref{eq:beta-alpha}--\eqref{eq:A-eps} together
+exhaust the information content of the two-anchor calibration.
+
+The implication is that the model's entire predicted curve $r(P)$
+at the calibration $E/N$ is parameterized by exactly two scalars:
+$\beta\alpha$ and $A_\varepsilon\nSFsix\alpha$. The underlying
+parameters $(\varepsilon, \beta, \kdiss,
+\varepsilon_{\mathrm{loss}})$ are not individually identifiable;
+they live on a continuous family of $(\varepsilon,\beta)$ pairs
+that all give the same $r(P)$ curve as long as $\alpha$ is rescaled
+accordingly. The fitted $\beta$ is therefore not directly a
+physical quantity; it is the value required for the depletion
+product $\beta\alpha$ to match the anchor data, given a specific
+assumed value of $\alpha$. Different assumptions about the rate
+source yield different fitted $\beta$, even though the predicted
+$r(P)$ curve at the calibration $E/N$ is identical in every case.
+
+\subsection{Heated case and the numerical invariant}
+\label{sec:identifiability:heated}
+
+The derivation of
+Section~\ref{sec:identifiability:reduction} is exact in the
+isothermal limit $\alpha_T \to 0$. Under the linear gas-heating
+model $T_g(P) = T_0 + \alpha_T P$ used in the baseline calibration,
+several additional factors in equation~\eqref{eq:etch} acquire
+power dependence: the F-atom thermal speed
+$\vth \propto T_g^{1/2}$, the diffusion coefficient
+$D \propto T_g^{3/2}$ through $\mathcal{G}(D)$, and the ideal-gas
+neutral density $\nSFsix \propto T_g^{-1}$. The simple Hill form
+no longer describes $r(P)$ exactly, and
+\eqref{eq:beta-alpha} no longer gives the fitted $\beta\alpha$ in
+closed form.
+
+The identifiability \emph{structure} is nevertheless preserved: in
+the heated case there is still a single scalar combination of the
+underlying parameters that the two anchors determine, along with a
+magnitude prefactor that $\varepsilon$ absorbs. We extract the
+heated-case invariant numerically as the dimensionless product
+\begin{equation}
+  \mathcal{I}
+  \;\equiv\;
+  \beta\,\kdiss\,\nel(P_H),
+  \label{eq:invariant-full}
+\end{equation}
+where $\nel(P_H)$ is computed self-consistently from the power
+balance at the high-power anchor using the rate-coefficient source
+under test. For the Maxwellian baseline,
+$\beta = 14.27$\,ms,
+$\kdiss = 1.109\times10^{-17}$\,m$^3$\,s$^{-1}$,
+$\nel(P_H) = 1.574\times10^{19}$\,m$^{-3}$ at
+$P_H = 2000\,$W, giving $\mathcal{I}_{\mathrm{Max}} = 2.491$. The
+rate-source-dependent consequence of the invariant constraint is
+expressed as
+\begin{equation}
+  \frac{\beta_{\mathrm{new}}}{\beta_{\mathrm{old}}}
+  \;=\;
+  \frac{\kdiss^{\mathrm{old}}}{\kdiss^{\mathrm{new}}}
+  \;\cdot\;
+  \frac{\nel^{\mathrm{old}}(P_H)}{\nel^{\mathrm{new}}(P_H)},
+  \label{eq:beta-shift}
+\end{equation}
+which holds exactly because $\mathcal{I}$ is preserved by
+construction. Section~\ref{sec:boltzmann} uses
+\eqref{eq:beta-shift} to make a falsifiable prediction about the
+shift in fitted $\beta$ when the Maxwellian rate source is replaced
+with a two-term Boltzmann rate source, and verifies the prediction
+numerically.
+
+\subsection{Numerical verification}
+\label{sec:identifiability:numerics}
+
+To verify \eqref{eq:beta-alpha}, we disable gas heating
+($\alpha_T = 0$), keep the Maxwellian rate-coefficient backend
+fixed, and fit $(\varepsilon,\beta)$ against the anchors. The
+closed form predicts
+$\beta\alpha = 6.7414\times10^{-3}\,$W$^{-1}$, which, using the
+power-balance value of $\alpha$ at the isothermal $E/N$, gives
+$\beta = 77.27\,$ms. A direct numerical fit in the isothermal
+limit returns $\beta = 77.26\,$ms, in agreement with the closed
+form to better than $0.02\,\%$.
+
+As a further check, we rescale $\kdiss$ artificially by a factor
+$f$ (still isothermal) and refit $(\varepsilon,\beta)$. The
+identifiability theorem predicts $\beta \propto 1/f$ while every
+observable prediction remains unchanged.
+Table~\ref{tab:scaling} collects the result for four values of $f$.
+
+\begin{table}[t]
+\centering
+\caption{Numerical verification of the isothermal identifiability
+theorem under artificial $\kdiss$ rescaling. The fitted depletion
+timescale $\beta$ scales as $1/f$ to within $0.02\,\%$, and the
+predicted etch-rate curves are indistinguishable to the tolerance
+of the numerical fit across the four rescaled fits.}
+\label{tab:scaling}
+\begin{tabular}{cccc}
+\toprule
+$f$ & $\beta_{\mathrm{fit}}$ (ms) &
+$f\cdot\beta_{\mathrm{fit}}$ (ms) & predicted slope \\
+\midrule
+$1.00$ & $77.27$  & $77.27$ & --- \\
+$0.50$ & $154.53$ & $77.27$ & $1.000$ \\
+$0.30$ & $257.57$ & $77.27$ & $1.000$ \\
+$0.10$ & $772.70$ & $77.27$ & $1.000$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The product $f\beta_{\mathrm{fit}}$ is constant to numerical
+tolerance, confirming that the identifiable scalar is
+$\beta\kdiss$ when $\varepsilon_{\mathrm{loss}}$ is held fixed by
+holding the rate source fixed.
+
+\subsection{Physical interpretation}
+\label{sec:identifiability:physics}
+
+The identifiability analysis clarifies what the depletion
+calibration actually measures. In the isothermal case the two
+anchors constrain $\beta\alpha$, the dimensionless ratio of the
+electron-impact dissociation rate to the pumping rate. In the
+heated case they constrain the equivalent numerical invariant
+$\mathcal{I} = \beta\,\kdiss\,\nel(P_H)$. Any model with the
+correct value of this invariant and the correct prefactor will
+reproduce the anchor etch rates and the entire intermediate $r(P)$
+curve. The individual values of $\beta$, $\kdiss$, $\nel$, and
+$\varepsilon$ are not constrained by the data on their own merits;
+they are constrained jointly through their participation in the
+identifiable product.
+
+This explains the apparent failure of the Maxwellian baseline
+calibration. The Maxwellian assumption overestimates $\kdiss$ in
+\sfsix{} at $E/N = 100\,$Td by a factor of approximately 29 owing
+to the depletion of the high-energy EEDF tail by attachment in the
+real two-term Boltzmann distribution. A larger assumed $\kdiss$
+forces $\beta$ to take a smaller value to keep $\mathcal{I}$ on the
+locus determined by the anchors, and the resulting
+$\beta = 14\,$ms is the value the model requires to reproduce the
+data given an erroneous $\kdiss$. The small-$\beta$ value is not a
+failure of the depletion mechanism nor a sign that the depletion
+model is inappropriate; it is the arithmetic consequence of an EEDF
+error being absorbed into the single fitted parameter that
+participates in the identifiable product alongside $\kdiss$.
+
+The methodological lesson is that the calibration result
+$\beta = 14\,$ms cannot be interpreted as a residence time in the
+first place. Two etch-rate measurements at one
+$(E/N,x_{\mathrm{Ar}})$ contain only enough information to
+determine one scalar combination of the depletion and rate
+parameters, and $\beta$ on its own is not that combination. Either
+an independent estimate of $\kdiss$, or a measurement at a
+different operating condition that breaks the at-anchor degeneracy
+(Section~\ref{sec:observability}), is required before the fitted
+depletion parameter can be assigned a physical interpretation.
