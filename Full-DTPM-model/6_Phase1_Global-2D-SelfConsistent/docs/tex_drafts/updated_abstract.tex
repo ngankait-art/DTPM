@@ -1,0 +1,57 @@
+% Replacement abstract for main.tex (around line 50 of the original file).
+% Highlights the two architectural upgrades in this revision:
+%   - Self-consistent power-coupling efficiency via a Lieberman coupled-circuit
+%     model (resolves L6 of the prior revision).
+%   - Capacitive wafer-bias sheath module m12 (resolves L5 of the prior revision).
+
+This report presents a \emph{self-consistent Global--2D hybrid framework} ---
+a \emph{Unified Masked-Domain Model} --- that couples a validated 0D global
+plasma chemistry solver with a two-dimensional axisymmetric
+electromagnetic--transport solver on a single shared reactor mask.  The
+hybrid architecture is the principal methodological contribution of this
+work: a 0D sub-problem supplies volume-averaged electron temperature,
+ionisation rates, and gas composition; a 2D sub-problem resolves the induced
+azimuthal electric field, Ohmic power deposition, and spatially resolved
+electron and radical densities; and a Picard fixed-point iteration returns
+spatially averaged 2D quantities back to the 0D closure, driving the coupled
+system to self-consistency.  The two solvers share a single axisymmetric
+geometry mask that encodes the T-shaped TEL reactor (ICP source tube, 2\,mm
+aperture, and processing chamber) and enforces material-specific wall
+recombination probabilities following Kokkoris \textit{et al.}\ (2009).
+
+The present revision advances the framework in two architectural directions
+relative to the prior Phase-1 release:
+
+\textbf{Self-consistent power coupling.}  The ICP-coil coupling efficiency
+$\eta$ is no longer prescribed; it emerges from a Lieberman transformer
+coupled-circuit model
+$I_\mathrm{peak}^2 = 2\,P_\mathrm{rf}/(R_\mathrm{coil} + R_\mathrm{plasma})$,
+where $R_\mathrm{plasma}$ is updated each Picard iteration from the FDTD
+Ohmic integral.  The only circuit inputs are $P_\mathrm{rf}$ (user
+operating point), $R_\mathrm{coil}$ and $L_\mathrm{coil}$ from
+Lieberman~2005 Ch.~12.  Unit tests assert the limiting-case invariants
+$\eta \to 1$ at $R_\mathrm{coil}=0$ and $\eta \to 0$ at
+$R_\mathrm{plasma}=0$.
+
+\textbf{Capacitive wafer-bias sheath.}  A new module, $m12$, closes a
+reduced-order Lieberman sheath power balance at the wafer electrode,
+deriving the DC sheath potential, ion flux, and neutral-gas-heating power
+from a prescribed bias power.  The result enters the ambipolar diffusion
+solver as an effective plasma-volume expansion source in the process
+chamber.  A single dimensionless free parameter $\lambda_\mathrm{exp}$ is
+calibrated once (on Mettler's 90\,\% SF$_6$ bias-on centre [F]
+enhancement) and blind-tested against the 30\,\% SF$_6$ case to verify
+composition transferability.
+
+Together these two upgrades allow an \emph{absolute-magnitude} benchmark
+against Mettler's (UIUC 2025) spatially resolved radical-probe dataset,
+where the prior revision was limited to normalised-shape agreement only.
+At Mettler's canonical 1000\,W / 10\,mTorr / 70\,\% SF$_6$ / 200\,W bias
+operating point, the converged $\eta \approx 0.95$ and the calibrated
+$\lambda_\mathrm{exp} = 3.20$ reproduce his absolute radial [F]
+distribution to within the $\pm 20\,\%$ composition-transfer tolerance,
+closing the factor-of-2--4 magnitude gap that the prior revision
+reported.  Five principal limitations remain (L1-L4 of the architectural
+discussion; L5 becomes a kinetic-regime scope note); the previously listed
+``prescribed $\eta$'' (old L6) and ``no wafer-bias sheath'' (old L5) are
+now resolved in the present revision.

@@ -1,0 +1,34 @@
+# Model D: Full multi-species transport (FUTURE — architecture stub)
+model:
+  name: "Model D — Full multi-species transport"
+  type: "full_multispecies"
+  description: "All 9 species solved via 2D transport PDEs (not local balance)"
+  status: "NOT YET IMPLEMENTED — architecture ready"
+
+geometry:
+  R_icp: 0.038
+  R_proc: 0.105
+  L_icp: 0.1815
+  L_proc: 0.050
+  L_apt: 0.002
+
+mesh:
+  Nr: 50
+  Nz: 80
+
+operating:
+  P_rf: 700
+  p_mTorr: 10
+  frac_Ar: 0.0
+  Q_sccm: 100
+  Tgas: 313
+  eta: 0.43
+
+wall_chemistry:
+  gamma_Al: 0.015      # Kokkoris literature
+  calibrated: false
+
+solver:
+  n_iter: 120
+  omega: 0.05
+  species_transport: "full_2d"  # all species via PDE, not local balance

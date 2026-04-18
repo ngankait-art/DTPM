@@ -1,0 +1,39 @@
+# Model A: Calibrated 2-species baseline
+model:
+  name: "Model A — Calibrated 2-species"
+  type: "2species"
+  description: "F + SF6 transport with calibrated gamma_Al"
+  
+geometry:
+  R_icp: 0.038       # m
+  R_proc: 0.105      # m
+  L_icp: 0.1815      # m
+  L_proc: 0.050      # m
+  L_apt: 0.002       # m
+  
+mesh:
+  Nr: 50
+  Nz: 80
+  beta_r: 1.2
+  beta_z: 1.0
+
+operating:
+  P_rf: 700           # W
+  p_mTorr: 10         # mTorr
+  frac_Ar: 0.0
+  Q_sccm: 100
+  Tgas: 313            # K
+  eta: 0.43
+  f_rf: 2.0e6          # Hz
+
+wall_chemistry:
+  gamma_Al: 0.18       # CALIBRATED
+  gamma_quartz: 0.001
+  gamma_Si: 0.025
+  gamma_window: 0.001
+  calibrated: true
+
+solver:
+  n_iter: 70
+  omega: 0.12
+  convergence_tol: 0.01

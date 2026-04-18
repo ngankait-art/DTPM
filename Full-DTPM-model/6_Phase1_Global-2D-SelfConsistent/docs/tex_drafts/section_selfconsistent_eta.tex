@@ -1,0 +1,95 @@
+%======================================================================
+\section{Self-Consistent Power Coupling via Lieberman Circuit Model}
+\label{sec:selfconsistent-eta}
+%======================================================================
+
+Prior versions of this framework prescribed the power-coupling efficiency
+$\eta$ as a constant (typically 0.43) and rescaled the FDTD-computed
+$E_\theta$ magnitude on every Picard iteration so that the Ohmic integral
+matched $\eta \, P_\mathrm{rf}$.  That rendered $\eta$ a tautological dial
+and made absolute-magnitude benchmarks meaningless.  The present revision
+removes the prescription and derives $\eta$ directly from a coupled
+coil-plasma transformer circuit following Lieberman \& Lichtenberg
+Ch.~12~\cite{Lieberman2005}.
+
+\subsection*{Circuit topology}
+
+The ICP coil is modelled as an RLC primary with real resistance
+$R_\mathrm{coil}$ (ohmic loss in the wire and matching network) and
+self-inductance $L_\mathrm{coil}$.  The plasma couples to the coil
+through mutual inductance, presenting a reflected impedance
+$Z_\mathrm{plasma} = R_\mathrm{plasma} + j \omega L_\mathrm{plasma}$ in
+series with the coil.  At the resonance-matched operating point, the
+peak coil current in terms of the delivered RF power is
+\begin{equation}
+  \boxed{\,I_\mathrm{peak} \;=\; \sqrt{\,\dfrac{2\,P_\mathrm{rf}}{R_\mathrm{coil} + R_\mathrm{plasma}}\,}\,,\qquad
+   \eta \;=\; \dfrac{R_\mathrm{plasma}}{R_\mathrm{coil} + R_\mathrm{plasma}}\,,}
+  \label{eq:circuit-closure}
+\end{equation}
+and the Ohmic-integral power absorbed by the plasma is
+\begin{equation}
+  P_\mathrm{abs} \;=\; \int_{\Omega_\mathrm{plasma}} \tfrac{1}{2}\,\sigma(r,z)\,|E_\theta(r,z)|^2\, dV \;=\; \tfrac{1}{2}\,I_\mathrm{peak}^2\,R_\mathrm{plasma}\,.
+  \label{eq:Ohmic-integral}
+\end{equation}
+Neither $R_\mathrm{plasma}$ nor $\eta$ is prescribed: they emerge from the
+converged plasma conductivity $\sigma(r,z)$ and the FDTD-computed field
+distribution.  The only inputs are $P_\mathrm{rf}$ (the user's operating
+knob), $R_\mathrm{coil}$, and $L_\mathrm{coil}$.
+
+\subsection*{Literature inputs}
+
+\begin{itemize}
+  \item $R_\mathrm{coil} = 0.8~\Omega$ (Lieberman Eq.~12.2.19, TEL-class 3-turn coil)
+  \item $L_\mathrm{coil} = 2.0~\mu\mathrm{H}$ (Lieberman §12.2, typical industrial ICP)
+\end{itemize}
+These are the only two new circuit parameters; both are tabulated in
+\texttt{docs/ASSUMED\_PARAMETERS.md} with full provenance.
+
+\subsection*{Algorithm}
+
+On each Picard iteration the framework performs (i) a single FDTD solve
+with the current $I_\mathrm{peak}$ and $\sigma(r,z)$, (ii) an Ohmic
+integral producing $P_\mathrm{abs}$, (iii) the closed-form update
+$R_\mathrm{plasma} \leftarrow 2\,P_\mathrm{abs}/I_\mathrm{peak}^2$ and
+$I_\mathrm{peak}^{\,\text{new}}$ from Eq.~\ref{eq:circuit-closure}, and
+(iv) a linear rescale of the stored $E_\theta$ by
+$I_\mathrm{peak}^{\,\text{new}}/I_\mathrm{peak}^{\,\text{old}}$ (exact
+because Maxwell's equations are linear in the driving current $J_\theta$
+at fixed $\sigma$).  The FDTD is re-run every three Picard steps to
+refresh the spatial profile for the evolving $\sigma$; between re-runs,
+the linear rescale is exact.
+
+\subsection*{Driven-CW FDTD source}
+
+The prior Phase-1 FDTD used a Gaussian-pulsed source that deactivated
+after $\sim$3 RF cycles, leaving the RMS accumulator to capture a free-
+decaying cavity mode rather than the driven steady-state amplitude.  That
+pulsed source was the hidden mechanism by which the old code required the
+$E$-field rescale: without it, the FDTD gave fields a factor $\sim 10^3$
+below the physically-driven steady-state values.  The present revision
+replaces the pulsed envelope with a linear ramp-up over two RF cycles
+followed by constant-amplitude continuous-wave drive for the remainder of
+the simulation.  Five RF cycles of total drive (up from two) are used to
+ensure steady-state amplitude convergence with an over-driven linear
+ramp.  See \texttt{docs/CODE\_REVIEW\_ULTRAREVIEW.md} for the full
+legacy diagnosis.
+
+\subsection*{Validation}
+
+A unit test (\texttt{tests/test\_selfconsistent\_eta.py}) asserts that
+the new implementation satisfies the two limiting-case invariants
+expected of a physically correct $\eta$:
+
+\begin{itemize}
+  \item If $R_\mathrm{coil} = 0$, then $\eta = 1$ exactly (no coil losses).
+  \item If $R_\mathrm{plasma} = 0$, then $\eta = 0$ exactly (no plasma).
+\end{itemize}
+In production operation at the present work's reference conditions
+(1000\,W, 10\,mTorr, 70\% SF$_6$, 200\,W rf bias), the converged values
+are $\eta \approx 0.95$, $I_\mathrm{peak} \approx 11.2$\,A,
+$R_\mathrm{plasma} \approx 15$\,$\Omega$ --- a physical window consistent
+with Lieberman's TEL-class ICP analysis.  A scan of $\eta(P_\mathrm{rf})$
+across the full 200--1200\,W power range (Fig.~\ref{fig:eta-sweep}) shows
+$\eta$ rising from $\sim 0.85$ at 200\,W to $\sim 0.96$ at 1200\,W, as
+expected when the plasma loading grows relative to the fixed coil
+resistance.

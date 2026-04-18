@@ -1,0 +1,38 @@
+# Model C: Hybrid multi-species (UNCALIBRATED, literature gamma)
+model:
+  name: "Model C — Uncalibrated prediction"
+  type: "hybrid_multispecies"
+  description: "9 species with Kokkoris literature gamma_Al = 0.015 (NO calibration)"
+
+geometry:
+  R_icp: 0.038
+  R_proc: 0.105
+  L_icp: 0.1815
+  L_proc: 0.050
+  L_apt: 0.002
+
+mesh:
+  Nr: 50
+  Nz: 80
+  beta_r: 1.2
+  beta_z: 1.0
+
+operating:
+  P_rf: 700
+  p_mTorr: 10
+  frac_Ar: 0.0
+  Q_sccm: 100
+  Tgas: 313
+  eta: 0.43
+  f_rf: 2.0e6
+
+wall_chemistry:
+  gamma_Al: 0.015      # UNCALIBRATED — Kokkoris literature value
+  gamma_quartz: 0.001
+  gamma_Si: 0.025
+  gamma_window: 0.001
+  calibrated: false
+
+solver:
+  n_iter: 70
+  omega: 0.12

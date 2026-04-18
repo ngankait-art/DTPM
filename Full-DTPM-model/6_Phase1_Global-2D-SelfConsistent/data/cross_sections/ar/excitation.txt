@@ -1,0 +1,39 @@
+# Argon excitation cross-sections (lumped)
+# Source: Hayashi database via LXCat
+# Process: e + Ar -> e + Ar* (combined excitation to 3p5 4s manifold)
+# Threshold: 11.55 eV (first excited state: 3p5 4s[3/2]2, metastable)
+# Units: energy [eV], cross-section [m^2]
+#
+# Note: This is a lumped cross-section combining the four 4s levels
+# (two metastable at 11.55, 11.72 eV and two resonance at 11.62, 11.83 eV).
+# Commonly used in Boltzmann equation calculations for simplicity.
+#
+EXCITATION
+Ar -> Ar*
+ 11.55e+0   0.000e+0
+ 11.80e+0   1.20e-22
+ 12.00e+0   3.00e-22
+ 12.50e+0   6.20e-22
+ 13.00e+0   9.50e-22
+ 13.50e+0   1.30e-21
+ 14.00e+0   1.60e-21
+ 15.00e+0   2.20e-21
+ 16.00e+0   2.80e-21
+ 17.00e+0   3.20e-21
+ 18.00e+0   3.50e-21
+ 20.00e+0   3.80e-21
+ 22.00e+0   3.60e-21
+ 25.00e+0   3.00e-21
+ 30.00e+0   2.30e-21
+ 35.00e+0   1.80e-21
+ 40.00e+0   1.50e-21
+ 50.00e+0   1.10e-21
+ 60.00e+0   8.50e-22
+ 80.00e+0   5.50e-22
+ 100.0e+0   4.00e-22
+ 150.0e+0   2.50e-22
+ 200.0e+0   1.80e-22
+ 300.0e+0   1.10e-22
+ 500.0e+0   5.50e-23
+ 700.0e+0   3.50e-23
+ 1000.e+0   2.20e-23

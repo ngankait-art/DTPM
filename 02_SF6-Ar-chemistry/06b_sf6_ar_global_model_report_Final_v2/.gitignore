@@ -1,0 +1,29 @@
+# ── LaTeX build artefacts ──────────────────────────────────────
+# Generated each time you run pdflatex/bibtex; the canonical PDFs
+# in this folder are the two "Zero-Dimensional … _v1.pdf"
+# and "… _v2.pdf" files, which are tracked.
+main.aux
+main.log
+main.out
+main.toc
+main.bbl
+main.blg
+main.synctex.gz
+*.fls
+*.fdb_latexmk
+# Auto-generated intermediate PDF (canonical deliverable is the _v2.pdf)
+main.pdf
+
+# ── Python caches ──────────────────────────────────────────────
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+.ipynb_checkpoints/
+
+# ── OS / editor noise ──────────────────────────────────────────
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
