@@ -1,0 +1,136 @@
+{
+  "winning_model": {
+    "name": "surrogate_lxcat_v4_arch",
+    "architecture": "SeparateHeadsMLP (shared trunk + per-species heads)",
+    "winner_experiment": "E3_separate_heads",
+    "nF_rmse": 0.0015435571549460292,
+    "nSF6_rmse": 0.001283392426557839,
+    "n_ensemble": 5,
+    "n_cases": 221,
+    "rate_source": "lxcat"
+  },
+  "architecture_sweep": [
+    {
+      "name": "E0_baseline",
+      "nF_rmse": 0.01901011106868585,
+      "nF_std": 0.0039301432101495086,
+      "nSF6_rmse": 0.015798483043909073,
+      "physics_reg": false
+    },
+    {
+      "name": "E1_v4_recipe",
+      "nF_rmse": 0.0037734697107225657,
+      "nF_std": 0.0005584253797445265,
+      "nSF6_rmse": 0.0033772206710030637,
+      "physics_reg": true
+    },
+    {
+      "name": "E2_wider_deeper",
+      "nF_rmse": 0.0039030431459347406,
+      "nF_std": 0.000985112131972281,
+      "nSF6_rmse": 0.0031928112730383873,
+      "physics_reg": true
+    },
+    {
+      "name": "E3_separate_heads",
+      "nF_rmse": 0.0020950123046835265,
+      "nF_std": 0.00015466727438790767,
+      "nSF6_rmse": 0.0015549422629798453,
+      "physics_reg": true
+    },
+    {
+      "name": "E4_residual",
+      "nF_rmse": 0.002439752221107483,
+      "nF_std": 0.0006605617762851756,
+      "nSF6_rmse": 0.0021000283304601908,
+      "physics_reg": true
+    },
+    {
+      "name": "E5_enhanced_features",
+      "nF_rmse": 0.009573041927069426,
+      "nF_std": 0.0017996953025207166,
+      "nSF6_rmse": 0.006059863604605198,
+      "physics_reg": true
+    },
+    {
+      "name": "E6_huber_loss",
+      "nF_rmse": 0.003937201031173269,
+      "nF_std": 0.0008268571198333265,
+      "nSF6_rmse": 0.0032389337041725716,
+      "physics_reg": true
+    }
+  ],
+  "ablation": [
+    {
+      "name": "none",
+      "bias": false,
+      "reg": false,
+      "epochs": 1500,
+      "nF_rmse": 0.018297723184029262
+    },
+    {
+      "name": "bias_only",
+      "bias": true,
+      "reg": false,
+      "epochs": 1500,
+      "nF_rmse": 0.0031402281019836664
+    },
+    {
+      "name": "reg_only",
+      "bias": false,
+      "reg": true,
+      "epochs": 1500,
+      "nF_rmse": 0.018875767787297566
+    },
+    {
+      "name": "epochs_only",
+      "bias": false,
+      "reg": false,
+      "epochs": 2000,
+      "nF_rmse": 0.016104704700410366
+    },
+    {
+      "name": "all_three",
+      "bias": true,
+      "reg": true,
+      "epochs": 2000,
+      "nF_rmse": 0.0038477350026369095
+    }
+  ],
+  "reference_models": {
+    "surrogate_v4_legacy": {
+      "nF_rmse": 0.0029211651999503374,
+      "nSF6_rmse": 0.0027009835466742516
+    },
+    "surrogate_lxcat_v3": {
+      "nF_rmse": 0.011243894696235657,
+      "nSF6_rmse": 0.008103406056761742
+    }
+  },
+  "mesh_convergence": {
+    "nF_avg_rel_err": 0.018609038995691763,
+    "nSF6_avg_rel_err": 0.023043635891378172,
+    "ne_avg_rel_err": 0.04887026739873878,
+    "F_drop_rel_err": 0.026733364082245324
+  },
+  "speedup": {
+    "legacy_vs_v4": 530.996806685612,
+    "lxcat_vs_lxcat_surr": 873.9825967918237,
+    "lxcat_vs_v4_surr": 987.3384330127785
+  },
+  "literature_validation": {
+    "legacy_F_rel_err": 0.3597229111552788,
+    "legacy_Te_rmse_eV": 0.17280508490723312,
+    "lxcat_Te_rmse_eV": 1.6827744375464353
+  },
+  "ml_baselines": {
+    "polynomial_deg3": 0.051003601402044296,
+    "polynomial_deg4": 0.039406005293130875,
+    "gaussian_process": 0.006290971910565768
+  },
+  "supplementary": {
+    "transfer_learning": "No benefit (0.00375 vs 0.00385)",
+    "te_auxiliary_head": "Hurts nF (0.00424 vs 0.0038)",
+    "mixed_physics": "Hurts both regimes (legacy 0.0057, LXCat 0.0229)"
+  }
+}

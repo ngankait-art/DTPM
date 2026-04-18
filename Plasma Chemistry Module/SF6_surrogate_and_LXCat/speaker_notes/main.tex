@@ -1,0 +1,1467 @@
+\documentclass[12pt,a4paper]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage[shortlabels]{enumitem}
+\usepackage{hyperref}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=blue,
+  urlcolor=blue,
+}
+
+\setlength{\parskip}{0.6em}
+\setlength{\parindent}{0pt}
+
+\title{Speaker Notes:\\
+  ML Surrogate for SF\textsubscript{6} Plasma Discharge Modeling}
+\author{Progress Update Script --- Internal Use}
+\date{April 2026}
+
+\begin{document}
+\maketitle
+\tableofcontents
+\clearpage
+
+%% ============================================================
+\section*{How to Use This Document}
+
+These notes are written as a progress-update script for a supervisor
+who already knows the 2D TEL finite-difference solver from the
+previous meeting. Everything here is \emph{new work since that
+meeting}. The speaking tone is informal and first-person: ``Last time
+we discussed X. Since then, I have done Y.''
+
+Each slide section contains:
+\begin{itemize}
+  \item \textbf{Purpose} --- what the slide must accomplish.
+  \item \textbf{What to Say} --- 2--4 paragraphs of natural first-person speech.
+  \item \textbf{Figure Guidance} --- how to read the plot or diagram on screen.
+  \item \textbf{Likely Questions} --- what the supervisor may ask and how to handle it.
+  \item \textbf{Transition} --- the bridge sentence to the next slide.
+\end{itemize}
+
+Speak at roughly 2 minutes per slide; the full update should land at
+35--40 minutes plus Q\&A.
+
+\clearpage
+
+%% ============================================================
+\section{Slide 1 --- Title}
+\label{sec:slide1}
+
+\subsection*{Purpose}
+Frame this as a progress update, not a fresh introduction.
+The supervisor already knows the problem and the solver; establish
+that today's content is new work.
+
+\subsection*{What to Say}
+
+Thanks for making time. Last time we met, I walked through the 2D TEL
+finite-difference solver --- the governing equations, the mesh, and why
+the runtime was a bottleneck. Today I want to show you everything
+that has happened since then.
+
+The headline result is an ensemble surrogate that hits a
+log\textsubscript{10} fluorine-density RMSE of 0.00154 --- roughly
+0.35\% error in linear density --- with speedups of 531$\times$ to
+874$\times$ over the solver. But the path to get there involved some
+dead ends that I think are just as worth discussing. I will cover
+those honestly.
+
+\subsection*{Figure Guidance}
+No figure on this slide. Title and date should be visible.
+
+\subsection*{Likely Questions}
+None expected here. If asked ``Is this a PINN talk?'' --- answer:
+PINNs were one of the first things I tried; I will show why they
+failed for this problem.
+
+\subsection*{Transition}
+Let me start with a quick recap of where we left off.
+
+\clearpage
+
+%% ============================================================
+\section{Slide 2 --- Recap: Where We Left Off}
+\label{sec:slide2}
+
+\subsection*{Purpose}
+One slide, thirty seconds. Remind the supervisor of the solver,
+the inputs, and the output we care about. Do not re-derive
+anything --- just anchor the conversation.
+
+\subsection*{What to Say}
+
+Quick recap so we are on the same page. We have the 2D TEL
+drift-diffusion solver for SF\textsubscript{6} discharges. It takes
+operating conditions --- pressure, voltage, gap distance --- and
+produces spatial profiles of species densities on a non-uniform mesh.
+The quantity we care most about is the steady-state atomic fluorine
+density, nF, because it drives component degradation in switchgear.
+The solver is validated but slow, which motivated the surrogate work
+I am about to describe.
+
+You already know all of this. I just want to make sure we are
+starting from the same place before I show the new directions.
+
+\subsection*{Figure Guidance}
+If a schematic of the simulation domain is shown, gesture to it
+briefly. Do not explain it --- the supervisor has seen it before.
+
+\subsection*{Likely Questions}
+\begin{itemize}
+  \item \emph{Has anything changed in the solver since last time?}
+    --- No changes to the solver itself; all the new work is on the
+    ML side and the LXCat cross-section integration.
+\end{itemize}
+
+\subsection*{Transition}
+Since that meeting, I have been exploring three directions. Let me
+give you the overview before diving into each.
+
+\clearpage
+
+%% ============================================================
+\section{Slide 3 --- Three Directions Overview}
+\label{sec:slide3}
+
+\subsection*{Purpose}
+Give the supervisor a roadmap for the rest of the talk. Three
+directions: (1) PINNs, (2) supervised surrogates, (3) LXCat
+cross-section integration. Set expectations for the narrative arc.
+
+\subsection*{What to Say}
+
+Since our last meeting, I have pursued three main threads. First, I
+tried physics-informed neural networks --- PINNs --- because they are
+the obvious first idea when you have a PDE solver. That did not work,
+and I will explain why. Second, I pivoted to a purely supervised
+surrogate approach, which is where all the positive results came from.
+Third, I integrated updated cross-section data from LXCat into the
+solver and studied how it affects both the physics and the surrogate.
+
+The story arc is: PINN attempt, failure, pivot, then a systematic
+progression through four surrogate versions that brought the error
+down by two orders of magnitude. Along the way, the LXCat work
+produced a genuine surprise about dataset sensitivity. I will also
+cover architecture sweeps, ablation studies, and several negative
+results that I think are important to document.
+
+\subsection*{Figure Guidance}
+If a roadmap or flowchart is shown, point to the three branches.
+Emphasise that the PINN branch is a dead end --- the supervisor
+should not expect positive results from it.
+
+\subsection*{Likely Questions}
+\begin{itemize}
+  \item \emph{Why did you start with PINNs?}
+    --- They are the most-cited approach in the literature for
+    PDE surrogates, so it was the natural starting point.
+  \item \emph{How long did the PINN work take before you pivoted?}
+    --- Be honest about the time spent.
+\end{itemize}
+
+\subsection*{Transition}
+Let me start with the PINN attempt.
+
+\clearpage
+
+%% ============================================================
+\section{Slide 4 --- PINN Attempt and Failure}
+\label{sec:slide4}
+
+\subsection*{Purpose}
+Report the PINN experiments honestly. Two variants tried, both
+failed. This is a valuable negative result that justifies the
+pivot to supervised learning.
+
+\subsection*{What to Say}
+
+PINNs were the first thing I tried after our last meeting.
+I tested two variants. The data-only PINN --- essentially a neural
+network trained on solver data but using the PINN framework with
+automatic differentiation and collocation points --- does
+eventually converge, but it is 23,000$\times$ slower than standard
+supervised training to reach the same loss. The framework overhead
+is enormous and provides no benefit when you already have labelled
+data from the solver.
+
+The second variant was a PDE-constrained PINN, where I added the
+governing equations as a soft penalty in the loss. This one
+diverges outright. The PDE residual and the data residual compete,
+and the optimiser cannot satisfy both simultaneously. I tried
+adaptive loss weighting, curriculum strategies, and NTK-based
+balancing --- none of them stabilised training.
+
+The takeaway is straightforward: PINNs are not the right tool
+here. We have abundant, trusted solver data, so there is no reason
+to pay the overhead of physics-informed training. This failure is
+what motivated the pivot to a purely supervised approach, which I
+will cover next.
+
+\subsection*{Figure Guidance}
+If loss curves are shown, point to the data-only PINN curve (slowly
+descending) versus the standard training curve (converging orders of
+magnitude faster). Point to the PDE-constrained curve diverging or
+oscillating. The visual contrast makes the argument immediately.
+
+\subsection*{Likely Questions}
+\begin{itemize}
+  \item \emph{Is the PDE too stiff for PINNs?}
+    --- Likely yes; the SF\textsubscript{6} chemistry has rate
+    constants spanning many orders of magnitude.
+  \item \emph{Could a better PINN implementation work?}
+    --- Possibly, but the 23,000$\times$ overhead for the data-only
+    case suggests the framework itself is the bottleneck. Even if
+    PDE-constrained training could be stabilised, we would still
+    face that overhead.
+  \item \emph{Did you try DeepONet or Fourier Neural Operator?}
+    --- Not yet; those are possible future directions, but the
+    supervised approach already works well.
+\end{itemize}
+
+\subsection*{Transition}
+So PINNs were a dead end. That led me to ask: what if we just do
+straightforward supervised learning?
+
+\clearpage
+
+%% ============================================================
+\section{Slide 5 --- Pivot to Supervised Surrogates}
+\label{sec:slide5}
+
+\subsection*{Purpose}
+Explain the supervised surrogate strategy: generate training data
+from the solver, train a neural network to map inputs to spatial
+profiles. Justify working in log space.
+
+\subsection*{What to Say}
+
+After the PINN failure, I went back to basics. The idea is simple:
+run the solver across a grid of input conditions, collect the nF
+profiles, and train a feedforward network to reproduce them. No
+physics in the loss --- just mean-squared error on
+log\textsubscript{10} nF.
+
+Working in log space turned out to be critical. The fluorine density
+spans several orders of magnitude across the spatial domain, so
+predicting in linear space forces the network to balance accuracy at
+high and low densities, which it does poorly. In log space, the
+dynamic range is compressed and the regression problem is
+well-conditioned. This single transformation is probably the most
+important design choice in the entire pipeline.
+
+The output is not a single number --- it is the full spatial profile
+at every mesh node. So the network has a multi-dimensional output,
+and the architecture needs to handle that gracefully. That is where
+the surrogate versioning comes in: I went through four major versions,
+each addressing a specific shortcoming of the previous one.
+
+\subsection*{Figure Guidance}
+If a schematic of the input--output mapping is shown, point to the
+inputs on the left and the spatial profile on the right. Emphasise
+that this is a curve prediction problem, not scalar regression.
+
+\subsection*{Likely Questions}
+\begin{itemize}
+  \item \emph{How many solver runs are in the training set?}
+    --- Give the exact number; mention 80/10/10 train/val/test split.
+  \item \emph{Why not predict in linear space with a log loss?}
+    --- Equivalent in principle, but log-space MSE is simpler and
+    gave better results empirically.
+\end{itemize}
+
+\subsection*{Transition}
+Let me walk you through the four versions.
+
+\clearpage
+
+%% ============================================================
+\section{Slide 6 --- Surrogate v1 through v4 Progression}
+\label{sec:slide6}
+
+\subsection*{Purpose}
+Show the error progression across four model versions, each
+incorporating a specific improvement. This demonstrates systematic
+iteration, not luck.
+
+\subsection*{What to Say}
+
+Here is the progression. Version 1 was a baseline MLP --- nothing
+fancy, just a few hidden layers with ReLU activations. It achieved
+an RMSE of 0.133, which is terrible --- more than 30\% error in
+linear density. It was a sanity check that the pipeline works, but
+the model itself was not useful.
+
+Version 2 added better input normalisation and a wider network,
+bringing the error down to 0.111. Still bad, but a 17\% relative
+improvement. Version 3 is where things got interesting: I introduced
+bias initialisation to the training-set mean and switched to a
+cosine-annealing learning rate schedule. That dropped the RMSE to
+0.023 --- nearly a 5$\times$ improvement over v2. This confirmed
+that training recipe matters more than raw architecture at this stage.
+
+Version 4 introduced the separate-heads architecture and weight decay.
+The RMSE fell to 0.003. So across four iterations, we went from 0.133
+to 0.003 --- roughly a 44$\times$ improvement. Each version targeted
+a specific bottleneck, and the progression was monotonic. No lucky
+accidents.
+
+\subsection*{Figure Guidance}
+If a bar chart or waterfall showing v1 through v4 errors is
+displayed, walk through each bar left to right. Emphasise the big
+jump from v2 to v3 (bias init + LR schedule) and from v3 to v4
+(separate heads).
+
+\subsection*{Likely Questions}
+\begin{itemize}
+  \item \emph{What changed between each version?}
+    --- Summarise: v1$\to$v2 was normalisation/width, v2$\to$v3 was
+    bias init + LR schedule, v3$\to$v4 was separate heads + weight
+    decay.
+  \item \emph{Why not skip to v4?}
+    --- Each version taught us something; the ablation study (later)
+    confirms which ingredients matter.
+\end{itemize}
+
+\subsection*{Transition}
+Version 4 got us to 0.003. But can we do better? Let me show the
+accuracy analysis.
+
+\clearpage
+
+%% ============================================================
+\section{Slide 7 --- Surrogate v4 Accuracy}
+\label{sec:slide7}
+
+\subsection*{Purpose}
+Deep-dive on v4 performance. Show where it succeeds and where
+residual errors remain, motivating the ensemble and the architecture
+sweep.
+
+\subsection*{What to Say}
+
+Version 4 achieves an RMSE of 0.00292 on the test set. In linear
+terms, that is about 0.67\% error --- already quite good for a
+surrogate. But when I looked at the spatial error distribution, the
+errors are not uniform. The near-electrode regions, where the nF
+gradient is steepest, have higher residuals than the bulk.
+
+This told me two things. First, a single model with shared output
+weights is struggling to simultaneously capture the steep-gradient
+and flat-gradient regions. That is what motivated the separate-heads
+design in v4, and it helped, but there was still room for improvement.
+Second, seed-to-seed variance was noticeable --- different random
+initialisations gave different error patterns. That pointed toward
+ensembling as the next step.
+
+So the path forward was clear: run an architecture sweep to find the
+best head configuration, then ensemble the winners. That is exactly
+what I did.
+
+\subsection*{Figure Guidance}
+If a spatial error heatmap or profile overlay is shown, point to the
+electrode regions where the residual is highest. If a parity plot is
+shown, point to the slight scatter at the distribution tails.
+
+\subsection*{Likely Questions}
+\begin{itemize}
+  \item \emph{Is 0.00292 already good enough for engineering use?}
+    --- Arguably yes, but we can do better, and the ensemble also
+    gives us uncertainty quantification.
+  \item \emph{How much does seed variance matter in practice?}
+    --- Enough to change the third significant figure of RMSE, which
+    is why ensembling is worth the cost.
+\end{itemize}
+
+\subsection*{Transition}
+Before the ensemble, I integrated the LXCat cross-section data.
+Let me show you what that revealed.
+
+\clearpage
+
+%% ============================================================
+\section{Slide 8 --- LXCat Integration}
+\label{sec:slide8}
+
+\subsection*{Purpose}
+Explain why LXCat data was integrated and what it means for the
+surrogate strategy. This is new work since the last meeting.
+
+\subsection*{What to Say}
+
+One thing I wanted to investigate since our last discussion was how
+sensitive the results are to the choice of electron-scattering
+cross-sections. Our solver has always used a legacy hand-curated
+dataset. LXCat is the community-maintained open-access database that
+the plasma physics community increasingly treats as the reference
+source. So I swapped in the LXCat cross-sections and re-ran the full
+simulation matrix.
+
+Integrating LXCat on the solver side was straightforward --- I
+replaced the lookup tables. But it doubled the simulation effort
+because every input condition now had to be run with both datasets.
+The payoff is that we get paired data: for each input condition, we
+can compare legacy vs.\ LXCat outputs directly and ask whether the
+surrogate needs to distinguish between them.
+
+The answer turned out to be surprising, and I will get to that
+in a moment. First, let me show you what actually changed
+in the physics.
+
+\subsection*{Figure Guidance}
+If a table of cross-section sources is shown, point to the specific
+datasets used. If a workflow diagram shows the solver with swappable
+cross-section tables, highlight the swap point.
+
+\subsection*{Likely Questions}
+\begin{itemize}
+  \item \emph{Which LXCat dataset specifically?}
+    --- Name the source and version.
+  \item \emph{Did you re-validate the solver with LXCat data?}
+    --- Yes, coming on the solver validation slide.
+\end{itemize}
+
+\subsection*{Transition}
+Here is what changed in the physics.
+
+\clearpage
+
+%% ============================================================
+\section{Slide 9 --- LXCat Physics Impact}
+\label{sec:slide9}
+
+\subsection*{Purpose}
+Show that LXCat cross-sections produce real, measurable changes in
+intermediate quantities (Te, ne), even though the effect on nF is
+small.
+
+\subsection*{What to Say}
+
+When I compared the legacy and LXCat solver outputs, the intermediate
+quantities shifted substantially. Electron temperature increased by
+56\% under LXCat cross-sections. Electron density decreased by 69\%.
+These are large, physically meaningful changes --- the two datasets
+really do produce different plasma states.
+
+But here is the surprising part: fluorine density --- the quantity we
+actually predict --- changed by less than 2\%. The big shifts in Te
+and ne largely cancel out when propagated through the full chemistry
+to nF. Fluorine density is an integrated downstream quantity that
+depends on many competing reactions, and errors in individual rates
+partially offset each other.
+
+This was not obvious a priori. I expected the 56\% Te shift to
+propagate into a significant nF difference. It did not. That has
+important implications for the surrogate, which I will discuss on the
+next slide.
+
+\subsection*{Figure Guidance}
+If overlaid profiles (legacy vs.\ LXCat) for Te or ne are shown,
+point to the region of maximum discrepancy. Then contrast with the
+nF profiles, which should be nearly overlapping. The visual contrast
+between ``big difference in Te'' and ``no difference in nF'' is the
+key message.
+
+\subsection*{Likely Questions}
+\begin{itemize}
+  \item \emph{Why does the discrepancy shrink for nF?}
+    --- Fluorine density sits downstream of many competing reaction
+    pathways; rate errors partially cancel.
+  \item \emph{Should we trust LXCat more than legacy?}
+    --- LXCat is more recent and community-vetted, but the solver
+    validation (coming up) shows a mixed picture.
+\end{itemize}
+
+\subsection*{Transition}
+The less-than-2\% nF change led me to do a formal dataset diagnosis.
+
+\clearpage
+
+%% ============================================================
+\section{Slide 10 --- Dataset Diagnosis Surprise}
+\label{sec:slide10}
+
+\subsection*{Purpose}
+Present the key finding: legacy and LXCat produce statistically
+identical nF distributions. This simplifies the surrogate strategy.
+
+\subsection*{What to Say}
+
+I did a systematic comparison of the nF profiles from both
+cross-section datasets across the full input space. The
+standard-deviation ratio is 0.99$\times$ --- essentially unity.
+Point by point, the nF profiles are indistinguishable within the
+solver's own numerical noise.
+
+This is genuinely surprising. The underlying plasma state is
+different --- Te and ne shifted by 56\% and 69\% respectively ---
+but the observable we care about is invariant. It means we do not
+need to treat cross-section provenance as an input feature to the
+surrogate. A single model trained on either dataset will generalise
+to the other for nF predictions. It also means that any accuracy
+differences between legacy-trained and LXCat-trained surrogates are
+training artefacts, not physics.
+
+I want to be careful here: this invariance is specific to nF. If we
+needed to predict Te or ne, we would need separate models for each
+cross-section dataset. But for our target observable, the two
+datasets are interchangeable.
+
+\subsection*{Figure Guidance}
+If a parity plot (legacy nF vs.\ LXCat nF) is shown, point to the
+tightness of the scatter around the 1:1 line. Mention the
+0.99$\times$ standard-deviation ratio. If a residual histogram is
+shown, point to its narrowness.
+
+\subsection*{Likely Questions}
+\begin{itemize}
+  \item \emph{Could this change at different pressures or geometries?}
+    --- Possible; we have not tested outside our current parameter
+    range. Worth investigating.
+  \item \emph{Does this mean the cross-section data does not matter?}
+    --- No --- it matters for Te and ne. It just does not matter
+    for nF, which is our prediction target.
+\end{itemize}
+
+\subsection*{Transition}
+With this physics understood, I went back to the surrogate and ran
+a proper architecture sweep.
+
+\clearpage
+
+%% ============================================================
+\section{Slide 11 --- Architecture Sweep}
+\label{sec:slide11}
+
+\subsection*{Purpose}
+Present the results of the architecture hyperparameter sweep.
+Establish that E3 with separate heads is the winner.
+
+\subsection*{What to Say}
+
+I swept over several architecture variants: shared heads versus
+separate heads, different trunk depths, hidden widths, and activation
+functions. Each variant was trained multiple times with different
+seeds, and I report the median test RMSE.
+
+The winner is what I call E3 with separate heads. It achieves a test
+RMSE of 0.00210 for a single model, which is already better than the
+v4 architecture at 0.00292. The key insight is that separate output
+heads let the network specialise its predictions for different spatial
+regions --- the steep-gradient near-electrode zone versus the smoother
+bulk. The shared-trunk design extracts common features from the inputs,
+and then each head adapts those features to its own output region.
+
+Wider and deeper networks did not help beyond a point. The
+separate-heads design was the single biggest architectural win.
+
+\subsection*{Figure Guidance}
+If a bar chart or table of RMSE values by architecture is shown,
+draw attention to the E3-separate-heads bar. Point to the gap between
+it and the runner-up. If error bars are shown, note that the
+improvement is statistically significant across seeds.
+
+\subsection*{Likely Questions}
+\begin{itemize}
+  \item \emph{How many architectures were in the sweep?}
+    --- Give the exact number.
+  \item \emph{Did you use automated NAS?}
+    --- No; the search space was small enough for a structured manual
+    sweep.
+  \item \emph{How much extra compute does separate heads cost?}
+    --- Minimal at inference; the trunk is shared and the heads are
+    small.
+\end{itemize}
+
+\subsection*{Transition}
+Architecture is only half the story. The ablation tells us which
+training ingredients actually matter.
+
+\clearpage
+
+%% ============================================================
+\section{Slide 12 --- Ablation Study}
+\label{sec:slide12}
+
+\subsection*{Purpose}
+Isolate the contribution of each training ingredient. Highlight the
+surprising result that regularisation alone is useless.
+
+\subsection*{What to Say}
+
+I ablated two key ingredients: bias initialisation and regularisation
+(weight decay). The full recipe combines both with learning-rate
+warmup. Here are the numbers.
+
+Bias initialisation alone gives an RMSE of 0.00314 --- that is 83\%
+worse than the best ensemble, but it is the single most impactful
+ingredient in isolation. It works because initialising the output
+bias to the training-set mean gives the network a sensible starting
+point; it only needs to learn the residual.
+
+Regularisation alone gives 0.01888. That is essentially useless ---
+it is worse than v3. Weight decay on its own constrains the network
+too aggressively for our small dataset and compact architecture. It
+prevents the model from fitting fine-grained spatial features.
+
+The lesson for practitioners: not every ``best practice'' helps in
+every context. Regularisation is only useful in combination with the
+other techniques; in isolation, it is actively harmful. Bias
+initialisation is the one thing you should always do.
+
+\subsection*{Figure Guidance}
+Point to the ablation table or bar chart. Highlight the
+regularisation-only row and its surprisingly high RMSE --- this is
+the most counterintuitive result. Contrast it with bias-only.
+If the full-recipe result is shown, note that ensembling (next slide)
+improves further.
+
+\subsection*{Likely Questions}
+\begin{itemize}
+  \item \emph{What counts as ``full recipe''?}
+    --- Bias init + weight decay + LR warmup, all together.
+  \item \emph{Would more data change this picture?}
+    --- Possibly; with a larger dataset, regularisation might become
+    more beneficial.
+  \item \emph{Did you try dropout instead of weight decay?}
+    --- Yes/no; mention what was tried.
+\end{itemize}
+
+\subsection*{Transition}
+With the best architecture and training recipe identified, here is
+the production result.
+
+\clearpage
+
+%% ============================================================
+\section{Slide 13 --- Production Ensemble Result}
+\label{sec:slide13}
+
+\subsection*{Purpose}
+Present the headline number. This is the main result of the
+update.
+
+\subsection*{What to Say}
+
+The production ensemble --- multiple E3-separate-heads models trained
+with different random seeds --- achieves a test-set RMSE of 0.00154
+in log\textsubscript{10} fluorine density. For SF\textsubscript{6}
+density, the corresponding number is 0.00128.
+
+To put 0.00154 in physical terms: $10^{0.00154} \approx 1.0035$,
+so the typical prediction is within about 0.35\% of the true density
+in linear space. This is 47\% better than the previous best single
+model --- v4 at 0.00292. The improvement comes from the combination
+of the E3 architecture, the full training recipe, and ensemble
+averaging.
+
+The ensemble also gives us uncertainty quantification for free. The
+standard deviation across members flags inputs where the model is
+less confident. In practice, the spread is tightest in the interior
+of the training distribution and widens near the edges, which is
+exactly the behaviour we want.
+
+\subsection*{Figure Guidance}
+If a parity plot (predicted vs.\ true log nF) is shown, point to the
+tightness of the scatter around the 1:1 line. If a spatial profile
+overlay is shown, point out that the predicted and true curves are
+visually indistinguishable. Mention the nSF6 number if both species
+are plotted.
+
+\subsection*{Likely Questions}
+\begin{itemize}
+  \item \emph{How many ensemble members?}
+    --- Give the exact count.
+  \item \emph{Is 0.00154 the mean or median across test samples?}
+    --- Clarify which statistic is reported.
+  \item \emph{How does ensemble spread compare to RMSE?}
+    --- Spread is typically comparable to or slightly larger than
+    RMSE, so it is a useful, slightly conservative uncertainty
+    estimate.
+\end{itemize}
+
+\subsection*{Transition}
+Those are the ML metrics. But the surrogate is only as good as the
+solver it learned from. Let me show the solver validation.
+
+\clearpage
+
+%% ============================================================
+\section{Slide 14 --- Solver Validation}
+\label{sec:slide14}
+
+\subsection*{Purpose}
+Establish credibility of the ground truth by comparing the solver
+to published benchmarks for both cross-section datasets.
+
+\subsection*{What to Say}
+
+Before we trust the surrogate, we need to trust the solver. I
+compared the solver's predictions against published literature for
+two quantities: electron temperature and fluorine density.
+
+For fluorine density, both datasets agree with literature to within
+about 36\%. For electron temperature, the picture diverges: the
+legacy cross-sections give about 5\% discrepancy relative to
+literature, while LXCat shows 58\%. So LXCat, despite being more
+recent and community-curated, does not uniformly improve agreement
+with experiment.
+
+This is an important nuance. It means the ``best'' cross-section
+dataset depends on which observable you care about. For our
+purposes --- predicting nF --- the solver is credible with either
+dataset. The 36\% literature discrepancy sounds large, but the
+literature values themselves carry significant experimental
+uncertainty. What matters is that the solver is in the right
+ballpark and internally consistent.
+
+\subsection*{Figure Guidance}
+If a comparison table is shown, point to the Te row and the nF row
+separately. Emphasise that the conclusions are
+observable-dependent --- this connects back to the dataset diagnosis
+finding.
+
+\subsection*{Likely Questions}
+\begin{itemize}
+  \item \emph{Which literature source?}
+    --- Cite the specific papers used.
+  \item \emph{Is 36\% error acceptable?}
+    --- For this class of simulation, yes; it is within the range
+    reported by other groups in the literature.
+  \item \emph{Does the 58\% Te error under LXCat worry you?}
+    --- It is worth investigating further, but since nF is invariant
+    to the dataset choice, it does not affect our surrogate results.
+\end{itemize}
+
+\subsection*{Transition}
+The solver is credible. Let me now show the spatial error structure
+and mesh convergence.
+
+\clearpage
+
+%% ============================================================
+\section{Slide 15 --- Spatial Error and Mesh Convergence}
+\label{sec:slide15}
+
+\subsection*{Purpose}
+Show that (a) the solver is numerically converged and (b) the
+surrogate's error is below the solver's own discretisation error.
+
+\subsection*{What to Say}
+
+I ran a mesh-convergence study by progressively refining the grid
+and comparing nF profiles. The profiles converge to a fixed shape,
+confirming we are in the asymptotic regime. The remaining nF
+convergence error is 1.86\%, which is much smaller than the 36\%
+physics uncertainty from the literature comparison. So the mesh is
+not the bottleneck --- the physics uncertainty dominates.
+
+More importantly, the surrogate's RMSE of 0.00154 --- corresponding
+to 0.35\% linear error --- is well below the solver's own 1.86\%
+mesh-convergence error. This means the surrogate is not adding
+meaningful error on top of what the solver already introduces through
+discretisation. We are faithfully reproducing the solver's output,
+not a smoothed or aliased version of it.
+
+\subsection*{Figure Guidance}
+If a convergence plot (error vs.\ mesh nodes) is shown, point to the
+plateau. If a spatial error map is shown, point to the
+near-electrode regions where surrogate error is highest --- these
+coincide with the steepest nF gradients, as expected.
+
+\subsection*{Likely Questions}
+\begin{itemize}
+  \item \emph{What is the finest mesh you tested?}
+    --- Give the node count.
+  \item \emph{Is 1.86\% acceptable for the mesh error?}
+    --- Yes; it is an order of magnitude below the physics uncertainty
+    and an order of magnitude above the surrogate error. The error
+    budget is dominated by cross-section uncertainty, not
+    discretisation.
+\end{itemize}
+
+\subsection*{Transition}
+Let me compare the neural network against simpler ML baselines.
+
+\clearpage
+
+%% ============================================================
+\section{Slide 16 --- ML Baselines}
+\label{sec:slide16}
+
+\subsection*{Purpose}
+Show that the neural network is not overkill by comparing against
+Gaussian processes and polynomial regression.
+
+\subsection*{What to Say}
+
+I benchmarked two baselines. A Gaussian process regressor achieves an
+RMSE of 0.006 --- roughly 4$\times$ worse than our ensemble at
+0.00154. A polynomial regressor gives 0.039, which is essentially
+unusable for our accuracy requirements.
+
+The GP result is interesting. It is a respectable model that gives
+calibrated uncertainty estimates and works well with small datasets.
+But it scales poorly to larger training sets and does not handle the
+high-dimensional spatial output as naturally as the neural network.
+For our problem, the neural network is the right tool --- not because
+simpler methods fail completely, but because they hit a performance
+ceiling well above what we need.
+
+The polynomial result is not surprising --- it confirms that the
+input--output mapping has nonlinearities that a low-order polynomial
+cannot capture. You need either a flexible kernel method (GP) or a
+neural network.
+
+\subsection*{Figure Guidance}
+If a bar chart or table is shown, point to each baseline in turn.
+Draw attention to the GP--NN gap (4$\times$) and the polynomial's
+poor performance (25$\times$ worse than ensemble).
+
+\subsection*{Likely Questions}
+\begin{itemize}
+  \item \emph{Did you tune the GP kernel?}
+    --- Yes; Mat\'ern kernel with hyperparameter optimisation via
+    marginal likelihood.
+  \item \emph{What about XGBoost or random forests?}
+    --- Tree methods handle multi-output poorly; we did not test
+    them but would not expect them to beat the GP.
+\end{itemize}
+
+\subsection*{Transition}
+Now let me quantify the speedup.
+
+\clearpage
+
+%% ============================================================
+\section{Slide 17 --- Speedup}
+\label{sec:slide17}
+
+\subsection*{Purpose}
+Quantify wall-clock speedup over both solver variants. This is one
+of the two headline numbers (along with accuracy).
+
+\subsection*{What to Say}
+
+The surrogate achieves a 531$\times$ speedup over the legacy solver
+and an 874$\times$ speedup over the LXCat solver. The LXCat solver
+is slower because the updated cross-sections produce stiffer
+chemistry that requires more sub-iterations in the implicit
+time-stepper.
+
+These speedups are measured end-to-end: solver time includes I/O
+and post-processing; surrogate time includes input normalisation,
+forward pass, and output de-normalisation. No cherry-picking. The
+surrogate runs on a single CPU core with no GPU required --- for a
+model this small, GPU launch overhead actually dominates, so CPU is
+faster for single-sample inference.
+
+In practical terms, the 874$\times$ number means that a parameter
+sweep that would take a full workday with the LXCat solver finishes
+in about 100 seconds with the surrogate. That is the difference
+between ``run overnight'' and ``run while you wait.''
+
+\subsection*{Figure Guidance}
+If a bar chart of wall-clock times is shown, point to the three bars.
+If a log scale is used, mention it. Emphasise that the surrogate bar
+is barely visible on a linear scale --- that is the point.
+
+\subsection*{Likely Questions}
+\begin{itemize}
+  \item \emph{Does this include batch inference?}
+    --- Clarify whether the speedup is per-sample or amortised.
+  \item \emph{What is the absolute inference time?}
+    --- Milliseconds per profile on CPU.
+  \item \emph{Would a GPU help for batch predictions?}
+    --- Yes, for large batches; for single-sample, CPU wins.
+\end{itemize}
+
+\subsection*{Transition}
+Let me step back and rank all the things that mattered.
+
+\clearpage
+
+%% ============================================================
+\section{Slide 18 --- Computational Cost}
+\label{sec:slide18}
+
+\subsection*{Purpose}
+Show that the experimental campaign was thorough and that the
+compute budget was spent deliberately.  Demonstrate awareness of
+cost---important for credibility and reproducibility.
+
+\subsection*{What to Say}
+
+Before I rank the findings, let me give you the full accounting of
+compute time.  The entire experimental campaign consumed 97 hours
+of training across 13 experiment categories.  That breaks down into
+three tiers.
+
+The core experiments---architecture sweep, ablation study, and
+production ensemble---took about 41 hours and produced all of the
+positive results I have shown you.  The supplementary
+experiments---transfer learning, mixed-physics training, and the
+Te auxiliary head---consumed 54 hours, more than the core work, and
+all three yielded negative results.  The remaining 3 hours cover
+fast validation tasks like ML baselines, mesh convergence, and
+literature comparison.
+
+I want to draw your attention to the fact that the supplementary
+experiments dominate the compute budget.  The ablation study alone
+took 22 hours because five configurations were each trained with
+three seeds.  Transfer learning and mixed-physics training each
+required multiple full training runs.  None of these experiments
+improved the production surrogate, but they preemptively answer
+the obvious reviewer questions: ``Did you try transfer learning?''
+Yes---no benefit.  ``Can one model handle both cross-section sets?''
+No---it hurts both.  ``Does predicting Te help?'' No---it hurts nF
+by 11\%.
+
+All training ran on Apple MPS for the GPU experiments and on CPU for
+ablation and supplementary runs.  Multiple experiments ran in
+parallel to reduce wall-clock time.
+
+\subsection*{Figure Guidance}
+The slide shows a compact table grouped into Core, Supplementary,
+and Fast Validation tiers.  Point to the hours column for the
+supplementary tier and emphasise that 55\% of compute went to
+negative results.
+
+\subsection*{Likely Questions}
+\begin{itemize}
+  \item \emph{Why did the supplementary experiments take so long?}
+    --- Each required full training to convergence with multiple
+    seeds; the LXCat dataset training is inherently expensive.
+  \item \emph{Could you have skipped the negative experiments?}
+    --- In hindsight, yes, but reviewers will ask about transfer
+    learning and multi-task learning.  Having the results ready
+    strengthens the paper.
+  \item \emph{What hardware was used?}
+    --- Apple MPS (GPU) for architecture sweep and ensemble; CPU for
+    ablation and supplementary experiments.
+\end{itemize}
+
+\subsection*{Transition}
+Now let me rank everything that mattered.
+
+\clearpage
+
+%% ============================================================
+\section{Slide 19 --- What Mattered Most}
+\label{sec:slide19}
+
+\subsection*{Purpose}
+Synthesise findings into a ranked list. Include both positive and
+negative results.
+
+\subsection*{What to Say}
+
+If I had to rank the factors that mattered most for getting from a
+mediocre surrogate to a production-quality one, here is my list.
+
+Number one: working in log space. This makes the regression problem
+well-conditioned. Without it, the network struggles with the dynamic
+range. Number two: the separate-heads architecture --- the biggest
+architectural win. Number three: bias initialisation --- the most
+impactful single training trick, as confirmed by the ablation.
+Number four: ensembling, which smooths out seed variance and provides
+uncertainty estimates.
+
+Number five is just as important: what did \emph{not} work.
+Regularisation alone was useless --- RMSE of 0.01888. Transfer
+learning from legacy to LXCat showed no benefit: 0.00375 versus
+0.00385 from scratch. Mixed-physics training, combining both
+datasets, hurt both tasks: 0.006 for legacy, 0.023 for LXCat.
+Predicting Te as an auxiliary output did not help nF either --- 0.004
+in both cases, with added complexity. PINNs were a complete dead end.
+
+I think the negative results are just as valuable as the positive
+ones. They save future researchers from going down dead ends that
+look promising on paper.
+
+\subsection*{Figure Guidance}
+If a ranked list or waterfall chart is shown, walk through it top to
+bottom. Dwell on the negative results at the bottom --- the
+supervisor will find these most informative.
+
+\subsection*{Likely Questions}
+\begin{itemize}
+  \item \emph{Would more data change the ranking?}
+    --- Possibly; with a larger dataset, regularisation might become
+    more important.
+  \item \emph{Is the ranking specific to this problem?}
+    --- Log-space is likely general; the rest may be
+    problem-dependent.
+\end{itemize}
+
+\subsection*{Transition}
+Let me be honest about the limitations.
+
+\clearpage
+
+%% ============================================================
+\section{Slide 20 --- Limitations}
+\label{sec:slide20}
+
+\subsection*{Purpose}
+Acknowledge what the current work cannot do. Demonstrate
+intellectual honesty and identify where effort should go next.
+
+\subsection*{What to Say}
+
+I want to be upfront about what this surrogate cannot do yet. First,
+it predicts steady-state profiles only --- no transient dynamics.
+If you need the time evolution of the discharge, you still need the
+solver. Second, the model is trained on a fixed parameter range; I
+have not tested extrapolation beyond the training domain, and I would
+not trust it there without additional validation.
+
+Third, the mesh convergence error is 1.86\%, which means the solver
+itself introduces that much uncertainty before the surrogate even
+enters the picture. The surrogate cannot be more accurate than its
+training data. Fourth, the LXCat Te discrepancy of 58\% versus
+literature is concerning --- if Te accuracy ever becomes important,
+we will need to revisit the cross-section data or the solver's
+treatment of electron energy balance.
+
+Finally, the negative results on transfer learning and mixed-physics
+training suggest that combining data from different cross-section
+datasets is nontrivial. If new datasets emerge in the future, we
+cannot simply throw them into the existing training set --- we will
+need separate models or a more sophisticated conditioning approach.
+
+\subsection*{Figure Guidance}
+No complex figure expected. If a bullet-point summary of limitations
+is shown, walk through each point and give the one-line justification
+for why it matters.
+
+\subsection*{Likely Questions}
+\begin{itemize}
+  \item \emph{How would you handle extrapolation?}
+    --- Use the ensemble spread as a warning flag; retrain with
+    additional solver runs in the new regime.
+  \item \emph{Is transient prediction feasible with this approach?}
+    --- Possibly with a sequence model (RNN, transformer), but that
+    is future work.
+\end{itemize}
+
+\subsection*{Transition}
+Given those limitations, here is what I plan to do next.
+
+\clearpage
+
+%% ============================================================
+\section{Slide 21 --- Next Steps}
+\label{sec:slide21}
+
+\subsection*{Purpose}
+Summarise the key takeaways and outline the near-term plan. End
+on a concrete, actionable note.
+
+\subsection*{What to Say}
+
+Here is what I plan to work on next.  First, I want to extend the
+surrogate to time-dependent profiles, probably using a recurrent or
+transformer-based decoder.  Second, I want to investigate active
+learning to minimise the number of solver runs needed for
+training --- right now we do a brute-force grid, and there may be
+smarter sampling strategies.  Third, I want to deploy the surrogate
+in an interactive tool where an engineer can adjust operating
+conditions and see the fluorine profile update in real time.
+
+Phase 2 on the physics side would be integrating BOLSIG+ for the
+EEDF calculation, then a PINN-based Boltzmann solver, and eventually
+PIC-MCC validation.  These are longer-term goals, but the surrogate
+infrastructure built here carries over directly.
+
+\subsection*{Figure Guidance}
+If a roadmap or bullet list is shown, walk through each item briefly.
+Point to the benchmark plot on the right as evidence that the
+surrogate infrastructure is mature enough to build on.
+
+\subsection*{Likely Questions}
+\begin{itemize}
+  \item \emph{What is the timeline for transient modelling?}
+    --- Exploratory; depends on data availability.
+  \item \emph{How would active learning work in practice?}
+    --- Use ensemble uncertainty to identify high-uncertainty regions,
+    run solver at those conditions, and retrain.
+\end{itemize}
+
+\subsection*{Transition}
+Let me close with the summary.
+
+\clearpage
+
+%% ============================================================
+\section{Slide 22 --- Conclusion}
+\label{sec:slide22}
+
+\subsection*{Purpose}
+Deliver the three-point summary and the key insight.  End on a
+memorable, concrete note.
+
+\subsection*{What to Say}
+
+Let me wrap up with three takeaways.
+
+First, the supervised ensemble surrogate works: 0.00154 RMSE in log
+nF, 0.35\% linear error, 531--874$\times$ speedup.  This is
+production-ready for the use cases we discussed.
+
+Second, the cross-section dataset choice does not affect nF
+predictions --- the 0.99$\times$ standard-deviation ratio was an
+unexpected but useful finding.  LXCat and legacy produce
+statistically identical nF distributions despite 56\% shifts in
+electron temperature.
+
+Third, several popular ML techniques --- PINNs, transfer learning,
+multi-task learning --- did not help here, and documenting those
+failures is important.  The full campaign consumed 97 hours of
+compute, with 55\% going to supplementary experiments that all
+yielded negative results.
+
+The single most important lesson: bias initialisation accounts for
+83\% of the improvement.  Training recipe dominates architecture,
+which dominates data source.  Recipe is everything.
+
+That is everything I have.  Thank you --- happy to take questions.
+
+\subsection*{Figure Guidance}
+The slide shows a numbered summary and a boxed key insight.  Do not
+re-read numbers from the screen; the supervisor has them visible.
+Let the boxed statement land on its own.
+
+\subsection*{Likely Questions}
+General Q\&A.  Be prepared for:
+\begin{itemize}
+  \item Deep dives into the PINN failure mode.
+  \item Questions about generalisation to other gas mixtures.
+  \item Requests for the code or dataset.
+  \item How the uncertainty estimate would be used in practice.
+  \item Timeline for the next-steps items.
+\end{itemize}
+
+\subsection*{Transition}
+If questions arise about transfer learning, Te auxiliary outputs,
+mixed-physics training, or PINN details, advance to the backup
+slides.
+
+\clearpage
+
+%% ============================================================
+\section*{Backup Slides}
+
+%% ============================================================
+\subsection*{Backup A --- PINN Details}
+
+\textbf{Purpose:} Provide additional detail on the PINN experiments
+if the supervisor wants to dig deeper.
+
+\textbf{What to Say:}
+
+The data-only PINN used the same network architecture as our
+supervised baseline but trained through the PINN framework with
+automatic differentiation and collocation points at the mesh nodes.
+It converged to the same loss level as standard training, but
+required 23,000$\times$ more wall-clock time. The overhead comes
+from evaluating the PDE residual at every collocation point at every
+training step, even though we are not using it in the loss --- it
+is purely framework overhead.
+
+The PDE-constrained variant added the drift-diffusion equations
+as a soft penalty. I tried multiple loss-weighting strategies:
+fixed weights from 0.01 to 100, self-adaptive weights, and
+NTK-based balancing. None stabilised training. The fundamental
+issue is that the PDE residual involves stiff source terms with
+rate constants spanning 10+ orders of magnitude, which creates
+conflicting gradient directions that the optimiser cannot reconcile.
+
+\textbf{Likely Questions:}
+\begin{itemize}
+  \item \emph{Would causal training (Krishnapriyan et al.) help?}
+    --- Possibly for the temporal dimension, but we are predicting
+    steady state, so causality is not the issue.
+  \item \emph{What about domain decomposition for PINNs?}
+    --- An interesting idea but adds significant implementation
+    complexity for uncertain benefit.
+\end{itemize}
+
+\bigskip
+
+%% ============================================================
+\subsection*{Backup B --- Transfer Learning}
+
+\textbf{Purpose:} Show that pre-training on legacy data and
+fine-tuning on LXCat data provides no benefit.
+
+\textbf{What to Say:}
+
+I hypothesised that the legacy dataset could serve as a pre-training
+source for the LXCat surrogate. I pre-trained on legacy data, froze
+the trunk, and fine-tuned the heads on LXCat data. The result:
+0.00375 RMSE, compared to 0.00385 for training on LXCat from scratch.
+The difference is within noise.
+
+This is entirely consistent with the dataset diagnosis. If the nF
+distributions are statistically identical, there is nothing meaningful
+to transfer. The 0.99$\times$ standard-deviation ratio tells us the
+two datasets carry the same information about nF, so pre-training on
+one does not give the network a head start on the other. I also tried
+unfreezing the trunk during fine-tuning --- results were similar.
+
+\textbf{Likely Questions:}
+\begin{itemize}
+  \item \emph{What if the datasets were more different?}
+    --- Then transfer might help, but the diagnosis tells us they
+    are not different enough.
+  \item \emph{Could transfer help with a completely new gas mixture?}
+    --- Possibly; that would be a genuinely different distribution.
+\end{itemize}
+
+\bigskip
+
+%% ============================================================
+\subsection*{Backup C --- Te Auxiliary Output}
+
+\textbf{Purpose:} Show that multi-task learning with Te does not
+improve nF accuracy.
+
+\textbf{What to Say:}
+
+Multi-task learning is a standard regularisation technique: if
+electron temperature shares the same input features as fluorine
+density, predicting both should improve the shared representation.
+In practice, the two-output model achieves an nF RMSE of 0.004 ---
+identical to the single-output model. The Te head adds parameters and
+training complexity with no benefit to the quantity we care about.
+
+My interpretation is that nF and Te have sufficiently different
+functional forms that sharing a trunk forces compromises. The
+separate-heads architecture partially mitigates this, but the net
+effect is still neutral at best. The added training complexity is
+not worth it.
+
+\textbf{Likely Questions:}
+\begin{itemize}
+  \item \emph{What loss weighting did you use?}
+    --- Swept over several ratios; none improved nF.
+  \item \emph{Could Te help as an input feature?}
+    --- Interesting idea, but Te is a solver output, not known a
+    priori.
+\end{itemize}
+
+\bigskip
+
+%% ============================================================
+\subsection*{Backup D --- Mixed-Physics Training}
+
+\textbf{Purpose:} Show that combining legacy and LXCat data into
+one training set hurts both tasks.
+
+\textbf{What to Say:}
+
+I tried training a single surrogate on the combined legacy + LXCat
+dataset, adding a binary indicator feature for dataset provenance.
+The result was worse for both subsets: 0.006 RMSE on legacy data
+(versus 0.00154 for the specialist model) and 0.023 on LXCat data.
+The network cannot simultaneously serve two masters.
+
+This is a case where the 0.99$\times$ nF similarity is misleading.
+The distributions are similar but not identical, and the small
+differences act as label noise when mixed. The network wastes
+capacity reconciling conflicting labels at nearly identical input
+points. The practical recommendation: train separate surrogates for
+each cross-section dataset. The computational cost is minimal, and
+the accuracy benefit is large.
+
+\textbf{Likely Questions:}
+\begin{itemize}
+  \item \emph{Did you try FiLM layers or other conditioning?}
+    --- No; worth exploring if cross-dataset generalisation were
+    a hard requirement.
+  \item \emph{What about a mixture-of-experts approach?}
+    --- That would effectively learn separate models, which is
+    what we already recommend.
+\end{itemize}
+
+\clearpage
+
+%% ============================================================
+\section*{Q\&A Preparation}
+
+This section collects the most likely questions across all slides,
+organised by topic. Review this before the meeting.
+
+\subsection*{Physics and Solver}
+
+\begin{enumerate}[1.]
+  \item \emph{Is the solver truly 2D or 1D?} ---
+    The solver is 2D (TEL geometry). The surrogate predicts the
+    spatial profile along the gap axis, which is the
+    safety-relevant dimension.
+
+  \item \emph{Why does the LXCat Te discrepancy not propagate to nF?} ---
+    Fluorine density is downstream of many competing reactions whose
+    rate errors partially cancel. Te affects individual rates, but the
+    integrated effect on nF is buffered.
+
+  \item \emph{What is the 36\% literature error on F density?} ---
+    Both legacy and LXCat solvers agree with published experimental /
+    computational benchmarks to within $\sim$36\%. The literature values
+    themselves carry experimental uncertainty.
+
+  \item \emph{Is 1.86\% mesh convergence error acceptable?} ---
+    Yes. It is one order of magnitude below the physics uncertainty
+    (36\%) and one order of magnitude above the surrogate error
+    (0.35\%). The error budget is dominated by cross-section
+    uncertainty, not discretisation.
+\end{enumerate}
+
+\subsection*{Machine Learning Methodology}
+
+\begin{enumerate}[1.]
+  \item \emph{Why not use PINNs?} ---
+    Data-only PINNs are 23,000$\times$ slower than supervised
+    training. PDE-constrained PINNs diverge due to stiff chemistry.
+    With abundant solver data, supervised learning is faster, simpler,
+    and more accurate.
+
+  \item \emph{Why does regularisation alone hurt?} ---
+    With a small dataset and compact network, weight decay prevents the
+    model from fitting fine-grained spatial features. Bias init is far
+    more impactful (0.00314 vs.\ 0.01888).
+
+  \item \emph{How many ensemble members?} ---
+    Give the exact count used in the production model.
+
+  \item \emph{Why separate heads instead of a shared output layer?} ---
+    The nF profile has steep gradients near the electrodes and smooth
+    behaviour in the bulk. Separate heads let the network specialise
+    for each regime. The architecture sweep confirms a win:
+    0.00210 (E3 separate) vs.\ 0.00292 (v4 shared).
+
+  \item \emph{Did you try transformers, DeepONet, or FNO?} ---
+    Not yet. The problem is small enough that an MLP with separate
+    heads works well. More complex architectures are possible future
+    directions.
+
+  \item \emph{How sensitive is the result to hyperparameters?} ---
+    The v1$\to$v4 progression shows that training recipe matters more
+    than fine-tuning. The ablation isolates which ingredients drive the
+    improvement.
+\end{enumerate}
+
+\subsection*{Negative Results}
+
+\begin{enumerate}[1.]
+  \item \emph{Why did transfer learning not help?} ---
+    The dataset diagnosis shows legacy and LXCat nF distributions have
+    a 0.99$\times$ std ratio --- they carry the same information, so
+    there is nothing to transfer. Result: 0.00375 vs.\ 0.00385.
+
+  \item \emph{Why did mixed-physics training hurt?} ---
+    Small differences between datasets act as label noise. The network
+    wastes capacity reconciling conflicting labels: 0.006 legacy,
+    0.023 LXCat, both worse than separate models.
+
+  \item \emph{Why did the Te auxiliary output not help nF?} ---
+    nF and Te have different functional forms; sharing a trunk forces
+    compromises. Both single- and two-output models give nF RMSE of
+    0.004.
+
+  \item \emph{Are these negative results problem-specific?} ---
+    Partly. The PINN failure is likely general for stiff chemistry.
+    The transfer/mixed-physics results are specific to the near-identical
+    dataset pair. The Te auxiliary result may generalise to other
+    multi-output problems where outputs have very different functional
+    forms.
+\end{enumerate}
+
+\subsection*{Practical Deployment}
+
+\begin{enumerate}[1.]
+  \item \emph{Can I use the surrogate for conditions outside the
+    training range?} ---
+    Not recommended without validation. The ensemble spread provides a
+    warning flag for out-of-distribution inputs. Retrain with
+    additional solver runs in the new regime.
+
+  \item \emph{How would the uncertainty estimate be used in practice?} ---
+    Flag predictions where ensemble spread exceeds a threshold.
+    Trigger a solver run for those cases to validate or augment the
+    training set.
+
+  \item \emph{What is the deployment plan?} ---
+    An interactive tool where an engineer adjusts operating conditions
+    (pressure, voltage, gap) via sliders and sees the nF profile update
+    in real time. Millisecond inference on CPU makes this feasible.
+
+  \item \emph{Can I get the code or the trained models?} ---
+    Discuss availability and any IP considerations.
+\end{enumerate}
+
+\clearpage
+
+%% ============================================================
+\section*{Quick-Reference Number Sheet}
+
+For convenience during Q\&A, all key numbers in one place:
+
+\begin{center}
+\begin{tabular}{l l}
+\hline
+\textbf{Metric} & \textbf{Value} \\
+\hline
+Ensemble nF RMSE (log\textsubscript{10}) & 0.00154 ($\sim$0.35\% linear) \\
+Ensemble nSF6 RMSE (log\textsubscript{10}) & 0.00128 \\
+Legacy v4 single-model RMSE & 0.00292 \\
+Improvement over v4 & 47\% \\
+\hline
+\multicolumn{2}{l}{\emph{Surrogate progression}} \\
+v1 & 0.133 \\
+v2 & 0.111 \\
+v3 & 0.023 \\
+v4 & 0.003 \\
+\hline
+Architecture sweep winner & E3 separate heads (0.00210) \\
+\hline
+\multicolumn{2}{l}{\emph{Ablation}} \\
+Bias only & 0.00314 (+83\% from best) \\
+Reg only & 0.01888 (useless) \\
+\hline
+Speedup (legacy solver) & 531$\times$ \\
+Speedup (LXCat solver) & 874$\times$ \\
+\hline
+\multicolumn{2}{l}{\emph{Literature comparison}} \\
+F density error & 36\% \\
+Te error (legacy) & 5\% \\
+Te error (LXCat) & 58\% \\
+\hline
+\multicolumn{2}{l}{\emph{LXCat physics impact}} \\
+Te change & +56\% \\
+ne change & $-$69\% \\
+nF change & $<$2\% \\
+\hline
+\multicolumn{2}{l}{\emph{ML baselines}} \\
+GP RMSE & 0.006 \\
+Polynomial RMSE & 0.039 \\
+\hline
+\multicolumn{2}{l}{\emph{PINN}} \\
+Data-only overhead & 23,000$\times$ \\
+PDE-constrained & diverges \\
+\hline
+\multicolumn{2}{l}{\emph{Negative results}} \\
+Transfer learning & 0.00375 vs.\ 0.00385 (no benefit) \\
+Mixed-physics legacy & 0.006 \\
+Mixed-physics LXCat & 0.023 \\
+Te auxiliary nF RMSE & 0.004 vs.\ 0.004 \\
+\hline
+Mesh convergence error (nF) & 1.86\% \\
+\hline
+\end{tabular}
+\end{center}
+
+\end{document}

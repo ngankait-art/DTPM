@@ -1,0 +1,113 @@
+\documentclass[aspectratio=169]{beamer}
+\usetheme{metropolis}
+\usepackage{booktabs,siunitx}
+
+\title{Physics-Regularized Surrogates for SF\textsubscript{6} ICP Modeling}
+\subtitle{LXCat Integration and Architecture Optimization}
+\date{}
+
+\begin{document}
+
+\begin{frame}
+\titlepage
+\end{frame}
+
+% ──────────────────────────────────────
+\begin{frame}{Problem}
+\begin{itemize}
+  \item SF\textsubscript{6} ICP etching: need spatially resolved F, SF\textsubscript{6} density
+  \item FD solver: 54 reactions, 2D axi, Robin BCs --- accurate but slow
+  \item Goal: neural network surrogate with $>$500$\times$ speedup
+  \item Challenge: LXCat cross sections change electron kinetics
+\end{itemize}
+\end{frame}
+
+% ──────────────────────────────────────
+\begin{frame}{Key Finding: The Gap Was Training, Not Physics}
+\begin{itemize}
+  \item Initial LXCat surrogate: 3.85$\times$ worse than legacy
+  \item Dataset diagnosis: \textbf{distributions are statistically identical}
+  \item Root cause: missing physics regularization + output initialization
+  \item Physics reg alone: 5$\times$ improvement
+\end{itemize}
+\end{frame}
+
+% ──────────────────────────────────────
+\begin{frame}{Architecture Comparison}
+\begin{table}
+\small
+\begin{tabular}{lccc}
+\toprule
+Experiment & nF RMSE & nSF6 RMSE & vs legacy v4 \\
+\midrule
+E0\_baseline & 0.0190 & 0.0158 & 6.6$\times$ \\
+E1\_v4\_recipe & 0.0038 & 0.0034 & 1.3$\times$ \\
+E2\_wider\_deeper & 0.0039 & 0.0032 & 1.3$\times$ \\
+\textbf{E3\_separate\_heads} & 0.0021 & 0.0016 & 0.7$\times$ \\
+E4\_residual & 0.0024 & 0.0021 & 0.8$\times$ \\
+E5\_enhanced\_features & 0.0096 & 0.0061 & 3.3$\times$ \\
+E6\_huber\_loss & 0.0039 & 0.0032 & 1.4$\times$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+Winner: E3\_separate\_heads --- separate heads allow per-species specialization
+\end{frame}
+
+% ──────────────────────────────────────
+\begin{frame}{Production Ensemble Result}
+\begin{itemize}
+  \item Architecture: E3\_separate\_heads
+  \item 5-model ensemble on LXCat data (221 cases)
+  \item n\textsubscript{F} RMSE: \textbf{1.54e-03}
+  \item n\textsubscript{SF6} RMSE: \textbf{1.28e-03}
+  \item Improvement over initial LXCat surrogate: $>$80\%
+  \item Speedup: $>$500$\times$ over FD solver
+\end{itemize}
+\end{frame}
+
+% ──────────────────────────────────────
+\begin{frame}{PINN Negative Result}
+\begin{itemize}
+  \item Attempted PDE-constrained PINN: \textbf{diverged}
+  \item Root causes: stiff chemistry (15+ orders), 2nd-derivative instability,
+    axis singularity, coupled energy equation
+  \item Data-only training: 23{,}000$\times$ loss reduction --- works fine
+  \item Lesson: soft physics priors (regularization) succeed where hard
+    PDE constraints (PINN) fail for stiff reaction-diffusion
+\end{itemize}
+\end{frame}
+
+% ──────────────────────────────────────
+\begin{frame}{LXCat Physics Impact}
+\begin{itemize}
+  \item LXCat Biagi attachment: 4--20$\times$ larger than legacy Arrhenius
+  \item T\textsubscript{e} increases 56\% (particle balance compensation)
+  \item n\textsubscript{e} drops to 34\% of legacy
+  \item F density: unchanged ($<$2\%) --- diffusion/wall controlled
+  \item LXCat T\textsubscript{e} overpredicts vs Lallement data by 58\%
+\end{itemize}
+\end{frame}
+
+% ──────────────────────────────────────
+\begin{frame}{What Mattered Most}
+\begin{enumerate}
+  \item \textbf{Physics regularization}: 5$\times$ improvement (dominant)
+  \item \textbf{Output bias initialization}: nearly as important as reg alone
+  \item \textbf{Separate heads}: 1.8$\times$ on top of reg
+  \item Wider/deeper networks: no improvement
+  \item Enhanced features: actively harmful
+  \item Huber loss: no improvement
+\end{enumerate}
+\end{frame}
+
+% ──────────────────────────────────────
+\begin{frame}{Conclusion}
+\begin{itemize}
+  \item LXCat surrogates match legacy accuracy with proper training recipe
+  \item The ``harder physics'' narrative was wrong --- it was training recipe
+  \item Separate-heads architecture provides modest additional gain
+  \item Ready for design-space exploration with first-principles rates
+\end{itemize}
+\end{frame}
+
+\end{document}

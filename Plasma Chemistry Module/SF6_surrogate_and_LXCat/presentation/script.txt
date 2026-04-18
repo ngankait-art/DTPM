@@ -1,0 +1,85 @@
+SPEAKER SCRIPT — Physics-Regularized Surrogates for SF6 ICP Modeling
+=====================================================================
+
+SLIDE 1: Title
+- "Today I'll present our work on building neural network surrogates for
+  SF6 plasma etching simulations, with a focus on integrating first-principles
+  LXCat cross sections and understanding what makes these surrogates work."
+
+SLIDE 2: Problem
+- "SF6 ICP etching is critical for semiconductor manufacturing. We need
+  spatially resolved fluorine density predictions across different operating
+  conditions. Our finite-difference solver handles 54 reactions in 2D
+  axisymmetric geometry, but takes seconds per case — too slow for
+  design-space exploration."
+- "The additional challenge: when we replaced calibrated Arrhenius rates
+  with LXCat Biagi cross sections, the surrogate accuracy degraded by
+  nearly 4x. We needed to understand why."
+
+SLIDE 3: Key Finding
+- "This is the most important slide. We ran a comprehensive statistical
+  comparison of the legacy and LXCat datasets — same 221 operating
+  conditions, same mesh, same geometry. The distributions are
+  statistically identical across every metric we checked: dynamic range,
+  spatial gradients, cross-correlations, regime structure."
+- "The gap wasn't physics. It was that our LXCat surrogate was trained
+  without physics regularization and output initialization that the
+  legacy surrogate had. Once we matched the training recipe, the gap
+  closed immediately."
+
+SLIDE 4: Architecture Comparison
+- "We ran 7 experiments, 3 seeds each, on the LXCat dataset. The big
+  jump is E0 to E1 — that's just adding physics regularization. A 5x
+  improvement from training recipe alone."
+- "The winner is E3_separate_heads — a shared trunk with separate output heads
+  for F and SF6. This lets each species specialize its last few layers
+  while sharing spatial representations."
+
+SLIDE 5: Production Result
+- "The 5-model ensemble achieves nF RMSE of 1.54e-03. For context,
+  the legacy surrogate v4 achieves 0.0029. We've matched or beaten
+  the legacy accuracy while using first-principles LXCat rates."
+- "Speedup is over 500x — from seconds to milliseconds per case."
+
+SLIDE 6: PINN Negative Result
+- "We did attempt a PINN approach first. It diverged. The combination
+  of stiff Arrhenius chemistry, second-derivative instability in
+  cylindrical coordinates, and multi-scale loss competition made it
+  unfeasible. This is a documented negative result."
+- "The lesson: soft physics priors through regularization succeed where
+  hard PDE constraints through PINNs fail, for this class of problems."
+
+SLIDE 7: LXCat Physics
+- "The LXCat integration is physically interesting. The Biagi attachment
+  cross sections are 4-20x larger than legacy Arrhenius, which forces
+  electron temperature up by 56% and electron density down to 34%.
+  But fluorine density barely changes — it's controlled by diffusion
+  and wall recombination, not electron-impact rates."
+- "One honest caveat: the LXCat solver overpredicts Te by 58% compared
+  to Lallement's measurements. The legacy calibrated rates match within
+  5%. This suggests the Biagi attachment cross sections may need revision
+  for SF6 at these conditions."
+
+SLIDE 8: What Mattered Most
+- "If you take one thing from this talk: for stiff reaction-diffusion
+  surrogates, the training recipe matters more than the architecture.
+  Physics regularization alone gives you 5x. Separate heads add another
+  1.8x. Everything else we tried — wider networks, deeper networks,
+  interaction features, robust losses — gave zero improvement."
+
+SLIDE 9: Conclusion
+- "LXCat surrogates can match legacy accuracy. The gap was training,
+  not physics. Separate heads help but the regularization is the key.
+  We're now ready for design-space exploration with first-principles rates."
+
+Q&A PREPARATION:
+- "Why not just use the legacy rates?" — LXCat provides traceable,
+  first-principles rates. The legacy Arrhenius rates are calibrated to
+  specific experimental conditions and may not extrapolate.
+- "Why not fix the PINN?" — We tried 7 different fixes. The fundamental
+  issue is that autograd through stiff chemistry amplifies gradients
+  by 15+ orders of magnitude. This is a known limitation of PINNs
+  for stiff systems.
+- "Is 0.003 RMSE good enough?" — In log10 space, 0.003 corresponds to
+  ~0.7% error in linear density. For process optimization, this is
+  well within engineering tolerance.
