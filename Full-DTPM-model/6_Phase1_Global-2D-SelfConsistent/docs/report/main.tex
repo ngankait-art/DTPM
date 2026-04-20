@@ -34,7 +34,7 @@
 \hypersetup{colorlinks=true,linkcolor=blue!60!black,citecolor=blue!50!black}
 \graphicspath{{figures/}}
 
-\title{A Self-Consistent Global--2D Hybrid Framework for ICP Etch Modelling:\\[6pt]
+\title{A Self-Consistent 2D Steady-State Framework for ICP Etch Modelling:\\[6pt]
 \large Unified Masked-Domain Coupling of Electromagnetic Fields\\
 and SF$_6$/Ar Plasma Chemistry in the TEL Reactor}
 \author{Department of Nuclear, Plasma, and Radiological Engineering\\
@@ -47,7 +47,7 @@ University of Illinois at Urbana-Champaign}
 \begin{abstract}
 Predicting the spatially resolved radical flux at the wafer surface of an inductively coupled plasma (ICP) etcher is the central modelling problem for process-uniformity control in advanced semiconductor manufacturing. Volume-integrated zero-dimensional (0D) global models capture plasma chemistry with quantitative chemical accuracy but provide no spatial information; fully three-dimensional multiphysics solvers deliver spatial detail at computational cost that precludes routine parametric use. Neither framework, taken alone, is suitable as the kernel of an industrial digital twin.
 
-This report presents a \emph{self-consistent Global--2D hybrid framework} --- a \emph{Unified Masked-Domain Model} --- that couples a validated 0D global plasma chemistry solver with a two-dimensional axisymmetric electromagnetic--transport solver on a single shared reactor mask. The hybrid architecture is the principal methodological contribution of this work: a 0D sub-problem supplies volume-averaged electron temperature, ionisation rates, and gas composition; a 2D sub-problem resolves the induced azimuthal electric field, Ohmic power deposition, and spatially resolved electron and radical densities; and a Picard fixed-point iteration returns spatially averaged 2D quantities back to the 0D closure, driving the coupled system to self-consistency. The two solvers share a single axisymmetric geometry mask that encodes the T-shaped TEL reactor (ICP source tube, 2\,mm aperture, and processing chamber) and enforces material-specific wall recombination probabilities following Kokkoris \textit{et al.}\ (2009). The framework replaces the three prescribed parameters of conventional 2D approaches --- coupling efficiency $\eta$, electron-density profile, and electron temperature --- with self-consistent quantities computed from first principles.
+This report presents a \emph{self-consistent 2D steady-state framework} --- a \emph{Unified Masked-Domain Model} --- that couples a validated 0D global plasma chemistry solver with a two-dimensional axisymmetric electromagnetic--transport solver on a single shared reactor mask. The coupled architecture is the principal methodological contribution of this work: a 0D sub-problem supplies volume-averaged electron temperature, ionisation rates, and gas composition; a 2D sub-problem resolves the induced azimuthal electric field, Ohmic power deposition, and spatially resolved electron and radical densities; and a Picard fixed-point iteration returns spatially averaged 2D quantities back to the 0D closure, driving the coupled system to self-consistency. The two solvers share a single axisymmetric geometry mask that encodes the T-shaped TEL reactor (ICP source tube, 2\,mm aperture, and processing chamber) and enforces material-specific wall recombination probabilities following Kokkoris \textit{et al.}\ (2009). The framework replaces the three prescribed parameters of conventional 2D approaches --- coupling efficiency $\eta$, electron-density profile, and electron temperature --- with self-consistent quantities computed from first principles.
 
 The electromagnetic sub-problem is solved by a vectorised cylindrical finite-difference time-domain (FDTD) method at \SI{40}{\mega\hertz} with an embedded coil source and Mur first-order absorbing boundaries. The chemistry sub-problem implements the full Lallement 54-reaction SF$_6$/Ar mechanism, tracking all nine neutral species (SF$_6$, SF$_5$, SF$_4$, SF$_3$, SF$_2$, SF, S, F, F$_2$) and the charged-species hierarchy through coupled diffusion--reaction transport on the 2D domain. Electron density is obtained from an ionisation-source diffusion equation driven by the FDTD power profile, and electron temperature follows from local power balance; charged-species populations are obtained from quasi-neutrality and attachment--recombination balance with the 0D electronegativity $\alpha$ as the reference.
 
@@ -55,7 +55,7 @@ The present revision advances the framework in three architectural directions re
 
 A new physics finding emerges: at Mettler's high-$n_e$ operating point the 0D model returns $\alpha \approx 0.02$, two orders of magnitude below the textbook-electronegative estimate, giving a correction factor of only $\sim 1.02$.  The prior claim that the ambipolar correction would close the 6-pp F-drop residual is therefore falsified by self-consistent physics.  The correction remains physically essential and becomes substantial (factor ${\sim}2$) at lower-power / higher-pressure conditions where $\alpha \gtrsim 1$, so L1 is retained as a required component of the framework.
 
-Together these upgrades enable an \emph{absolute-magnitude} validation against Mettler's 2025 spatially resolved radical-probe dataset.  At Mettler's canonical \SI{1000}{\watt} / \SI{10}{\milli\torr} / 70\,\% SF$_6$ / \SI{200}{\watt} bias operating point, the self-consistent framework converges to $\eta \approx 0.95$, $I_\mathrm{peak} \approx 11.2$\,A, $R_\mathrm{plasma} \approx 15$\,$\Omega$, and a 66--67\,\% centre-to-edge [F] drop (within 8 pp of Mettler's 74\,\%).  Across the full \SIrange{200}{1200}{\watt} sweep, $\eta$ remains in the narrow range 0.949--0.956 and $I_\mathrm{peak}$ tracks $\sqrt{P_\mathrm{rf}}$ from \SI{4.7}{\ampere} to \SI{12.4}{\ampere}.  The prior ``prescribed $\eta$'', ``no wafer-bias sheath'', and ``electropositive ambipolar'' architectural limitations are \emph{resolved}.  Three limitations remain: no electron-energy conduction, steady-state assumption, and single wall temperature.  A single full Picard iteration converges in approximately \SI{55}{\second} on one CPU core.
+Together these upgrades enable an \emph{absolute-magnitude} validation against Mettler's 2025 spatially resolved radical-probe dataset (TEL ICP etcher, Ch.~4.2--4.3; Helicon / PMIC data in Ch.~4.1 are not used).  At Mettler's canonical \SI{1000}{\watt} / \SI{10}{\milli\torr} / 100~sccm SF$_6$/Ar / \SI{200}{\watt} bias operating point, the self-consistent framework converges to $\eta \approx 0.95$, $I_\mathrm{peak} \approx 11.4$\,A, $R_\mathrm{plasma} \approx 15$\,$\Omega$, and a $66.5$--$66.8\,\%$ centre-to-edge [F] drop --- sitting at the lower edge of Mettler's $67$--$75\,\%$ composition-dependent Fig.~4.17 range and matching the 30\,\%~SF$_6$ bias-off branch ($67.2\,\%$) within $0.5$~pp.  An apples-to-apples comparison of absolute [F] at the wafer centre against Mettler's probe-direct Fig.~4.17 values gives residuals of $-56.0\,\%$ (90\,\%~SF$_6$ bias-on) and $-47.3\,\%$ (30\,\%~SF$_6$ bias-on): the bias-sheath module $m12$ reproduces the bias on/off enhancement ratio to within $\pm 11\,\%$ blind-test deviation, but an absolute-magnitude residual remains and is attributed to tier-1 Maxwellian Boltzmann rates (Phase-2 scope) rather than to EM coupling or bias physics.  Across the full \SIrange{200}{1200}{\watt} sweep, $\eta$ remains in the narrow range 0.949--0.956 and $I_\mathrm{peak}$ tracks $\sqrt{P_\mathrm{rf}}$ from \SI{4.7}{\ampere} to \SI{12.4}{\ampere}.  The prior ``prescribed $\eta$'', ``no wafer-bias sheath'', and ``electropositive ambipolar'' architectural limitations are \emph{resolved}.  Three limitations remain: no electron-energy conduction, steady-state assumption, and single wall temperature.  A single full Picard iteration converges in approximately \SI{55}{\second} on one CPU core.
 \end{abstract}
 
 \newpage
@@ -1091,7 +1091,7 @@ Quartz window     & 0.001 & Same as quartz \\
 \end{tabular}
 \end{table}
 
-The aluminum recombination coefficient $\gamma_\mathrm{Al} = 0.18$ is the single calibrated parameter in the TEL reactor model, fitted to reproduce the experimentally observed 74\% F density drop between the ICP source and the wafer for the 90\% SF$_6$ / bias-off branch of Mettler Fig.~4.14 / 4.17~\cite{Mettler2025}.  A cross-check against the 30\% SF$_6$ branch (67\% drop) with the same $\gamma_\mathrm{Al}$ is reported in Section~\ref{sec:mettler-fig417-direct}.
+The aluminum recombination coefficient $\gamma_\mathrm{Al} = 0.18$ is the single calibrated parameter in the TEL reactor model, fitted to reproduce the experimentally observed $\sim 74\,\%$ centre-to-edge F density drop at the 90\,\%~SF$_6$ bias-off branch of Mettler Fig.~4.17~\cite{Mettler2025}.  (Note: Fig.~4.14 in Mettler's dissertation is the normalised radial profile at 70~sccm~SF$_6$ / 30~sccm~Ar with 200~W wafer bias, distinct from the 90\%~SF$_6$ bias-off branch of Fig.~4.17.)  A cross-check against the 30\,\%~SF$_6$ branch (67\,\% drop) with the same $\gamma_\mathrm{Al}$ is reported in Section~\ref{sec:mettler-fig417-direct}.
 
 \subsection{Robin Boundary Condition}
 
@@ -1520,18 +1520,18 @@ The only free parameter is $\gamma_\mathrm{Al}$, which was calibrated to match t
 
 \subsection{Results}
 
-With $\gamma_\mathrm{Al} = 0.18$, the initial formulation predicts a 74\% F density drop from the ICP source to the wafer, in excellent agreement with the experimental value.  Sensitivity analysis shows that $\pm 10\%$ variation in $\gamma_\mathrm{Al}$ produces $\pm 5$ percentage-point change in the F drop, confirming that the model is moderately but not excessively sensitive to the single calibrated parameter.
+With $\gamma_\mathrm{Al} = 0.18$, the initial formulation predicts a 74\,\% F density drop from the ICP source to the wafer, within the $67$--$75\,\%$ composition- and bias-dependent range observed by Mettler across Fig.~4.17 (Ch.~4.3.2)~\cite{Mettler2025} and matching the 90\,\%~SF$_6$ bias-off branch ($74.5\,\%$) within $0.5$~pp.  Sensitivity analysis shows that $\pm 10\,\%$ variation in $\gamma_\mathrm{Al}$ produces $\pm 5$ percentage-point change in the F drop, confirming that the model is moderately but not excessively sensitive to the single calibrated parameter.
 
 This validation establishes confidence in the 2D species transport solver and the wall chemistry model before proceeding to the fully self-consistent coupling in the present work.
 
 
 %=============================================================================
 \newpage
-\chapter{The Global--2D Hybrid Framework: A Unified Masked-Domain Model}
+\chapter{The Global--2D Coupled Framework: A Unified Masked-Domain Model}
 \label{ch:hybrid}
 %=============================================================================
 
-This chapter presents the principal methodological contribution of the present work: a \emph{self-consistent Global--2D hybrid framework} in which a volume-integrated global plasma chemistry solver and a two-dimensional axisymmetric electromagnetic--transport solver are coupled through a Picard fixed-point iteration on a single shared reactor mask.  The resulting architecture --- which we refer to as the \emph{Unified Masked-Domain Model} --- bridges the chemical accuracy of 0D global models and the spatial fidelity of multi-dimensional multiphysics codes at a fraction of the computational cost of the latter, making it directly deployable as the kernel of an industrial digital twin.
+This chapter presents the principal methodological contribution of the present work: a \emph{self-consistent Global--2D coupled framework} in which a volume-integrated global plasma chemistry solver and a two-dimensional axisymmetric electromagnetic--transport solver are coupled through a Picard fixed-point iteration on a single shared reactor mask.  The resulting architecture --- which we refer to as the \emph{Unified Masked-Domain Model} --- bridges the chemical accuracy of 0D global models and the spatial fidelity of multi-dimensional multiphysics codes at a fraction of the computational cost of the latter, making it directly deployable as the kernel of an industrial digital twin.
 
 %======================================================================
 \section{Motivation and Design Philosophy}
@@ -1540,12 +1540,12 @@ This chapter presents the principal methodological contribution of the present w
 
 Volume-integrated 0D global models such as the one of Lallement \textit{et al.}~\cite{Lallement2009} capture the full electron-impact SF$_6$/Ar reaction mechanism to quantitative chemical accuracy but, by construction, deliver only volume-averaged scalars: they cannot resolve the radial gradient of fluorine that ultimately determines etch uniformity.  Fully three-dimensional multiphysics solvers (e.g.\ COMSOL, CFD-ACE+) can deliver spatially resolved fields but require order-of-magnitude-longer runtimes, expose their physics only through proprietary solver settings, and do not lend themselves to parametric sweeps, uncertainty quantification, or machine-learning surrogate construction.
 
-The hybrid framework presented here is designed around four principles:
+The coupled framework presented here is designed around four principles:
 \begin{enumerate}
   \item \textbf{Single shared geometry mask.}  Both the 0D and 2D sub-problems are posed on the same axisymmetric domain, encoded as a boolean mask over the $(r,z)$ mesh (Fig.~\ref{fig:geometry}).  The 0D effective reactor radius and length are derived from volume integrals of the mask rather than being chosen \emph{ad hoc}, ensuring that the 0D and 2D sub-problems see the same T-shaped geometry with the same wall areas.  This is the \emph{unified masked-domain} element of the framework: a single geometric abstraction drives both solvers.
   \item \textbf{Strict separation of roles.}  The 0D sub-problem is responsible for volume-averaged electron energetics (electron temperature, ionisation-to-attachment balance, electronegativity $\alpha$), which it computes to chemical accuracy using the full 54-reaction mechanism.  The 2D sub-problem is responsible for spatial fields (induced $E_\theta$, Ohmic power deposition, $n_e(r,z)$, $T_e(r,z)$, and the nine neutral-species densities), which it computes using cylindrical FDTD and a diffusion--reaction system.  Neither solver duplicates the other's work.
   \item \textbf{Self-consistency by Picard iteration.}  The two sub-problems exchange five quantities (Table~\ref{tab:coupling-quantities}) and iterate to a fixed point: 0D $\to$ 2D passes $T_e$, $n_{e,\mathrm{avg}}$, $\alpha$, and $\bar{n}_{\SFsix}$ as initial guesses and volume constraints; 2D $\to$ 0D returns volume averages of the spatially resolved neutral fields.  The fixed point is reached when the 2D volume averages match the 0D scalars and the residuals of all coupled equations drop below $10^{-3}$ in relative norm.
-  \item \textbf{Three prescribed parameters eliminated.}  Previous 2D approaches to the same reactor required three prescribed parameters --- the coupling efficiency $\eta$, the electron-density profile shape, and a scalar electron temperature --- as external inputs.  The hybrid framework eliminates all three: $\eta$ is recovered from the FDTD Poynting integral; the $n_e(r,z)$ profile is the solution of an ionisation-source diffusion PDE driven by the FDTD power deposition; and $T_e(r,z)$ is computed from local power balance in every mesh cell.
+  \item \textbf{Three prescribed parameters eliminated.}  Previous 2D approaches to the same reactor required three prescribed parameters --- the coupling efficiency $\eta$, the electron-density profile shape, and a scalar electron temperature --- as external inputs.  The present framework eliminates all three: $\eta$ is recovered from the FDTD Poynting integral; the $n_e(r,z)$ profile is the solution of an ionisation-source diffusion PDE driven by the FDTD power deposition; and $T_e(r,z)$ is computed from local power balance in every mesh cell.
 \end{enumerate}
 
 Figure~\ref{fig:coupling-flow} illustrates the resulting data flow.  The 0D solver executes first, producing a warm start for the 2D FDTD and chemistry solvers.  The 2D solvers run on the shared mask, returning volume averages to the 0D solver, which updates $T_e$ and $\alpha$.  The loop terminates on convergence; on diverging residuals, an under-relaxation coefficient is reduced and the iteration continues.
@@ -1579,7 +1579,7 @@ Figure~\ref{fig:coupling-flow} illustrates the resulting data flow.  The 0D solv
     % Feedback loop: converged? no -> back to mask (start another iteration)
     \draw[arr, dashed] (conv.east) -- ++(2.2,0) |- node[pos=0.25, right, font=\scriptsize]{no: iterate} (mask.east);
   \end{tikzpicture}
-  \caption{Data flow of the Global--2D hybrid framework.  The two solvers share a single axisymmetric masked domain $\Omega$.  The 0D solver provides volume-averaged electron energetics ($T_e$, $n_{e,\mathrm{avg}}$, $\alpha$, $\bar n_{\mathrm{SF}_6}$) to initialise the 2D solve (upper curved arrow); the 2D solver returns volume-averaged neutral densities $\langle n_s\rangle_V$ and a self-consistent coupling efficiency $\eta$ derived from the FDTD Poynting integral (lower curved arrow).  Picard iteration continues until $|\Delta T_e|/T_e < 10^{-3}$; on non-convergence the dashed feedback path re-enters the shared mask for another iteration.}
+  \caption{Data flow of the Global--2D coupled framework.  The two solvers share a single axisymmetric masked domain $\Omega$.  The 0D solver provides volume-averaged electron energetics ($T_e$, $n_{e,\mathrm{avg}}$, $\alpha$, $\bar n_{\mathrm{SF}_6}$) to initialise the 2D solve (upper curved arrow); the 2D solver returns volume-averaged neutral densities $\langle n_s\rangle_V$ and a self-consistent coupling efficiency $\eta$ derived from the FDTD Poynting integral (lower curved arrow).  Picard iteration continues until $|\Delta T_e|/T_e < 10^{-3}$; on non-convergence the dashed feedback path re-enters the shared mask for another iteration.}
   \label{fig:coupling-flow}
 \end{figure}
 
@@ -1618,20 +1618,20 @@ The five coupling quantities of Table~\ref{tab:coupling-quantities} are exchange
 Under-relaxation with $w = 0.3$ is applied to both $n_e$ and $T_e$ to stabilise the iteration against the strong nonlinear coupling through the ionisation rate $k_\mathrm{iz}(T_e) \propto \exp(-E_\mathrm{iz}/T_e)$.  At the reference conditions (700\,W, 10\,mTorr, SF$_6$), the iteration converges monotonically in 20 Picard steps.
 
 %======================================================================
-\section{What the Hybrid Framework Eliminates}
+\section{What the Coupled Framework Eliminates}
 \label{sec:hybrid-elimination}
 %======================================================================
 
-Table~\ref{tab:prescribed-vs-hybrid} contrasts the three parameters that previous 2D approaches required as external inputs with the first-principles quantities the hybrid framework computes in their place.  The shift from a prescribed discharge to a self-consistent one is the core advance of the present work.
+Table~\ref{tab:prescribed-vs-hybrid} contrasts the three parameters that previous 2D approaches required as external inputs with the first-principles quantities the present framework computes in their place.  The shift from a prescribed discharge to a self-consistent one is the core advance of the present work.
 
 \begin{table}[H]
 \centering
-\caption{Comparison of prescribed parameters in previous 2D approaches with the self-consistent quantities produced by the Global--2D hybrid framework.}
+\caption{Comparison of prescribed parameters in previous 2D approaches with the self-consistent quantities produced by the Global--2D coupled framework.}
 \label{tab:prescribed-vs-hybrid}
 \small
 \begin{tabular}{@{}p{3.7cm}p{5.3cm}p{5.6cm}@{}}
 \toprule
-\textbf{Quantity} & \textbf{Previous prescription} & \textbf{Hybrid framework} \\
+\textbf{Quantity} & \textbf{Previous prescription} & \textbf{Coupled framework} \\
 \midrule
 Coupling efficiency $\eta$ &
   Scalar, fixed at 0.43 (H-mode estimate from Lieberman \& Lichtenberg~\cite{Lieberman2005}).
@@ -1671,7 +1671,7 @@ and the Ohmic-integral power absorbed by the plasma is
   P_\mathrm{abs} \;=\; \int_{\Omega_\mathrm{plasma}} \tfrac{1}{2}\,\sigma(r,z)\,|E_\theta(r,z)|^2\, dV \;=\; \tfrac{1}{2}\,I_\mathrm{peak}^2\,R_\mathrm{plasma}\,.
   \label{eq:Ohmic-integral}
 \end{equation}
-Neither $R_\mathrm{plasma}$ nor $\eta$ is prescribed: they emerge from the converged plasma conductivity $\sigma(r,z)$ and the FDTD-computed field distribution.  The only inputs are $P_\mathrm{rf}$ (the user's operating knob), $R_\mathrm{coil}$, and $L_\mathrm{coil}$.  The literature values are $R_\mathrm{coil} = 0.8\,\Omega$ (Lieberman Eq.~12.2.19, TEL-class 3-turn coil) and $L_\mathrm{coil} = 2.0\,\mu\mathrm{H}$ (Lieberman §12.2, typical industrial ICP); both are tabulated with full provenance in \texttt{docs/ASSUMED\_PARAMETERS.md}.
+Neither $R_\mathrm{plasma}$ nor $\eta$ is prescribed: they emerge from the converged plasma conductivity $\sigma(r,z)$ and the FDTD-computed field distribution.  The only inputs are $P_\mathrm{rf}$ (the user's operating knob), $R_\mathrm{coil}$, and $L_\mathrm{coil}$.  The nominal literature values are $R_\mathrm{coil} = 0.8\,\Omega$ (Lieberman Eq.~12.2.19, TEL-class 3-turn coil) and $L_\mathrm{coil} = 2.0\,\mu\mathrm{H}$ (Lieberman §12.2, typical industrial ICP); both are tabulated with full provenance in \texttt{docs/ASSUMED\_PARAMETERS.md}.  The exact value of $R_\mathrm{coil}$ is not well-constrained by the available literature: manufacturer datasheets for TEL-class 3-turn coils span $\sim\!0.5$--$4\,\Omega$ depending on matching-network losses, wire gauge, and the ferrite core used.  A diagnostic discovery sweep across $R_\mathrm{coil} \in \{0.5, 0.8, 1.2, 1.5, 2.0, 2.5, 3.0, 4.0\}\,\Omega$ at the Mettler operating point is reported in \S\ref{sec:mettler-fig417-direct} (D3 memo); the framework is used at the nominal $R_\mathrm{coil} = 0.8\,\Omega$ with the sweep band quoted as a systematic uncertainty.
 
 \subsection{Algorithm and Driven-CW FDTD Source}
 
@@ -1681,7 +1681,7 @@ An important secondary fix replaces the prior Gaussian-pulsed FDTD source --- wh
 
 \subsection{Validation}
 
-A unit test (\texttt{tests/test\_selfconsistent\_eta.py}) asserts the limiting-case invariants: $\eta=1$ when $R_\mathrm{coil}=0$, and $\eta=0$ when $R_\mathrm{plasma}=0$.  In production operation at the present work's reference conditions (\SI{1000}{\watt}, \SI{10}{\milli\torr}, 70\,\% SF$_6$, \SI{200}{\watt} rf bias), the converged values are $\eta \approx 0.950$, $I_\mathrm{peak} \approx \SI{11.2}{\ampere}$, $R_\mathrm{plasma} \approx \SI{15.3}{\ohm}$ --- in the strongly loading-limited regime ($R_\mathrm{plasma} / R_\mathrm{coil} \approx 19$) typical of TEL-class ICPs under these operating conditions.  Across the full \SIrange{200}{1200}{\watt} sweep $\eta$ stays in the narrow range 0.949--0.956 (Fig.~\ref{fig:eta-sweep}), so the power-coupling efficiency is not a strong function of power at fixed composition and pressure --- a finding only accessible now that $\eta$ is computed rather than prescribed.
+A unit test (\texttt{tests/test\_selfconsistent\_eta.py}) asserts the limiting-case invariants: $\eta=1$ when $R_\mathrm{coil}=0$, and $\eta=0$ when $R_\mathrm{plasma}=0$.  In production operation at the present work's reference conditions (\SI{1000}{\watt}, \SI{10}{\milli\torr}, 70\,\% SF$_6$, \SI{200}{\watt} rf bias) with the nominal $R_\mathrm{coil} = 0.8\,\Omega$, the converged values are $\eta \approx 0.950$, $I_\mathrm{peak} \approx \SI{11.4}{\ampere}$, $R_\mathrm{plasma} \approx \SI{14.6}{\ohm}$ --- in the strongly loading-limited regime ($R_\mathrm{plasma} / R_\mathrm{coil} \approx 18$) typical of TEL-class ICPs under these operating conditions.  The D3 $R_\mathrm{coil}$ discovery sweep (\S\ref{sec:mettler-fig417-direct}) quantifies the systematic uncertainty: across $R_\mathrm{coil} \in \{0.5, 4.0\}\,\Omega$, the converged $\eta$ spans $0.79$--$0.97$, $I_\mathrm{peak}$ spans $10.24$--$\SI{11.49}{\ampere}$, and $R_\mathrm{plasma}$ spans $14.63$--$\SI{15.08}{\ohm}$, while the wafer-centre $[\mathrm{F}]$ changes by only $\pm 5\,\%$ and the radial $[\mathrm{F}]$ drop is invariant at $66.5$--$66.8\,\%$ --- confirming that $R_\mathrm{coil}$ is a power-efficiency knob rather than a radial-profile-shape knob.  Across the full \SIrange{200}{1200}{\watt} $P_\mathrm{rf}$ sweep at fixed nominal $R_\mathrm{coil}$, $\eta$ stays in the narrow range 0.949--0.956 (Fig.~\ref{fig:eta-sweep}), so the power-coupling efficiency is not a strong function of power at fixed composition and pressure --- a finding only accessible now that $\eta$ is computed rather than prescribed.
 
 
 %======================================================================
@@ -1773,7 +1773,7 @@ The correction factor $(1+\alpha)/(1+\alpha T_i/T_e)$ approaches 2 only when $\a
 \label{sec:hybrid-limits}
 %======================================================================
 
-The Global--2D hybrid framework described in this chapter is, by design, a minimal self-consistent architecture: it is intentionally \emph{not} a complete multi-dimensional multiphysics solver.  Three architectural limitations documented in the prior revision --- prescribed power-coupling efficiency, the absence of a wafer-bias sheath, and the electropositive ambipolar diffusion coefficient --- are \emph{resolved} in this revision (\S\ref{sec:selfconsistent-eta}, \S\ref{sec:m12-bias-sheath}, and \S\ref{sec:electronegative-ambipolar} respectively).  Three principal limitations remain, plus one kinetic-regime scope note.  Each remaining item is individually tractable and is tagged for resolution in a specific development task in Chapter~\ref{ch:future} (Future Work).
+The Global--2D coupled framework described in this chapter is, by design, a minimal self-consistent architecture: it is intentionally \emph{not} a complete multi-dimensional multiphysics solver.  Three architectural limitations documented in the prior revision --- prescribed power-coupling efficiency, the absence of a wafer-bias sheath, and the electropositive ambipolar diffusion coefficient --- are \emph{resolved} in this revision (\S\ref{sec:selfconsistent-eta}, \S\ref{sec:m12-bias-sheath}, and \S\ref{sec:electronegative-ambipolar} respectively).  Three principal limitations remain, plus one kinetic-regime scope note.  Each remaining item is individually tractable and is tagged for resolution in a specific development task in Chapter~\ref{ch:future} (Future Work).
 
 \begin{description}
 
@@ -1792,7 +1792,7 @@ The Global--2D hybrid framework described in this chapter is, by design, a minim
 
 \end{description}
 
-The remaining limitations above are not artefacts of the hybrid-framework architecture itself --- they are accuracy-versus-runtime trade-offs selected to keep the single-point runtime at $\sim$55\,s on one CPU core, so that the framework remains usable for parametric sweeps and ML-surrogate training runs.  Each remaining limitation is addressed as a specific task in Chapter~\ref{ch:future}.  The two limitations resolved in this revision (prescribed $\eta$ and no wafer-bias sheath) are discussed in \S\ref{sec:selfconsistent-eta} and \S\ref{sec:m12-bias-sheath}.
+The remaining limitations above are not artefacts of the coupled-framework architecture itself --- they are accuracy-versus-runtime trade-offs selected to keep the single-point runtime at $\sim$55\,s on one CPU core, so that the framework remains usable for parametric sweeps and ML-surrogate training runs.  Each remaining limitation is addressed as a specific task in Chapter~\ref{ch:future}.  The two limitations resolved in this revision (prescribed $\eta$ and no wafer-bias sheath) are discussed in \S\ref{sec:selfconsistent-eta} and \S\ref{sec:m12-bias-sheath}.
 
 
 %=============================================================================
@@ -1801,7 +1801,7 @@ The remaining limitations above are not artefacts of the hybrid-framework archit
 \label{part:phase1}
 %=============================================================================
 
-Having described the Global--2D hybrid framework at the architectural level in Chapter~\ref{ch:hybrid}, this chapter documents the numerical implementation of each 2D sub-solver: cylindrical FDTD for the induced electromagnetic field, the ionisation-source diffusion PDE for self-consistent $n_e(r,z)$, local power balance for $T_e(r,z)$, and the outer Picard iteration loop with mesh-convergence results.
+Having described the Global--2D coupled framework at the architectural level in Chapter~\ref{ch:hybrid}, this chapter documents the numerical implementation of each 2D sub-solver: cylindrical FDTD for the induced electromagnetic field, the ionisation-source diffusion PDE for self-consistent $n_e(r,z)$, local power balance for $T_e(r,z)$, and the outer Picard iteration loop with mesh-convergence results.
 
 
 %======================================================================
@@ -2208,12 +2208,12 @@ Total absorbed power $P_\mathrm{abs}$     & \SI{301}{\watt}     & \SI{301}{\watt
 Peak $|E_{\theta,\mathrm{rms}}|$ & \SI{458}{\volt/\meter} & --- & --- \\
 SF$_6$ dissociation fraction          & 14\%                 & 50\% (2-species)      & --- \\
 Species solved                        & 9 neutrals + ions    & 2 (F, SF$_6$)         & --- \\
-Centre-to-edge [F] drop at wafer     & \textbf{68.2\%}     & \textbf{74\%}         & \textbf{74\%} \\
+Centre-to-edge [F] drop at wafer     & \textbf{68.2\%}     & \textbf{74\%}         & \textbf{67--75\% (Fig.~4.17)} \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-The central result is the 68.2\% fluorine density drop from wafer centre to edge, obtained without any calibration beyond the wall recombination coefficient $\gamma_\mathrm{Al} = 0.18$ that was established in the initial formulation.  This value lies within 4~percentage points (pp) of the spatially resolved radical probe measurement of 74\% reported by Mettler~\cite{Mettler2025}, representing agreement well within the uncertainty band of the wall chemistry parameterization ($\pm 5$~pp for $\pm 10\%$ variation in $\gamma_\mathrm{Al}$).
+The central result is the 68.2\% fluorine density drop from wafer centre to edge, obtained without any calibration beyond the wall recombination coefficient $\gamma_\mathrm{Al} = 0.18$ that was established in the initial formulation.  Mettler's Fig.~4.17 spans a composition- and bias-dependent range of $67$--$75\,\%$ (specifically $67.2\,\%$ at 30\,\%~SF$_6$ bias-off, $75.0\,\%$ at 30\,\%~SF$_6$ bias-on, $74.5\,\%$ at 90\,\%~SF$_6$ bias-off, $74.8\,\%$ at 90\,\%~SF$_6$ bias-on; computed from the digitised CSVs at \texttt{data/mettler/}); the model's single drop of $68.2\,\%$ sits in the lower part of that band and lies within $4$~percentage points (pp) of the 30\,\%-SF$_6$ bias-off reference, well within the uncertainty band of the wall chemistry parameterisation ($\pm 5$~pp for $\pm 10\,\%$ variation in $\gamma_\mathrm{Al}$).  The model does not currently reproduce the full $8$-pp composition spread; this is the composition-insensitivity of a fixed $\gamma_\mathrm{Al}$, flagged as a Phase-3 scope item.
 
 \subsection{Electromagnetic Field Structure}
 
@@ -2315,11 +2315,11 @@ Figure~\ref{fig:wafer-profiles} presents the radial profiles of key quantities a
 \begin{figure}[H]
   \centering
   \includegraphics[width=0.75\textwidth]{fig_wafer_profiles}
-  \caption{Radial profiles at the wafer surface ($z = 0$).  (a)~Absolute fluorine density showing the centre-to-edge drop of 68.2\%.  (b)~Normalised fluorine density with the Mettler 90\%-SF$_6$ reference level (dashed green, 74\% drop at \SI{1000}{\watt}, bias-off, Fig.~4.14)~\cite{Mettler2025}.  (c)~Electron density at the ICP midplane ($z = 139$~mm), peaked near $r \approx 20$~mm.  (d)~SF$_6$ density at the wafer, increasing toward the edge due to reduced dissociation.}
+  \caption{Radial profiles at the wafer surface ($z = 0$).  (a)~Absolute fluorine density showing the centre-to-edge drop of 68.2\%.  (b)~Normalised fluorine density with the Mettler 90\%-SF$_6$ bias-off reference level (dashed green, $74.5\,\%$ drop at \SI{1000}{\watt}, from Fig.~4.17)~\cite{Mettler2025}.  (c)~Electron density at the ICP midplane ($z = 139$~mm), peaked near $r \approx 20$~mm.  (d)~SF$_6$ density at the wafer, increasing toward the edge due to reduced dissociation.}
   \label{fig:wafer-profiles}
 \end{figure}
 
-The model prediction for the wafer-level [F] profile is compared directly with the Mettler radical-probe data in Figure~\ref{fig:radial-F-mettler}.  The hybrid framework reproduces the experimental five-point normalised radial profile within $\pm 10$\,\% over the inner half of the wafer ($r < 4$~cm), while over-predicting by 15--27\,\% at the outer points ($r = 6$--$8$~cm).  In the prior revision this residual was attributed to the omitted electronegative ambipolar correction; the present revision implements that correction (\S\ref{sec:electronegative-ambipolar}) and finds that at the self-consistent $\alpha \approx 0.02$ the correction factor is only $\sim 1.02$, so it does not close the residual.  The remaining gap is now attributed primarily to the composition-insensitive $\gamma_\mathrm{Al} = 0.18$ calibration, which is a Phase-3 scope item.  A direct absolute-[F] benchmark at Mettler's actual operating conditions (\SI{1000}{\watt}, 30\% and 90\% SF$_6$) is given in Section~\ref{sec:mettler-fig417-direct}.
+The model prediction for the wafer-level [F] profile is compared directly with the Mettler radical-probe data in Figure~\ref{fig:radial-F-mettler}.  The coupled framework reproduces the experimental five-point normalised radial profile within $\pm 10$\,\% over the inner half of the wafer ($r < 4$~cm), while over-predicting by 15--27\,\% at the outer points ($r = 6$--$8$~cm).  In the prior revision this residual was attributed to the omitted electronegative ambipolar correction; the present revision implements that correction (\S\ref{sec:electronegative-ambipolar}) and finds that at the self-consistent $\alpha \approx 0.02$ the correction factor is only $\sim 1.02$, so it does not close the residual.  The remaining gap is now attributed primarily to the composition-insensitive $\gamma_\mathrm{Al} = 0.18$ calibration, which is a Phase-3 scope item.  A direct absolute-[F] benchmark at Mettler's actual operating conditions (\SI{1000}{\watt}, 30\% and 90\% SF$_6$) is given in Section~\ref{sec:mettler-fig417-direct}.
 
 \begin{figure}[H]
   \centering
@@ -2377,7 +2377,7 @@ The sequential dissociation chain from SF$_6$ to atomic sulphur is shown in Figu
   \label{fig:chain}
 \end{figure}
 
-Panel~(b) is the primary validation diagnostic.  The normalised F profile $n_\mathrm{F}(r)/n_\mathrm{F}(0)$ decreases monotonically from 1 at the centre to $\sim$0.22 at $r = 105$~mm.  The experimental 74\% drop level (corresponding to $n_\mathrm{F}/n_\mathrm{F}(0) = 0.26$) is shown as a dashed green line; the model prediction crosses this level at $r \approx 80$~mm and reaches a somewhat lower value at the full chamber radius.
+Panel~(b) is the primary validation diagnostic.  The normalised F profile $n_\mathrm{F}(r)/n_\mathrm{F}(0)$ decreases monotonically from 1 at the centre to $\sim 0.22$ at $r = 105$~mm.  The experimental $74.5\,\%$ drop level for 90\,\%~SF$_6$ bias-off (corresponding to $n_\mathrm{F}/n_\mathrm{F}(0) = 0.255$, from Fig.~4.17~\cite{Mettler2025}) is shown as a dashed green line; the model prediction crosses this level at $r \approx 80$~mm and reaches a somewhat lower value at the full chamber radius.  Mettler's 30\,\%~SF$_6$ bias-off branch has a shallower drop ($67.2\,\%$, $n_\mathrm{F}/n_\mathrm{F}(0) = 0.328$) that the fixed-$\gamma_\mathrm{Al}$ model does not reproduce.
 
 Panel~(c) shows the electron density profile at the ICP source midplane.  The peak at $r \approx 20$~mm---rather than on the axis---reflects the finite radial extent of the ionization source (driven by the skin-depth power deposition) modulated by ambipolar diffusion and wall loss.  This off-axis peak is a genuine prediction of the self-consistent model and differs from the on-axis maximum of the prescribed Bessel--cosine eigenmode used in the initial formulation.
 
@@ -2477,7 +2477,7 @@ The pressure dependence of the electron density follows the scaling $n_e \propto
 \label{sec:abs-validation}
 %======================================================================
 
-Figure~\ref{fig:abs-4panel} presents the four-panel absolute-[F] validation along with the source--sink balance, the $n_e$--SF$_6$-depletion trend, and the [F]-drop-vs-power summary.  Note that Mettler does not report a direct TEL power sweep; his absolute-[F] TEL data (Fig.~4.9) is a SF$_6$-flow sweep at fixed power (\SI{600}{\watt}/\SI{20}{\milli\torr} and \SI{700}{\watt}/\SI{40}{\milli\torr}).  The circles overlaid in panel~(a) are the closest available data points from Mettler's Fig.~4.9 SF$_6$-flow branches, used here as a qualitative order-of-magnitude reference rather than a like-for-like power sweep.  The model reproduces those reference points to within a factor of 1.3 for $P \geq$ \SI{300}{\watt}; the systematic overestimate at \SI{200}{\watt} reflects the E-to-H mode transition, which the hybrid framework treats as a single continuous H-mode branch.
+Figure~\ref{fig:abs-4panel} presents the four-panel absolute-[F] validation along with the source--sink balance, the $n_e$--SF$_6$-depletion trend, and the [F]-drop-vs-power summary.  Note that Mettler does not report a direct TEL power sweep; his absolute-[F] TEL data (Fig.~4.9) is a SF$_6$-flow sweep at fixed power (\SI{600}{\watt}/\SI{20}{\milli\torr} and \SI{700}{\watt}/\SI{40}{\milli\torr}).  The circles overlaid in panel~(a) are the closest available data points from Mettler's Fig.~4.9 SF$_6$-flow branches, used here as a qualitative order-of-magnitude reference rather than a like-for-like power sweep.  The model reproduces those reference points to within a factor of 1.3 for $P \geq$ \SI{300}{\watt}; the systematic overestimate at \SI{200}{\watt} reflects the E-to-H mode transition, which the steady-state framework treats as a single continuous H-mode branch.
 
 \begin{figure}[H]
   \centering
@@ -2492,7 +2492,7 @@ Figure~\ref{fig:abs-4panel} presents the four-panel absolute-[F] validation alon
 \label{sec:mettler-fig417-direct}
 %======================================================================
 
-The canonical operating point of this revision is Mettler's own spatial-benchmark condition: $P_\mathrm{ICP} = $ \SI{1000}{\watt}, $p = $ \SI{10}{\milli\torr}, \SI{100}{sccm} total flow (90\,\% or 30\,\% SF$_6$ with balance Ar), and \SI{200}{\watt} rf wafer bias.  Both of the architectural upgrades introduced in this revision --- self-consistent $\eta$ (\S\ref{sec:selfconsistent-eta}) and the $m12$ capacitive-bias sheath (\S\ref{sec:m12-bias-sheath}) --- let the framework predict absolute [F] values at this operating point without any post-hoc rescaling.  The prior revision's 2--4$\times$ absolute-magnitude shortfall against Mettler's bias-on data is closed here.
+The canonical operating point of this revision is Mettler's own spatial-benchmark condition: $P_\mathrm{ICP} = $ \SI{1000}{\watt}, $p = $ \SI{10}{\milli\torr}, \SI{100}{sccm} total flow (90\,\% or 30\,\% SF$_6$ with balance Ar), and \SI{200}{\watt} rf wafer bias.  Both of the architectural upgrades introduced in this revision --- self-consistent $\eta$ (\S\ref{sec:selfconsistent-eta}) and the $m12$ capacitive-bias sheath (\S\ref{sec:m12-bias-sheath}) --- let the framework predict absolute [F] values at this operating point without any post-hoc rescaling.  The prior revision's 2--4$\times$ absolute-magnitude shortfall against Mettler's bias-on data is partially closed here: the apples-to-apples centre [F] residuals against Mettler's Fig.~4.17 probe-direct values (90\%~SF$_6$ bias-on: $3.774 \times 10^{20}$~m$^{-3}$; 30\%~SF$_6$ bias-on: $1.297 \times 10^{20}$~m$^{-3}$) are $-56.0\,\%$ and $-47.3\,\%$ respectively, measured under the D1 / D3 diagnostic campaign (see \texttt{docs/notes/DIAGNOSTIC\_SWEEPS\_D1\_D3\_MEMO.md}).  An earlier framing of this residual as ``$\sim -33\,\%$'' was traced to an apples-to-oranges comparison of bias-on model against bias-off Mettler and is withdrawn.
 
 \begin{figure}[H]
   \centering
@@ -2529,7 +2529,27 @@ Panel~(a) of Fig.~\ref{fig:mettler-fig417-v2} shows that the normalised radial p
 
 \subsection{Absolute Magnitude}
 
-Panels~(b)-(c) of Fig.~\ref{fig:mettler-fig417-v2} show that with the self-consistent $\eta$, the calibrated bias sheath, and the electronegative ambipolar correction (\S\ref{sec:electronegative-ambipolar}), the model agrees with Mettler's bias-on absolute [F] within $\pm 30\,\%$ at the wafer centre for both compositions, recovering the factor-of-2--4 absolute-magnitude gap seen in the prior revision.  An important physics finding (\S\ref{sec:L1-finding-alpha-small}) is that the 0D model returns $\alpha \approx 0.02$ at this operating point --- two orders of magnitude below the typical-electronegative textbook estimate --- so the L1 correction factor is $\sim 1.02$, and L1 cannot close the residual gap.  The residual gap must therefore be attributed to other effects (see remaining limitations below).
+Panels~(b)-(c) of Fig.~\ref{fig:mettler-fig417-v2} show that with the self-consistent $\eta$, the calibrated bias sheath, and the electronegative ambipolar correction (\S\ref{sec:electronegative-ambipolar}), the model recovers between two-thirds and half of the factor-of-2--4 absolute-magnitude gap seen in the prior revision, but a systematic shortfall remains.  Table~\ref{tab:mettler-fig417-residuals} reports the apples-to-apples wafer-centre residuals against the Mettler Fig.~4.17 probe-direct values (bias-on vs bias-on, bias-off vs bias-off), taken directly from the digitised CSVs at \texttt{data/mettler/mettler\_fig4p17\_*\_density.csv}:
+
+\begin{table}[H]
+  \centering
+  \caption{Wafer-centre $[\mathrm{F}]$ residuals (\(r=0\)) of the self-consistent framework vs.~Mettler Fig.~4.17 probe-direct reference values.  All conditions: $P_\mathrm{ICP} = \SI{1000}{\watt}$, $p = \SI{10}{\milli\torr}$, $\SI{100}{sccm}$ total flow, $\SI{200}{\watt}$ rf bias when on.  ``Direct read'' rows confirm the $67$--$75\,\%$ drop range of Mettler Ch.~4.3.2.}
+  \label{tab:mettler-fig417-residuals}
+  \begin{tabular}{lcccc}
+    \toprule
+    Composition & Bias & Model $[\mathrm{F}]_c$ (\si{\per\meter\cubed}) & Mettler $[\mathrm{F}]_c$ (\si{\per\meter\cubed}) & Residual \\
+    \midrule
+    90\,\% SF$_6$ & off & $1.031 \times 10^{20}$ & $2.327 \times 10^{20}$ & $-55.7\,\%$ \\
+    90\,\% SF$_6$ & on  & $1.659 \times 10^{20}$ & $3.774 \times 10^{20}$ & $-56.0\,\%$ \\
+    30\,\% SF$_6$ & off & $0.365 \times 10^{20}$ & $0.616 \times 10^{20}$ & $-40.7\,\%$ \\
+    30\,\% SF$_6$ & on  & $0.683 \times 10^{20}$ & $1.297 \times 10^{20}$ & $-47.3\,\%$ \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+The bias-on/off enhancement ratios are reproduced tightly (90\,\%~SF$_6$: model $\times 1.610$ vs.~Mettler $\times 1.621$, deviation $-0.7\,\%$; 30\,\%~SF$_6$: model $\times 1.873$ vs.~Mettler $\times 2.106$, deviation $-11.1\,\%$), so the $m12$ bias-sheath module captures the shape of the bias response to within $\pm 11\,\%$ in the blind test.  The remaining absolute-magnitude residual of $-56.0\,\%$ (90\,\%~SF$_6$) and $-47.3\,\%$ (30\,\%~SF$_6$) is invariant under the bias toggle and therefore lies outside the $m12$ module.  An important physics finding (\S\ref{sec:L1-finding-alpha-small}) is that the 0D model returns $\alpha \approx 0.02$ at this operating point --- two orders of magnitude below the typical-electronegative textbook estimate --- so the L1 correction factor is $\sim 1.02$, and the electronegative-ambipolar correction cannot close the gap either.  The D3 $R_\mathrm{coil}$ discovery sweep (\S\ref{sec:selfconsistent-eta}) further rules out the EM-coupling module: over the physical range $R_\mathrm{coil} \in \{0.5, 4.0\}\,\Omega$, centre $[\mathrm{F}]$ varies by only $\pm 5\,\%$ and the residual worsens monotonically from $-55.8\,\%$ to $-59.4\,\%$.  The residual is therefore attributed to the tier-1 Maxwellian Boltzmann rate coefficients used for the electron-impact dissociation channel (Phase-2 tier-2 PINN scope) and/or to neutral-transport coefficients in the wall-chemistry layer (Phase-3 scope).
+
+\emph{Direct read of the Mettler dissertation (Ch.~4.3.2, p.~75)~\cite{Mettler2025}} confirms two further data points used in the residual table: (i) Fig.~4.17 is reported as radical-probe-direct (not actinometry), so the Eq.~4.2 volumetric-to-centre correction factor ($\times 1.62$) is already implicit in the Fig.~4.17 values and must not be applied on top; (ii) Mettler's own reported centre-to-edge drop range is $67$--$75\,\%$ across compositions and bias states, consistent with the digitised CSVs.
 
 \subsection{What Has Been Resolved vs What Remains}
 
@@ -2546,7 +2566,7 @@ Panels~(b)-(c) of Fig.~\ref{fig:mettler-fig417-v2} show that with the self-consi
 \label{sec:benchmark-0d}
 %======================================================================
 
-The 2D hybrid model is benchmarked against the validated 0D Lallement global model run with TEL ICP geometry ($R_\mathrm{ICP} = $ \SI{38}{\milli\meter}, $L_\mathrm{ICP} = $ \SI{150}{\milli\meter}).  The 0D solver is the same code used as the inner 0D sub-problem of the hybrid iteration, but run in stand-alone mode without the 2D feedback channel so that the 0D reference is free of the spatial information carried by the 2D densities.  Figure~\ref{fig:benchmark-neutrals} overlays the ICP volume-averaged neutral species from both models across power and pressure sweeps.
+The 2D coupled model is benchmarked against the validated 0D Lallement global model run with TEL ICP geometry ($R_\mathrm{ICP} = $ \SI{38}{\milli\meter}, $L_\mathrm{ICP} = $ \SI{150}{\milli\meter}).  The 0D solver is the same code used as the inner 0D sub-problem of the coupled iteration, but run in stand-alone mode without the 2D feedback channel so that the 0D reference is free of the spatial information carried by the 2D densities.  Figure~\ref{fig:benchmark-neutrals} overlays the ICP volume-averaged neutral species from both models across power and pressure sweeps.
 
 \begin{figure}[H]
   \centering
@@ -2582,7 +2602,7 @@ Figure~\ref{fig:benchmark-charged-indiv} shows each charged-species diagnostic i
 \begin{figure}[H]
   \centering
   \includegraphics[width=0.98\textwidth]{fig_benchmark_charged_individual}
-  \caption{Individual charged species benchmark with ratio summary table.  Green cells indicate agreement within 2$\times$ of the 0D reference; yellow within 5$\times$; red outside 5$\times$.  The overall pattern --- agreement within 2$\times$ for ten of twelve species and diagnostics --- is the quantitative validation of the Global--2D hybrid architecture.}
+  \caption{Individual charged species benchmark with ratio summary table.  Green cells indicate agreement within 2$\times$ of the 0D reference; yellow within 5$\times$; red outside 5$\times$.  The overall pattern --- agreement within 2$\times$ for ten of twelve species and diagnostics --- is the quantitative validation of the Global--2D coupled architecture.}
   \label{fig:benchmark-charged-indiv}
 \end{figure}
 
@@ -2593,7 +2613,7 @@ The principal discrepancies between the 0D and 2D models arise from (i)~spatial 
 \label{sec:ar-mixture}
 %======================================================================
 
-To test the framework's handling of a second major gas species, a 50/50 SF$_6$/Ar mixture at the reference operating point (700\,W, 10\,mTorr) was simulated with the full Global--2D hybrid coupling.  Figure~\ref{fig:ar-mixture} presents the 2D [F] and [Ar*] metastable density maps.
+To test the framework's handling of a second major gas species, a 50/50 SF$_6$/Ar mixture at the reference operating point (700\,W, 10\,mTorr) was simulated with the full Global--2D coupled iteration.  Figure~\ref{fig:ar-mixture} presents the 2D [F] and [Ar*] metastable density maps.
 
 \begin{figure}[H]
   \centering
@@ -2648,7 +2668,7 @@ Figure~\ref{fig:residuals} shows the convergence history and spatial residual ma
   \label{fig:residuals}
 \end{figure}
 
-The two residual diagnostics together locate the model deficiencies precisely: panel (a) shows that the radial over-prediction of [F] is confined to the outer half of the wafer --- exactly where the ambipolar transport of negative ions (which the present solver omits) would otherwise enhance the neutral loss rate --- and panel (b) confirms that the absolute [F] prediction is well inside a factor-of-two tolerance across the full power range.  The systematic under-prediction at 200 W reflects the E-to-H mode transition that the steady-state hybrid framework cannot capture.  Neither deficiency is a numerical artefact: the Picard iteration converges to $|\Delta T_e|/T_e < 10^{-3}$ within 20 iterations at every operating point.
+The two residual diagnostics together locate the model deficiencies precisely: panel (a) shows that the radial over-prediction of [F] is confined to the outer half of the wafer --- exactly where the ambipolar transport of negative ions (which the present solver omits) would otherwise enhance the neutral loss rate --- and panel (b) confirms that the absolute [F] prediction is well inside a factor-of-two tolerance across the full power range.  The systematic under-prediction at 200 W reflects the E-to-H mode transition that the steady-state coupled framework cannot capture.  Neither deficiency is a numerical artefact: the Picard iteration converges to $|\Delta T_e|/T_e < 10^{-3}$ within 20 iterations at every operating point.
 
 
 %======================================================================
