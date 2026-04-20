@@ -1505,7 +1505,13 @@ Before developing the self-consistent coupled model, the 2D species transport so
 
 \subsection{Experimental Reference}
 
-Mettler reported a centre-to-edge [F] drop ranging from 67\% to 75\% depending on the SF$_6$/Ar composition and the presence of wafer bias; the 74\% value corresponds specifically to the 90\% SF$_6$ (90~sccm SF$_6$ / 10~sccm Ar), bias-off condition at \SI{1000}{\watt} ICP, \SI{10}{\milli\torr} (Mettler Fig.~4.14 / 4.17).  The present work's self-consistent reference operating point (\SI{10}{\milli\torr} SF$_6$/Ar, \SI{700}{\watt}, $\eta = 0.43$) is our design baseline; a direct like-for-like comparison against Mettler's Fig.~4.17 conditions (\SI{1000}{\watt}, 70~sccm SF$_6$ / 30~sccm Ar, \SI{200}{\watt} rf bias) is provided in Section~\ref{sec:mettler-fig417-direct}.  The cross-reactor F gradient is the primary validation target for the DTPM.
+Mettler reported a centre-to-edge [F] drop ranging from 67\% to 75\% depending on the SF$_6$/Ar composition and the presence of wafer bias (Mettler Ch.~4.3.2, explicit range).  The normalised Fig.~4.14 radial profile at Mettler's 70~sccm SF$_6$ / 30~sccm Ar bias-on condition (\SI{1000}{\watt} ICP, \SI{10}{\milli\torr}, \SI{200}{\watt} rf bias) is fit by the cubic polynomial
+\begin{equation}
+  f(r) \;=\; 1.01032 \;-\; 0.01847\,r^{2} \;+\; 7.139\times 10^{-4}\,r^{3},
+  \qquad r\ \mathrm{in\ cm}, \quad R^{2} = 0.997,
+  \label{eq:mettler-cubic-fit}
+\end{equation}
+which evaluates at $r = (0, 2, 4, 6, 8)$~cm to $f = (1.010, 0.942, 0.761, 0.500, 0.194)$.  These are the specific normalised [F] reference values used in the radial-profile benchmark of Section~\ref{sec:mettler-fig417-direct}.  The present work's 2D-solver reference point (\SI{10}{\milli\torr} SF$_6$/Ar, \SI{700}{\watt}, $\eta = 0.43$, pure SF$_6$) is the DTPM \emph{design baseline} --- used to characterise the framework across power, pressure, and mixture variations; it is distinct from the Mettler benchmark condition above and should not be compared to Mettler's radial curves without rescoping.  A direct like-for-like comparison at Mettler's own operating point is given in Section~\ref{sec:mettler-fig417-direct}.  The cross-reactor F gradient is the primary validation target for the DTPM.
 
 \subsection{Initial Model Configuration}
 
@@ -2189,13 +2195,13 @@ Figure~\ref{fig:reactor-schematic} shows the reactor cross-section with the key 
 
 \subsection{Overview of Converged Solution}
 
-The Picard iteration converges after 20 outer iterations (relative change in $n_e$ below 10\%) at the reference operating point of \SI{700}{\watt} ICP power, \SI{10}{\milli\torr} pure SF$_6$, and \SI{40}{\mega\hertz} source frequency.  The converged solution represents a self-consistent balance between the electromagnetic power deposition, electron heating and transport, and neutral species chemistry---all quantities that were prescribed independently in the initial formulation.
+The Picard iteration converges after 20 outer iterations (relative change in $n_e$ below 10\%) at the DTPM \emph{design-baseline} operating point of \SI{700}{\watt} ICP power, \SI{10}{\milli\torr} pure SF$_6$, no wafer bias, and \SI{40}{\mega\hertz} source frequency.  This design baseline is used throughout the Results chapter (Sections~7.1--7.4) to characterise the framework's predictive behaviour across power, pressure, and species-specific response.  It is \emph{not} a like-for-like match to Mettler's operating conditions (1000~W, 70:30 or 30:90 SF$_6$:Ar mixtures, 200~W rf bias) and should not be directly compared to Mettler's radial [F] curves; the like-for-like Mettler benchmark at his exact operating point is reported separately in Section~\ref{sec:mettler-fig417-direct}.  The converged solution at the design baseline represents a self-consistent balance between the electromagnetic power deposition, electron heating and transport, and neutral species chemistry---all quantities that were prescribed independently in the initial formulation.
 
 Table~\ref{tab:results-summary} summarizes the key output quantities.
 
 \begin{table}[H]
 \centering
-\caption{Summary of converged simulation results at the reference operating conditions: \SI{700}{\watt}, \SI{10}{\milli\torr} SF$_6$, \SI{40}{\mega\hertz}.  The ``Initial formulation'' column refers to the prior model with prescribed plasma profiles; the ``Mettler'' column is the experimental reference.}
+\caption{Summary of converged simulation results at the DTPM design-baseline operating conditions: \SI{700}{\watt}, \SI{10}{\milli\torr} pure SF$_6$, \SI{40}{\mega\hertz}, no bias.  The ``Initial formulation'' column refers to the prior model with prescribed plasma profiles; the ``Mettler'' column is his experimental reference at \SI{1000}{\watt} / \SI{200}{\watt} bias / 70:30 or 30:90 SF$_6$:Ar (not a like-for-like match to the pure-SF$_6$ no-bias baseline).}
 \label{tab:results-summary}
 \begin{tabular}{lccc}
 \toprule
@@ -2214,6 +2220,8 @@ Centre-to-edge [F] drop at wafer     & \textbf{68.2\%}     & \textbf{74\%}      
 \end{table}
 
 The central result is the 68.2\% fluorine density drop from wafer centre to edge, obtained without any calibration beyond the wall recombination coefficient $\gamma_\mathrm{Al} = 0.18$ that was established in the initial formulation.  Mettler's Fig.~4.17 spans a composition- and bias-dependent range of $67$--$75\,\%$ (specifically $67.2\,\%$ at 30\,\%~SF$_6$ bias-off, $75.0\,\%$ at 30\,\%~SF$_6$ bias-on, $74.5\,\%$ at 90\,\%~SF$_6$ bias-off, $74.8\,\%$ at 90\,\%~SF$_6$ bias-on; computed from the digitised CSVs at \texttt{data/mettler/}); the model's single drop of $68.2\,\%$ sits in the lower part of that band and lies within $4$~percentage points (pp) of the 30\,\%-SF$_6$ bias-off reference, well within the uncertainty band of the wall chemistry parameterisation ($\pm 5$~pp for $\pm 10\,\%$ variation in $\gamma_\mathrm{Al}$).  The model does not currently reproduce the full $8$-pp composition spread; this is the composition-insensitivity of a fixed $\gamma_\mathrm{Al}$, flagged as a Phase-3 scope item.
+
+\paragraph{Composition sensitivity at the 700 W point.}  As a supplementary check on the design baseline, a single rerun was performed at the same \SI{700}{\watt} / \SI{10}{\milli\torr} / no-bias condition but with a \textbf{70\,\% SF$_6$ / 30\,\% Ar} gas mixture (matching the Mettler Fig.~4.14 composition).  The converged result gives $\eta = 0.953$, $I_\mathrm{peak} = 9.11$~A, and wafer-centre $[\mathrm{F}] = 6.63 \times 10^{13}$~cm$^{-3}$.  The design baseline is retained as the primary reference for this chapter because it characterises the framework's pure-parent-gas behaviour, but readers interested in direct Mettler-composition comparisons are directed to Section~\ref{sec:mettler-fig417-direct} where the full benchmark matrix (30\,\% / 90\,\% SF$_6$, bias-on / bias-off at \SI{1000}{\watt} + \SI{200}{\watt} bias) is reported.  Data: \texttt{results/baseline\_700W\_70SF6\_nobias/summary.json}.
 
 \subsection{Electromagnetic Field Structure}
 
