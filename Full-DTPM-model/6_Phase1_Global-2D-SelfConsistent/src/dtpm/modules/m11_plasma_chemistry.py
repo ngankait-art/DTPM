@@ -352,6 +352,12 @@ def run(state, config):
     species_fields = chem_result.get('fields', {})
     ions = chem_result.get('ions', {})
 
+    # Operating voltages at the coil driven port (Lieberman Eq 12.2.19
+    # at matched-resonance condition: reactive part cancelled by the
+    # matching network, so V across coil is I * (R_coil + R_plasma)).
+    V_peak_final = float(I_peak * (R_coil + R_plasma))
+    V_rms_final = V_peak_final / np.sqrt(2.0)
+
     result = {
         'ne': ne,
         'Te': Te,
@@ -359,9 +365,12 @@ def run(state, config):
         'nSF6': nSF6,
         'P_rz': P_rz,
         'P_abs': float(P_abs),
+        'P_abs_final': float(P_abs),
         'eta_computed': float(eta),
         'I_peak_final': float(I_peak),
         'R_plasma_final': float(R_plasma),
+        'V_peak_final': V_peak_final,
+        'V_rms_final': V_rms_final,
         'R_coil': float(R_coil),
         'E_theta_rms': E_theta_rms,
         'F_drop_pct': float(F_drop),

@@ -41,6 +41,9 @@ def run_one(label, frac_Ar, bias_on, out_dir, config_path):
     s['eta_computed'] = float(state.get('eta_computed', 0.0))
     s['I_peak_final'] = float(state.get('I_peak_final', 0.0))
     s['R_plasma_final'] = float(state.get('R_plasma_final', 0.0))
+    s['V_peak_final'] = float(state.get('V_peak_final', 0.0))
+    s['V_rms_final'] = float(state.get('V_rms_final', 0.0))
+    s['P_abs_final'] = float(state.get('P_abs_final', state.get('P_abs', 0.0)))
     s['bias_V_dc'] = float(state.get('bias_V_dc', 0.0))
     s['bias_enabled'] = bool(state.get('bias_enabled', False))
     s['nF_centre_wafer_cm3'] = float(state['nF'][0, 0]) * 1e-6

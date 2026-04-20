@@ -39,6 +39,10 @@
   "eta_computed": 0.9525354358205557,
   "I_peak_final": 9.11388980150778,
   "R_plasma_final": 16.054679144962204,
-  "P_abs_final": 0.0,
-  "nF_centre_wafer_cm3": 66338951928409.26
+  "P_abs_final": 666.774805074389,
+  "nF_centre_wafer_cm3": 66338951928409.26,
+  "P_abs": 666.774805074389,
+  "V_peak_final": 153.6116883669569,
+  "V_rms_final": 108.61986651378992,
+  "R_coil": 0.8
 }

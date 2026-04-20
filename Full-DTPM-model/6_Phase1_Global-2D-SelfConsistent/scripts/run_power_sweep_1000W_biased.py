@@ -43,10 +43,13 @@ def main():
         state, mesh, inside, tel, config, r0D = run_simulation(
             overrides, config_path)
         s = save_sweep_point(state, mesh, inside, r0D, config, out_dir, label)
-        # Augment with bias diagnostics
+        # Augment with circuit + bias diagnostics
         s['eta_computed'] = float(state.get('eta_computed', 0.0))
         s['I_peak_final'] = float(state.get('I_peak_final', 0.0))
         s['R_plasma_final'] = float(state.get('R_plasma_final', 0.0))
+        s['V_peak_final'] = float(state.get('V_peak_final', 0.0))
+        s['V_rms_final'] = float(state.get('V_rms_final', 0.0))
+        s['P_abs_final'] = float(state.get('P_abs_final', state.get('P_abs', 0.0)))
         s['bias_V_dc'] = float(state.get('bias_V_dc', 0.0))
         s['bias_enabled'] = bool(state.get('bias_enabled', False))
         s['bias_lambda_exp'] = float(state.get('bias_lambda_exp', 0.0))

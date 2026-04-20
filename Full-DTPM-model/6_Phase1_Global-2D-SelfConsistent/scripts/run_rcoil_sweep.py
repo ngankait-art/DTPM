@@ -43,7 +43,8 @@ def run_one(r_coil, out_dir, config_path):
     s['R_plasma_final'] = float(state.get('R_plasma_final', 0.0))
     s['V_peak_final'] = float(state.get('V_peak_final', 0.0))
     s['V_rms_final'] = float(state.get('V_rms_final', 0.0))
-    s['P_abs_final'] = float(state.get('P_abs_final', 0.0))
+    # P_abs is the canonical key; P_abs_final added as alias post-fix
+    s['P_abs_final'] = float(state.get('P_abs_final', state.get('P_abs', 0.0)))
     s['nF_centre_wafer_cm3'] = float(state['nF'][0, 0]) * 1e-6
     s['F_drop_pct'] = float(s.get('F_drop_pct', 0.0))
     with open(os.path.join(out_dir, 'summary.json'), 'w') as f:

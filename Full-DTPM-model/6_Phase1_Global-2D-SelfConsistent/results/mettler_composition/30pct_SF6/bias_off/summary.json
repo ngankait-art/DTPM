@@ -41,5 +41,10 @@
   "R_plasma_final": 15.860457918107995,
   "bias_V_dc": 0.0,
   "bias_enabled": false,
-  "nF_centre_wafer_cm3": 36484383034637.64
+  "nF_centre_wafer_cm3": 36484383034637.64,
+  "P_abs": 951.9821121404777,
+  "P_abs_final": 951.9821121404777,
+  "V_peak_final": 182.54017595098344,
+  "V_rms_final": 129.07539625392593,
+  "R_coil": 0.8
 }

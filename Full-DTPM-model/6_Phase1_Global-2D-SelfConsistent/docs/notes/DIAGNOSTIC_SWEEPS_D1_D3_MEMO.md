@@ -119,26 +119,36 @@ other parameters match the v2 composition pair run. Script:
 All 8 points converged. Source:
 `results/rcoil_sweep/rcoil_summary.json`.
 
-| R_coil (Ω) | η | I_peak (A) | R_plasma (Ω) | P_abs (W) | [F]_c (cm⁻³) | F-drop (%) | Residual vs Mettler ([F]_c) |
-|---:|---:|---:|---:|---:|---:|---:|---:|
-| 0.50 | 0.967 | 11.49 | 14.64 | — | 1.67 × 10¹⁴ | 66.84 | −55.8% |
-| 0.80 | 0.948 | 11.38 | 14.63 | — | 1.66 × 10¹⁴ | 66.81 | −56.0% |
-| 1.20 | 0.924 | 11.22 | 14.68 | — | 1.64 × 10¹⁴ | 66.78 | −56.5% |
-| 1.50 | 0.907 | 11.11 | 14.70 | — | 1.63 × 10¹⁴ | 66.75 | −56.9% |
-| 2.00 | 0.881 | 10.92 | 14.77 | — | 1.60 × 10¹⁴ | 66.71 | −57.5% |
-| 2.50 | 0.856 | 10.74 | 14.85 | — | 1.59 × 10¹⁴ | 66.66 | −57.9% |
-| 3.00 | 0.833 | 10.56 | 14.94 | — | 1.57 × 10¹⁴ | 66.62 | −58.4% |
-| 4.00 | 0.790 | 10.24 | 15.08 | — | 1.53 × 10¹⁴ | 66.52 | −59.4% |
+| R_coil (Ω) | η | I_peak (A) | V_peak (V) | V_rms (V) | R_plasma (Ω) | P_abs (W) | [F]_c (cm⁻³) | F-drop (%) | Residual vs Mettler ([F]_c) |
+|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| 0.50 | 0.967 | 11.49 | 174.02 | 123.05 | 14.64 | 967.0 | 1.67 × 10¹⁴ | 66.84 | −55.8% |
+| 0.80 | 0.948 | 11.38 | 175.67 | 124.22 | 14.63 | 948.2 | 1.66 × 10¹⁴ | 66.81 | −56.0% |
+| 1.20 | 0.924 | 11.22 | 178.21 | 126.01 | 14.68 | 924.4 | 1.64 × 10¹⁴ | 66.78 | −56.5% |
+| 1.50 | 0.907 | 11.11 | 180.00 | 127.28 | 14.70 | 907.4 | 1.63 × 10¹⁴ | 66.75 | −56.9% |
+| 2.00 | 0.881 | 10.92 | 183.12 | 129.48 | 14.77 | 880.7 | 1.60 × 10¹⁴ | 66.71 | −57.5% |
+| 2.50 | 0.856 | 10.74 | 186.30 | 131.73 | 14.85 | 855.9 | 1.59 × 10¹⁴ | 66.66 | −57.9% |
+| 3.00 | 0.833 | 10.56 | 189.42 | 133.94 | 14.94 | 832.8 | 1.57 × 10¹⁴ | 66.62 | −58.4% |
+| 4.00 | 0.790 | 10.24 | 195.35 | 138.13 | 15.08 | 790.4 | 1.53 × 10¹⁴ | 66.52 | −59.4% |
 
 Mettler reference: 90% SF6 bias-on, r = 0, [F]_c = 3.774 × 10¹⁴ cm⁻³
 (Fig 4.17 digitised).
 
-*Note:* `P_abs`, `V_peak`, `V_rms` were written as 0.0 by
-`save_sweep_point`. The Picard-loop log shows `P_abs_final` is
-computed correctly (e.g. 948.2 W at R_coil = 0.8 Ω, the expected
-η × 1000 W value), so this is a serialisation bug in the summary
-script and not a physics bug. The η, I_peak, R_plasma columns above
-are authoritative; P_abs is recoverable as η × 1000 W.
+**V_peak / V_rms / P_abs convention**: computed at matched-resonance
+from the Lieberman circuit (Eq 12.2.19) as
+`V_peak = I_peak × (R_coil + R_plasma)`, `V_rms = V_peak / √2`, and
+`P_abs = η × P_rf`. These are now written by m11 as `V_peak_final`,
+`V_rms_final`, `P_abs_final` (fix 2026-04-19). Earlier JSONs had
+these fields as 0.0 because m11 didn't export them and the sweep
+scripts used stale key names (`*_final`). Patched post-hoc via
+`scripts/patch_operating_voltages.py` and the above numbers are
+authoritative.
+
+**Observation on V_peak(R_coil)**: V_peak climbs from 174 V at
+R_coil = 0.5 Ω to 195 V at R_coil = 4 Ω (12% increase), while I_peak
+*decreases* from 11.49 A to 10.24 A (11% decrease) and P_abs
+decreases from 967 W to 790 W (18% decrease). The voltage rises
+because `V = I × (R_coil + R_plasma)` and `(R_coil + R_plasma)`
+grows faster than I shrinks across the sweep.
 
 ### Headline finding: R_coil sweeps η but does NOT close the Mettler gap
 
@@ -242,11 +252,16 @@ the Phase-1 v2 report.
 
 ## Flags still open
 
-1. **`save_sweep_point` serialises `V_peak`, `V_rms`, `P_abs` as
-   0.0**, even though the Picard log shows the correct values (e.g.
-   `P_abs_final = 948.2 W` at R_coil = 0.8 Ω). Fix the serialisation
-   before any further sweeps, otherwise any downstream plot or
-   regression that consumes these fields will be wrong.
+1. ~~`save_sweep_point` serialises `V_peak`, `V_rms`, `P_abs` as
+   0.0~~ — **RESOLVED 2026-04-19**. m11 now writes `V_peak_final`,
+   `V_rms_final`, `P_abs_final` into the returned state dict
+   (computed from the Lieberman matched-resonance circuit:
+   `V_peak = I_peak × (R_coil + R_plasma)`). The three sweep scripts
+   (`run_rcoil_sweep.py`, `run_mettler_composition_pair.py`,
+   `run_power_sweep_1000W_biased.py`) updated to pull these keys.
+   Existing sweep JSONs patched in place by
+   `scripts/patch_operating_voltages.py`. Numbers in the D3 table
+   above are the authoritative post-fix values.
 
 ## Additional direct-read findings from the Mettler dissertation (2026-04-19)
 
