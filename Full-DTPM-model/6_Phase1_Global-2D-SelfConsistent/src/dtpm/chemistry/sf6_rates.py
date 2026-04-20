@@ -143,6 +143,18 @@ def rates(Te):
     k['iz_SF6_total']  = sum(k[f'iz{i}'] for i in [18, 19, 20, 21, 22, 23, 24])
     k['att_SF6_total'] = sum(k[f'at{i}'] for i in [30, 31, 32, 33, 34, 35, 36])
 
+    # --- Tier-2 PINN overrides (no-op unless tier2_interface.refresh() was called) ---
+    # When D4 (use_boltzmann_rates) is active, the m11 Picard loop has called
+    # tier2_interface.refresh(E/N, x_Ar, p) after the EM solve; this updates
+    # the aggregate channels iz_SF6_total, att_SF6_total and rescales d1-d5
+    # to match the PINN's k_diss total while preserving Lallement branching.
+    try:
+        from . import tier2_interface as _tier2
+        _tier2.apply_overrides(k)
+    except Exception:
+        # tier2_interface failing to import should never break tier-1 runs.
+        pass
+
     return k
 
 

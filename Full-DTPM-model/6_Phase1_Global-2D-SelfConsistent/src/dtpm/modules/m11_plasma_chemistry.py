@@ -145,6 +145,16 @@ def run(state, config):
     inner_relax = coup.get('inner_chem_relax', 0.12)
     rerun_fdtd_every = coup.get('rerun_fdtd_every', 1)  # every iter by default
 
+    # D4: Tier-2 PINN Boltzmann rates (opt-in via config.chemistry.use_boltzmann_rates)
+    chem_cfg = config.chemistry if hasattr(config, 'chemistry') else config.get('chemistry', {})
+    use_boltzmann = bool(chem_cfg.get('use_boltzmann_rates', False))
+    from ..chemistry import tier2_interface as _tier2
+    if use_boltzmann:
+        _tier2.install_pinn()
+        logger.info("M11: Tier-2 Boltzmann rates (PINN) ENABLED via config.chemistry")
+    else:
+        _tier2.clear()  # ensure any prior cache is flushed before tier-1 baseline
+
     P_rf = circ['source_power']
     R_coil = state.get('R_coil', circ.get('R_coil', 0.8))
     # m01 already seeded state['R_plasma'] and state['I_peak'] with initial guess
@@ -257,6 +267,18 @@ def run(state, config):
         P_abs = pd['P_abs']
         sigma_rz = pd['sigma_rz']
 
+        # D4 hook: refresh tier-2 PINN rates from the current EM field.
+        # Runs once per outer Picard iter when use_boltzmann_rates is True.
+        if use_boltzmann:
+            E_over_N_Td = _tier2.compute_eff_E_over_N(
+                E_theta_rms, ng, inside, mesh
+            )
+            _tier2.refresh(
+                E_over_N_Td,
+                x_Ar=oper.get('frac_Ar', 0.0),
+                pressure_mTorr=oper.get('pressure_mTorr', 10),
+            )
+
         # ────────────────────────────────────────────────────────────────
         # Step 4: Te(r,z) from local power balance
         # ────────────────────────────────────────────────────────────────
@@ -358,6 +380,11 @@ def run(state, config):
     V_peak_final = float(I_peak * (R_coil + R_plasma))
     V_rms_final = V_peak_final / np.sqrt(2.0)
 
+    # Capture tier-2 cache snapshot for diagnostics, then clear to avoid
+    # polluting subsequent tier-1 runs in the same Python process.
+    tier2_snapshot = dict(_tier2.current_cache()) if _tier2.is_active() else None
+    _tier2.clear()
+
     result = {
         'ne': ne,
         'Te': Te,
@@ -389,6 +416,9 @@ def run(state, config):
         'bias_P_bias_total': float(np.sum(
             bias.get('P_rz_bias', np.zeros((Nr, Nz))) * mesh.vol * inside
         )) if bias.get('enabled', False) else 0.0,
+        # D4 tier-2 snapshot (None when use_boltzmann_rates=False)
+        'tier2_boltzmann_cache': tier2_snapshot,
+        'use_boltzmann_rates': use_boltzmann,
     }
     for sp_name, sp_field in species_fields.items():
         result[f'n{sp_name}'] = sp_field

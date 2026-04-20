@@ -38,11 +38,15 @@ def run_simulation(config_overrides, config_path):
     with open(config_path) as f:
         cfg = yaml.safe_load(f)
 
-    # Apply overrides
+    # Apply overrides (auto-creates missing nested sections so that new
+    # config namespaces like `chemistry.use_boltzmann_rates` can be set
+    # even when the default_config.yaml does not declare them).
     for key_path, value in config_overrides.items():
         keys = key_path.split('.')
         d = cfg
         for k in keys[:-1]:
+            if k not in d or not isinstance(d[k], dict):
+                d[k] = {}
             d = d[k]
         d[keys[-1]] = value
 

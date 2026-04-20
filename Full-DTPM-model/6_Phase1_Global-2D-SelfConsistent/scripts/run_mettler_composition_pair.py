@@ -52,40 +52,67 @@ def run_one(label, frac_Ar, bias_on, out_dir, config_path):
     return state, s
 
 
+def _worker(task):
+    """Top-level worker for multiprocessing: runs one (label, frac_Ar, bias) point."""
+    label, frac_Ar, bias_on, case_dir, config_path = task
+    os.makedirs(case_dir, exist_ok=True)
+    _, s = run_one(label, frac_Ar, bias_on, case_dir, config_path)
+    return label, frac_Ar, bias_on, s
+
+
 def main():
+    import time
+    from multiprocessing import Pool
     config_path = os.path.join(PROJECT_ROOT, 'config', 'default_config.yaml')
     base = os.path.join(PROJECT_ROOT, 'results', 'mettler_composition')
 
     cases = [
-        ('90pct_SF6', 0.1, 1.60),   # (label, frac_Ar, Mettler target enhancement)
+        ('90pct_SF6', 0.1, 1.60),
         ('30pct_SF6', 0.7, 2.15),
     ]
-    summary = []
-    for label, frac_Ar, mettler_target in cases:
+    targets = {c[0]: c[2] for c in cases}
+    # Build 4 parallel tasks: 2 compositions x 2 bias states
+    tasks = []
+    for label, frac_Ar, _ in cases:
         case_dir = os.path.join(base, label)
-        out_off = os.path.join(case_dir, 'bias_off')
-        out_on = os.path.join(case_dir, 'bias_on')
-        os.makedirs(out_off, exist_ok=True)
-        os.makedirs(out_on, exist_ok=True)
-        _, s_off = run_one(f"{label}_off", frac_Ar, False, out_off, config_path)
-        _, s_on = run_one(f"{label}_on", frac_Ar, True, out_on, config_path)
-        enh = s_on['nF_centre_wafer_cm3'] / s_off['nF_centre_wafer_cm3']
+        tasks.append((f"{label}_off", frac_Ar, False,
+                      os.path.join(case_dir, 'bias_off'), config_path))
+        tasks.append((f"{label}_on",  frac_Ar, True,
+                      os.path.join(case_dir, 'bias_on'),  config_path))
+
+    n_workers = 1 if os.environ.get('COMPOSITION_SERIAL') == '1' else min(4, len(tasks))
+    print(f"# Mettler composition pair: {len(tasks)} runs, {n_workers} workers")
+    t0 = time.time()
+    if n_workers > 1:
+        with Pool(processes=n_workers) as pool:
+            results = pool.map(_worker, tasks)
+    else:
+        results = [_worker(t) for t in tasks]
+
+    # Assemble summary indexed by composition label
+    by_comp = {}
+    for label_bias, frac_Ar, bias_on, s in results:
+        base_label = label_bias.rsplit('_', 1)[0]
+        if base_label not in by_comp:
+            by_comp[base_label] = {'frac_Ar': frac_Ar}
+        key = 'nF_centre_on_cm3' if bias_on else 'nF_centre_off_cm3'
+        by_comp[base_label][key] = s['nF_centre_wafer_cm3']
+
+    summary = []
+    for label, d in by_comp.items():
+        enh = d['nF_centre_on_cm3'] / d['nF_centre_off_cm3']
         summary.append({
             'label': label,
-            'frac_Ar': frac_Ar,
-            'nF_centre_off_cm3': s_off['nF_centre_wafer_cm3'],
-            'nF_centre_on_cm3': s_on['nF_centre_wafer_cm3'],
+            'frac_Ar': d['frac_Ar'],
+            'nF_centre_off_cm3': d['nF_centre_off_cm3'],
+            'nF_centre_on_cm3': d['nF_centre_on_cm3'],
             'enhancement': enh,
-            'mettler_target': mettler_target,
-            'dev_pct': (enh / mettler_target - 1) * 100,
+            'mettler_target': targets[label],
+            'dev_pct': (enh / targets[label] - 1) * 100,
         })
-        print(f"\n[{label}] bias-off [F]c = {s_off['nF_centre_wafer_cm3']:.3e}, "
-              f"bias-on = {s_on['nF_centre_wafer_cm3']:.3e}, "
-              f"enh = x{enh:.3f} (target x{mettler_target:.2f}, "
-              f"dev {(enh/mettler_target-1)*100:+.1f}%)")
-
     with open(os.path.join(base, 'composition_summary.json'), 'w') as f:
         json.dump(summary, f, indent=2)
+    print(f"# Wall-clock: {time.time() - t0:.1f}s")
 
     print(f"\n{'#' * 70}\n# Composition pair complete\n{'#' * 70}")
     for row in summary:
