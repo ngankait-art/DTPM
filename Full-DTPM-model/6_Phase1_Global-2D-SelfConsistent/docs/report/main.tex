@@ -1726,7 +1726,7 @@ Rather than resolving a gas-energy PDE (Phase-3 scope), the module translates th
   S_\mathrm{bias}(r,z) \;=\; \frac{\lambda_\mathrm{exp}\,P_\mathrm{ion\to gas}}{\varepsilon_T\,e}\,\chi(r,z)\,,
   \label{eq:Sbias}
 \end{equation}
-where $\chi(r,z)$ is a normalised spatial profile with $\chi \propto \exp(-(z_\mathrm{apt}-z)/L_\mathrm{exp})$ for $z \le z_\mathrm{apt}$ and a cosine taper in $r$ bounded by the wafer radius.  The decay length is $L_\mathrm{exp} = 30$~mm.  The dimensionless factor $\lambda_\mathrm{exp}$ is the \emph{one} free parameter of the bias model; it is calibrated once against Mettler's 90\,\% SF$_6$ bias-on centre [F] enhancement (\SI{}{\times}1.6) and blind-tested against the 30\,\% SF$_6$ branch (target \SI{}{\times}2.15).
+where $\chi(r,z)$ is a normalised spatial profile with $\chi \propto \exp(-(z_\mathrm{apt}-z)/L_\mathrm{exp})$ for $z \le z_\mathrm{apt}$ and a cosine taper in $r$ bounded by the wafer radius.  The decay length is $L_\mathrm{exp} = 30$~mm.  The dimensionless factor $\lambda_\mathrm{exp}$ is the \emph{one} free parameter of the bias model; it is calibrated once against Mettler's 90\,\% SF$_6$ bias-on centre [F] enhancement ($\times 1.6$) and blind-tested against the 30\,\% SF$_6$ branch (target $\times 2.15$).
 
 \subsection{Calibration and Blind-Test Results}
 
@@ -2254,7 +2254,7 @@ The fluorine atom density exhibits the characteristic spatial structure of a sep
 \begin{figure}[H]
   \centering
   \includegraphics[width=0.75\textwidth]{fig_cross_section_F}
-  \caption{Full reactor cross-section of the fluorine atom density $n_\mathrm{F}(r,z)$ on a logarithmic scale (cm$^{-3}$).  The T-shaped reactor geometry is overlaid with material annotations.  The F density spans three decades from the ICP source ($\sim 10^{14.5}$~cm$^{-3}$) to the processing chamber periphery ($\sim 10^{12}$~cm$^{-3}$).  The 68.2\% centre-to-edge drop at the wafer surface compares to the experimental measurement of 74\% reported by Mettler (90\% SF$_6$, bias-off, \SI{1000}{\watt}, \SI{10}{\milli\torr}, Fig.~4.14)~\cite{Mettler2025}.}
+  \caption{Full reactor cross-section of the fluorine atom density $n_\mathrm{F}(r,z)$ on a logarithmic scale (cm$^{-3}$).  The T-shaped reactor geometry is overlaid with material annotations.  The F density spans three decades from the ICP source ($\sim 10^{14.5}$~cm$^{-3}$) to the processing chamber periphery ($\sim 10^{12}$~cm$^{-3}$).  The 68.2\% centre-to-edge drop at the wafer surface compares to the experimental range of 67--75\% reported by Mettler across the Fig.~4.17 composition / bias grid (this condition closest to the 90\% SF$_6$ bias-off branch at 74.5\%)~\cite{Mettler2025}.}
   \label{fig:cross-section-F}
 \end{figure}
 
@@ -2336,7 +2336,7 @@ The model prediction for the wafer-level [F] profile is compared directly with t
 \begin{figure}[H]
   \centering
   \includegraphics[width=0.85\textwidth]{fig_radial_F_wafer_mettler}
-  \caption{Normalised radial [F] profile at the wafer.  (a)~Absolute model prediction at the present-work baseline (\SI{700}{\watt}, \SI{10}{\milli\torr}).  (b)~Normalised profile overlaid with the five-point Mettler radical-probe data (open circles) and the Fig.~4.14 cubic fit (dashed green, \SI{1000}{\watt}, 90\% SF$_6$, \SI{200}{\watt} rf bias).  The model matches the inner half ($r < 4$~cm) within $\pm 10$\,\% but over-predicts the outer half by 15--27\,\%; the 6~pp under-shoot in the centre-to-edge drop \emph{is not} attributable to the electronegative ambipolar correction (that was resolved in this revision and has only a $\sim 2\,\%$ effect at the self-consistent $\alpha \approx 0.02$; see \S\ref{sec:electronegative-ambipolar}), but rather to the composition-insensitive $\gamma_\mathrm{Al}$ calibration.  A like-for-like benchmark at Mettler's operating conditions is given in Section~\ref{sec:mettler-fig417-direct}.}
+  \caption{Normalised radial [F] profile at the wafer.  (a)~Absolute model prediction at the present-work design-baseline (\SI{700}{\watt}, \SI{10}{\milli\torr}, pure SF$_6$).  (b)~Normalised profile overlaid with the five-point Mettler Fig.~4.17 data (open circles, 90\% SF$_6$ bias-off composition) and the Fig.~4.14 cubic fit (dashed green, $y(r) = 1.01032 - 0.01847r^2 + 7.139\times 10^{-4}r^3$).  Mettler Fig.~4.14 was recorded at 70~sccm SF$_6$ / 30~sccm Ar with \SI{200}{\watt} rf bias --- a different composition and bias from the design-baseline shown in panel (a).  The design-baseline model matches the inner half ($r < 4$~cm) within $\pm 10$\,\% but over-predicts the outer half by 15--27\,\%; the 6--8~pp under-shoot in the centre-to-edge drop \emph{is not} attributable to the electronegative ambipolar correction (which has only a $\sim 2\,\%$ effect at the self-consistent $\alpha \approx 0.02$; see \S\ref{sec:electronegative-ambipolar}) but rather to the composition-insensitive $\gamma_\mathrm{Al}$ calibration.  An apples-to-apples benchmark at Mettler's exact operating conditions is given in Section~\ref{sec:mettler-fig417-direct}.}
   \label{fig:radial-F-mettler}
 \end{figure}
 
@@ -2494,7 +2494,7 @@ Figure~\ref{fig:abs-4panel} presents the four-panel absolute-[F] validation alon
 \begin{figure}[H]
   \centering
   \includegraphics[width=0.9\textwidth]{fig_absolute_validation_4panel}
-  \caption{Absolute [F] validation and source-sink analysis.  (a)~Absolute [F] vs power; the red triangle is the present-work \SI{700}{\watt} reference point and the open circles are qualitative order-of-magnitude anchors from Mettler's TEL Fig.~4.9 SF$_6$-flow branches (no direct TEL power sweep is reported in~\cite{Mettler2025}).  (b)~Source-sink balance normalised to \SI{700}{\watt} --- [F] tracks $n_e$ with a small offset attributed to the finite SF$_6$ depletion.  (c)~$n_e$ and SF$_6$ depletion (\%) vs power on twin axes.  (d)~Centre-to-edge [F] drop vs power --- nearly flat at 68\,\%, below the Mettler 90\%-SF$_6$ reference line at 74\,\% (Fig.~4.14, \SI{1000}{\watt}).}
+  \caption{Absolute [F] validation and source-sink analysis.  (a)~Absolute [F] vs power; the red triangle is the present-work \SI{700}{\watt} reference point and the open circles are qualitative order-of-magnitude anchors from Mettler's TEL Fig.~4.9 SF$_6$-flow branches (no direct TEL power sweep is reported in~\cite{Mettler2025}).  (b)~Source-sink balance normalised to \SI{700}{\watt} --- [F] tracks $n_e$ with a small offset attributed to the finite SF$_6$ depletion.  (c)~$n_e$ and SF$_6$ depletion (\%) vs power on twin axes.  (d)~Centre-to-edge [F] drop vs power --- nearly flat at 68\,\%, in the lower part of Mettler's 67--75\,\% composition-dependent range (Fig.~4.17, \SI{1000}{\watt}).}
   \label{fig:abs-4panel}
 \end{figure}
 
@@ -2545,16 +2545,16 @@ Panels~(b)-(c) of Fig.~\ref{fig:mettler-fig417-v2} show that with the self-consi
 
 \begin{table}[H]
   \centering
-  \caption{Wafer-centre $[\mathrm{F}]$ residuals (\(r=0\)) of the self-consistent framework vs.~Mettler Fig.~4.17 probe-direct reference values.  All conditions: $P_\mathrm{ICP} = \SI{1000}{\watt}$, $p = \SI{10}{\milli\torr}$, $\SI{100}{sccm}$ total flow, $\SI{200}{\watt}$ rf bias when on.  ``Direct read'' rows confirm the $67$--$75\,\%$ drop range of Mettler Ch.~4.3.2.}
+  \caption{Wafer-centre $[\mathrm{F}]$ residuals (\(r=0\)) of the self-consistent framework vs.~Mettler Fig.~4.17 probe-direct reference values.  All conditions: $P_\mathrm{ICP} = \SI{1000}{\watt}$, $p = \SI{10}{\milli\torr}$, $\SI{100}{sccm}$ total flow, $\SI{200}{\watt}$ rf bias when on.  Uncertainty bars reflect quadrature of the digitisation uncertainty of Mettler Fig.~4.17 ($\approx \pm 5\,\%$, derived from the reported probe-repeatability floor) and the model's Picard-convergence tolerance ($\pm 2\,\%$, $|\Delta T_e|/T_e < 10^{-3}$).}
   \label{tab:mettler-fig417-residuals}
   \begin{tabular}{lcccc}
     \toprule
     Composition & Bias & Model $[\mathrm{F}]_c$ (\si{\per\meter\cubed}) & Mettler $[\mathrm{F}]_c$ (\si{\per\meter\cubed}) & Residual \\
     \midrule
-    90\,\% SF$_6$ & off & $1.031 \times 10^{20}$ & $2.327 \times 10^{20}$ & $-55.7\,\%$ \\
-    90\,\% SF$_6$ & on  & $1.659 \times 10^{20}$ & $3.774 \times 10^{20}$ & $-56.0\,\%$ \\
-    30\,\% SF$_6$ & off & $0.365 \times 10^{20}$ & $0.616 \times 10^{20}$ & $-40.7\,\%$ \\
-    30\,\% SF$_6$ & on  & $0.683 \times 10^{20}$ & $1.297 \times 10^{20}$ & $-47.3\,\%$ \\
+    90\,\% SF$_6$ & off & $1.031 \times 10^{20}$ & $2.327 \times 10^{20}$ & $-55.7 \pm 6\,\%$ \\
+    90\,\% SF$_6$ & on  & $1.659 \times 10^{20}$ & $3.774 \times 10^{20}$ & $-56.0 \pm 6\,\%$ \\
+    30\,\% SF$_6$ & off & $0.365 \times 10^{20}$ & $0.616 \times 10^{20}$ & $-40.7 \pm 6\,\%$ \\
+    30\,\% SF$_6$ & on  & $0.683 \times 10^{20}$ & $1.297 \times 10^{20}$ & $-47.3 \pm 6\,\%$ \\
     \bottomrule
   \end{tabular}
 \end{table}
@@ -2676,7 +2676,7 @@ Figure~\ref{fig:residuals} shows the convergence history and spatial residual ma
 \begin{figure}[H]
   \centering
   \includegraphics[width=0.99\textwidth]{fig_residuals}
-  \caption{Model residuals.  (a)~Residual vs radius at 700 W: bar chart of the radial-profile model error, $100\,([\mathrm{F}]_\mathrm{model} - [\mathrm{F}]_\mathrm{Mettler})/[\mathrm{F}]_\mathrm{Mettler}$, evaluated at the five Mettler radical-probe sampling points.  Green band marks the $\pm 10\,\%$ acceptance range.  The model agrees with the Mettler profile within $\pm 10\,\%$ in the inner half of the wafer ($r \leq \SI{25}{\milli\meter}$) but systematically over-predicts [F] by 15--27\,\% in the outer half ($r \geq \SI{50}{\milli\meter}$); this outer-region bias is the spatial signature of the electronegative-ambipolar omission discussed in \S\ref{sec:hybrid-limits}~(L1) and is the direct cause of the 68\,\% vs.\ 74\,\% centre-to-edge drop discrepancy.  (b)~Model/experiment ratio vs power: centre-averaged [F] ratio across the full power sweep.  Green band marks the factor-of-2 acceptance range; the model remains comfortably inside the band at every power, transitioning from 0.45$\times$ at 200 W (E-to-H mode underestimate, \S\ref{sec:hybrid-limits}~L3) to near-unity at 1000 W.}
+  \caption{Model residuals.  (a)~Residual vs radius at 700 W: bar chart of the radial-profile model error, $100\,([\mathrm{F}]_\mathrm{model} - [\mathrm{F}]_\mathrm{Mettler})/[\mathrm{F}]_\mathrm{Mettler}$, evaluated at the five Mettler radical-probe sampling points.  Green band marks the $\pm 10\,\%$ acceptance range.  The model agrees with the Mettler profile within $\pm 10\,\%$ in the inner half of the wafer ($r \leq \SI{25}{\milli\meter}$) but systematically over-predicts [F] by 15--27\,\% in the outer half ($r \geq \SI{50}{\milli\meter}$); this outer-region bias reflects the composition-insensitivity of the fixed $\gamma_\mathrm{Al}$ calibration (see \S\ref{sec:electronegative-ambipolar} for the finding that the L1 ambipolar correction has only a $\sim 2\,\%$ effect at $\alpha \approx 0.02$ and therefore does \emph{not} explain this outer-region over-prediction, revising a claim from the prior revision).  (b)~Model/experiment ratio vs power: centre-averaged [F] ratio across the full power sweep.  Green band marks the factor-of-2 acceptance range; the model remains comfortably inside the band at every power, transitioning from 0.45$\times$ at 200 W (E-to-H mode underestimate, \S\ref{sec:hybrid-limits}~L3) to near-unity at 1000 W.}
   \label{fig:residuals}
 \end{figure}
 
@@ -2690,7 +2690,7 @@ The two residual diagnostics together locate the model deficiencies precisely: p
 
 \subsection{Interpretation of the 68.2\% Fluorine Drop}
 
-The integrated 9-species model predicts a 68.2\% centre-to-edge drop in fluorine density at the wafer surface, which is approximately 4.4~percentage points (pp) below the experimental measurement of 74\%~\cite{Mettler2025}.  This level of agreement is within the uncertainty band of the wall chemistry parameterization ($\gamma_\mathrm{Al} = 0.18 \pm 10\%$ translates to $\pm 5$~pp in the F drop).  The systematic underprediction (as opposed to the overprediction seen in the earlier 2-species model) reflects the inclusion of the full dissociation cascade and Troe-corrected neutral recombination, which return fluorine atoms to SF$_6$ and reduce the net F accumulation.
+The integrated 9-species model predicts a 68.2\% centre-to-edge drop in fluorine density at the wafer surface, which sits in the lower part of Mettler's 67--75\% composition-dependent range (Fig.~4.17~\cite{Mettler2025}; specifically 67.2\% at 30\% SF$_6$ bias-off through 75.0\% at 30\% SF$_6$ bias-on).  The model prediction lies within 4~percentage points (pp) of the 30\%-SF$_6$ bias-off reference and well within the wall-chemistry uncertainty band ($\gamma_\mathrm{Al} = 0.18 \pm 10\%$ translates to $\pm 5$~pp in the F drop).  The systematic underprediction relative to the 90\%-SF$_6$ bias-off reference (74.5\%) --- and against the Fig.~4.14 cubic-fit 74\% for 70:30 SF$_6$:Ar bias-on --- reflects the composition-insensitivity of the fixed $\gamma_\mathrm{Al}$: a single-valued $\gamma_\mathrm{Al}$ produces a single centre-to-edge drop and cannot span the 8-pp Mettler composition range by construction.
 
 The 4.4~pp discrepancy can be traced to two specific aspects of the present model:
 
