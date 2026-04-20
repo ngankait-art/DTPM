@@ -47,7 +47,7 @@ University of Illinois at Urbana-Champaign}
 \begin{abstract}
 Predicting the spatially resolved radical flux at the wafer surface of an inductively coupled plasma (ICP) etcher is the central modelling problem for process-uniformity control in advanced semiconductor manufacturing. Volume-integrated zero-dimensional (0D) global models capture plasma chemistry with quantitative chemical accuracy but provide no spatial information; fully three-dimensional multiphysics solvers deliver spatial detail at computational cost that precludes routine parametric use. Neither framework, taken alone, is suitable as the kernel of an industrial digital twin.
 
-This report presents a \emph{self-consistent 2D steady-state framework} --- a \emph{Unified Masked-Domain Model} --- that couples a validated 0D global plasma chemistry solver with a two-dimensional axisymmetric electromagnetic--transport solver on a single shared reactor mask. The coupled architecture is the principal methodological contribution of this work: a 0D sub-problem supplies volume-averaged electron temperature, ionisation rates, and gas composition; a 2D sub-problem resolves the induced azimuthal electric field, Ohmic power deposition, and spatially resolved electron and radical densities; and a Picard fixed-point iteration returns spatially averaged 2D quantities back to the 0D closure, driving the coupled system to self-consistency. The two solvers share a single axisymmetric geometry mask that encodes the T-shaped TEL reactor (ICP source tube, 2\,mm aperture, and processing chamber) and enforces material-specific wall recombination probabilities following Kokkoris \textit{et al.}\ (2009). The framework replaces the three prescribed parameters of conventional 2D approaches --- coupling efficiency $\eta$, electron-density profile, and electron temperature --- with self-consistent quantities computed from first principles.
+This report presents a \emph{self-consistent Global--2D hybrid framework} --- a \emph{Unified Masked-Domain Model} --- that couples a validated 0D global plasma chemistry solver with a two-dimensional axisymmetric electromagnetic--transport solver on a single shared reactor mask. The hybrid architecture is the principal methodological contribution of this work: a 0D sub-problem supplies volume-averaged electron temperature, ionisation rates, and gas composition; a 2D sub-problem resolves the induced azimuthal electric field, Ohmic power deposition, and spatially resolved electron and radical densities; and a Picard fixed-point iteration returns spatially averaged 2D quantities back to the 0D closure, driving the coupled system to self-consistency. The two solvers share a single axisymmetric geometry mask that encodes the T-shaped TEL reactor (ICP source tube, 2\,mm aperture, and processing chamber) and enforces material-specific wall recombination probabilities following Kokkoris \textit{et al.}\ (2009). The framework replaces the three prescribed parameters of conventional 2D approaches --- coupling efficiency $\eta$, electron-density profile, and electron temperature --- with self-consistent quantities computed from first principles.
 
 The electromagnetic sub-problem is solved by a vectorised cylindrical finite-difference time-domain (FDTD) method at \SI{40}{\mega\hertz} with an embedded coil source and Mur first-order absorbing boundaries. The chemistry sub-problem implements the full Lallement 54-reaction SF$_6$/Ar mechanism, tracking all nine neutral species (SF$_6$, SF$_5$, SF$_4$, SF$_3$, SF$_2$, SF, S, F, F$_2$) and the charged-species hierarchy through coupled diffusion--reaction transport on the 2D domain. Electron density is obtained from an ionisation-source diffusion equation driven by the FDTD power profile, and electron temperature follows from local power balance; charged-species populations are obtained from quasi-neutrality and attachment--recombination balance with the 0D electronegativity $\alpha$ as the reference.
 
@@ -1533,11 +1533,11 @@ This validation establishes confidence in the 2D species transport solver and th
 
 %=============================================================================
 \newpage
-\chapter{The Global--2D Coupled Framework: A Unified Masked-Domain Model}
+\chapter{The Global--2D Hybrid Framework: A Unified Masked-Domain Model}
 \label{ch:hybrid}
 %=============================================================================
 
-This chapter presents the principal methodological contribution of the present work: a \emph{self-consistent Global--2D coupled framework} in which a volume-integrated global plasma chemistry solver and a two-dimensional axisymmetric electromagnetic--transport solver are coupled through a Picard fixed-point iteration on a single shared reactor mask.  The resulting architecture --- which we refer to as the \emph{Unified Masked-Domain Model} --- bridges the chemical accuracy of 0D global models and the spatial fidelity of multi-dimensional multiphysics codes at a fraction of the computational cost of the latter, making it directly deployable as the kernel of an industrial digital twin.
+This chapter presents the principal methodological contribution of the present work: a \emph{self-consistent Global--2D hybrid framework} in which a volume-integrated global plasma chemistry solver and a two-dimensional axisymmetric electromagnetic--transport solver are coupled through a Picard fixed-point iteration on a single shared reactor mask.  The resulting architecture --- which we refer to as the \emph{Unified Masked-Domain Model} --- bridges the chemical accuracy of 0D global models and the spatial fidelity of multi-dimensional multiphysics codes at a fraction of the computational cost of the latter, making it directly deployable as the kernel of an industrial digital twin.
 
 %======================================================================
 \section{Motivation and Design Philosophy}
@@ -1546,7 +1546,7 @@ This chapter presents the principal methodological contribution of the present w
 
 Volume-integrated 0D global models such as the one of Lallement \textit{et al.}~\cite{Lallement2009} capture the full electron-impact SF$_6$/Ar reaction mechanism to quantitative chemical accuracy but, by construction, deliver only volume-averaged scalars: they cannot resolve the radial gradient of fluorine that ultimately determines etch uniformity.  Fully three-dimensional multiphysics solvers (e.g.\ COMSOL, CFD-ACE+) can deliver spatially resolved fields but require order-of-magnitude-longer runtimes, expose their physics only through proprietary solver settings, and do not lend themselves to parametric sweeps, uncertainty quantification, or machine-learning surrogate construction.
 
-The coupled framework presented here is designed around four principles:
+The hybrid framework presented here is designed around four principles:
 \begin{enumerate}
   \item \textbf{Single shared geometry mask.}  Both the 0D and 2D sub-problems are posed on the same axisymmetric domain, encoded as a boolean mask over the $(r,z)$ mesh (Fig.~\ref{fig:geometry}).  The 0D effective reactor radius and length are derived from volume integrals of the mask rather than being chosen \emph{ad hoc}, ensuring that the 0D and 2D sub-problems see the same T-shaped geometry with the same wall areas.  This is the \emph{unified masked-domain} element of the framework: a single geometric abstraction drives both solvers.
   \item \textbf{Strict separation of roles.}  The 0D sub-problem is responsible for volume-averaged electron energetics (electron temperature, ionisation-to-attachment balance, electronegativity $\alpha$), which it computes to chemical accuracy using the full 54-reaction mechanism.  The 2D sub-problem is responsible for spatial fields (induced $E_\theta$, Ohmic power deposition, $n_e(r,z)$, $T_e(r,z)$, and the nine neutral-species densities), which it computes using cylindrical FDTD and a diffusion--reaction system.  Neither solver duplicates the other's work.
@@ -1585,7 +1585,7 @@ Figure~\ref{fig:coupling-flow} illustrates the resulting data flow.  The 0D solv
     % Feedback loop: converged? no -> back to mask (start another iteration)
     \draw[arr, dashed] (conv.east) -- ++(2.2,0) |- node[pos=0.25, right, font=\scriptsize]{no: iterate} (mask.east);
   \end{tikzpicture}
-  \caption{Data flow of the Global--2D coupled framework.  The two solvers share a single axisymmetric masked domain $\Omega$.  The 0D solver provides volume-averaged electron energetics ($T_e$, $n_{e,\mathrm{avg}}$, $\alpha$, $\bar n_{\mathrm{SF}_6}$) to initialise the 2D solve (upper curved arrow); the 2D solver returns volume-averaged neutral densities $\langle n_s\rangle_V$ and a self-consistent coupling efficiency $\eta$ derived from the FDTD Poynting integral (lower curved arrow).  Picard iteration continues until $|\Delta T_e|/T_e < 10^{-3}$; on non-convergence the dashed feedback path re-enters the shared mask for another iteration.}
+  \caption{Data flow of the Global--2D hybrid framework.  The two solvers share a single axisymmetric masked domain $\Omega$.  The 0D solver provides volume-averaged electron energetics ($T_e$, $n_{e,\mathrm{avg}}$, $\alpha$, $\bar n_{\mathrm{SF}_6}$) to initialise the 2D solve (upper curved arrow); the 2D solver returns volume-averaged neutral densities $\langle n_s\rangle_V$ and a self-consistent coupling efficiency $\eta$ derived from the FDTD Poynting integral (lower curved arrow).  Picard iteration continues until $|\Delta T_e|/T_e < 10^{-3}$; on non-convergence the dashed feedback path re-enters the shared mask for another iteration.}
   \label{fig:coupling-flow}
 \end{figure}
 
@@ -1624,20 +1624,20 @@ The five coupling quantities of Table~\ref{tab:coupling-quantities} are exchange
 Under-relaxation with $w = 0.3$ is applied to both $n_e$ and $T_e$ to stabilise the iteration against the strong nonlinear coupling through the ionisation rate $k_\mathrm{iz}(T_e) \propto \exp(-E_\mathrm{iz}/T_e)$.  At the reference conditions (700\,W, 10\,mTorr, SF$_6$), the iteration converges monotonically in 20 Picard steps.
 
 %======================================================================
-\section{What the Coupled Framework Eliminates}
+\section{What the Hybrid Framework Eliminates}
 \label{sec:hybrid-elimination}
 %======================================================================
 
-Table~\ref{tab:prescribed-vs-hybrid} contrasts the three parameters that previous 2D approaches required as external inputs with the first-principles quantities the present framework computes in their place.  The shift from a prescribed discharge to a self-consistent one is the core advance of the present work.
+Table~\ref{tab:prescribed-vs-hybrid} contrasts the three parameters that previous 2D approaches required as external inputs with the first-principles quantities the hybrid framework computes in their place.  The shift from a prescribed discharge to a self-consistent one is the core advance of the present work.
 
 \begin{table}[H]
 \centering
-\caption{Comparison of prescribed parameters in previous 2D approaches with the self-consistent quantities produced by the Global--2D coupled framework.}
+\caption{Comparison of prescribed parameters in previous 2D approaches with the self-consistent quantities produced by the Global--2D hybrid framework.}
 \label{tab:prescribed-vs-hybrid}
 \small
 \begin{tabular}{@{}p{3.7cm}p{5.3cm}p{5.6cm}@{}}
 \toprule
-\textbf{Quantity} & \textbf{Previous prescription} & \textbf{Coupled framework} \\
+\textbf{Quantity} & \textbf{Previous prescription} & \textbf{Hybrid framework} \\
 \midrule
 Coupling efficiency $\eta$ &
   Scalar, fixed at 0.43 (H-mode estimate from Lieberman \& Lichtenberg~\cite{Lieberman2005}).
@@ -1785,7 +1785,7 @@ The correction factor $(1+\alpha)/(1+\alpha T_i/T_e)$ approaches 2 only when $\a
 \label{sec:hybrid-limits}
 %======================================================================
 
-The Global--2D coupled framework described in this chapter is, by design, a minimal self-consistent architecture: it is intentionally \emph{not} a complete multi-dimensional multiphysics solver.  Three architectural limitations documented in the prior revision --- prescribed power-coupling efficiency, the absence of a wafer-bias sheath, and the electropositive ambipolar diffusion coefficient --- are \emph{resolved} in this revision (\S\ref{sec:selfconsistent-eta}, \S\ref{sec:m12-bias-sheath}, and \S\ref{sec:electronegative-ambipolar} respectively).  Three principal limitations remain, plus one kinetic-regime scope note.  Each remaining item is individually tractable and is tagged for resolution in a specific development task in Chapter~\ref{ch:future} (Future Work).
+The Global--2D hybrid framework described in this chapter is, by design, a minimal self-consistent architecture: it is intentionally \emph{not} a complete multi-dimensional multiphysics solver.  Three architectural limitations documented in the prior revision --- prescribed power-coupling efficiency, the absence of a wafer-bias sheath, and the electropositive ambipolar diffusion coefficient --- are \emph{resolved} in this revision (\S\ref{sec:selfconsistent-eta}, \S\ref{sec:m12-bias-sheath}, and \S\ref{sec:electronegative-ambipolar} respectively).  Three principal limitations remain, plus one kinetic-regime scope note.  Each remaining item is individually tractable and is tagged for resolution in a specific development task in Chapter~\ref{ch:future} (Future Work).
 
 \begin{description}
 
@@ -1804,7 +1804,7 @@ The Global--2D coupled framework described in this chapter is, by design, a mini
 
 \end{description}
 
-The remaining limitations above are not artefacts of the coupled-framework architecture itself --- they are accuracy-versus-runtime trade-offs selected to keep the single-point runtime at $\sim$55\,s on one CPU core, so that the framework remains usable for parametric sweeps and ML-surrogate training runs.  Each remaining limitation is addressed as a specific task in Chapter~\ref{ch:future}.  The two limitations resolved in this revision (prescribed $\eta$ and no wafer-bias sheath) are discussed in \S\ref{sec:selfconsistent-eta} and \S\ref{sec:m12-bias-sheath}.
+The remaining limitations above are not artefacts of the hybrid-framework architecture itself --- they are accuracy-versus-runtime trade-offs selected to keep the single-point runtime at $\sim$55\,s on one CPU core, so that the framework remains usable for parametric sweeps and ML-surrogate training runs.  Each remaining limitation is addressed as a specific task in Chapter~\ref{ch:future}.  The two limitations resolved in this revision (prescribed $\eta$ and no wafer-bias sheath) are discussed in \S\ref{sec:selfconsistent-eta} and \S\ref{sec:m12-bias-sheath}.
 
 
 %=============================================================================
@@ -1813,7 +1813,7 @@ The remaining limitations above are not artefacts of the coupled-framework archi
 \label{part:phase1}
 %=============================================================================
 
-Having described the Global--2D coupled framework at the architectural level in Chapter~\ref{ch:hybrid}, this chapter documents the numerical implementation of each 2D sub-solver: cylindrical FDTD for the induced electromagnetic field, the ionisation-source diffusion PDE for self-consistent $n_e(r,z)$, local power balance for $T_e(r,z)$, and the outer Picard iteration loop with mesh-convergence results.
+Having described the Global--2D hybrid framework at the architectural level in Chapter~\ref{ch:hybrid}, this chapter documents the numerical implementation of each 2D sub-solver: cylindrical FDTD for the induced electromagnetic field, the ionisation-source diffusion PDE for self-consistent $n_e(r,z)$, local power balance for $T_e(r,z)$, and the outer Picard iteration loop with mesh-convergence results.
 
 
 %======================================================================
@@ -2333,7 +2333,7 @@ Figure~\ref{fig:wafer-profiles} presents the radial profiles of key quantities a
   \label{fig:wafer-profiles}
 \end{figure}
 
-The model prediction for the wafer-level [F] profile is compared directly with the Mettler radical-probe data in Figure~\ref{fig:radial-F-mettler}.  The coupled framework reproduces the experimental five-point normalised radial profile within $\pm 10$\,\% over the inner half of the wafer ($r < 4$~cm), while over-predicting by 15--27\,\% at the outer points ($r = 6$--$8$~cm).  In the prior revision this residual was attributed to the omitted electronegative ambipolar correction; the present revision implements that correction (\S\ref{sec:electronegative-ambipolar}) and finds that at the self-consistent $\alpha \approx 0.02$ the correction factor is only $\sim 1.02$, so it does not close the residual.  The remaining gap is now attributed primarily to the composition-insensitive $\gamma_\mathrm{Al} = 0.18$ calibration, which is a Phase-3 scope item.  A direct absolute-[F] benchmark at Mettler's actual operating conditions (\SI{1000}{\watt}, 30\% and 90\% SF$_6$) is given in Section~\ref{sec:mettler-fig417-direct}.
+The model prediction for the wafer-level [F] profile is compared directly with the Mettler radical-probe data in Figure~\ref{fig:radial-F-mettler}.  The hybrid framework reproduces the experimental five-point normalised radial profile within $\pm 10$\,\% over the inner half of the wafer ($r < 4$~cm), while over-predicting by 15--27\,\% at the outer points ($r = 6$--$8$~cm).  In the prior revision this residual was attributed to the omitted electronegative ambipolar correction; the present revision implements that correction (\S\ref{sec:electronegative-ambipolar}) and finds that at the self-consistent $\alpha \approx 0.02$ the correction factor is only $\sim 1.02$, so it does not close the residual.  The remaining gap is now attributed primarily to the composition-insensitive $\gamma_\mathrm{Al} = 0.18$ calibration, which is a Phase-3 scope item.  A direct absolute-[F] benchmark at Mettler's actual operating conditions (\SI{1000}{\watt}, 30\% and 90\% SF$_6$) is given in Section~\ref{sec:mettler-fig417-direct}.
 
 \begin{figure}[H]
   \centering
@@ -2580,7 +2580,7 @@ The bias-on/off enhancement ratios are reproduced tightly (90\,\%~SF$_6$: model 
 \label{sec:benchmark-0d}
 %======================================================================
 
-The 2D coupled model is benchmarked against the validated 0D Lallement global model run with TEL ICP geometry ($R_\mathrm{ICP} = $ \SI{38}{\milli\meter}, $L_\mathrm{ICP} = $ \SI{150}{\milli\meter}).  The 0D solver is the same code used as the inner 0D sub-problem of the coupled iteration, but run in stand-alone mode without the 2D feedback channel so that the 0D reference is free of the spatial information carried by the 2D densities.  Figure~\ref{fig:benchmark-neutrals} overlays the ICP volume-averaged neutral species from both models across power and pressure sweeps.
+The 2D hybrid model is benchmarked against the validated 0D Lallement global model run with TEL ICP geometry ($R_\mathrm{ICP} = $ \SI{38}{\milli\meter}, $L_\mathrm{ICP} = $ \SI{150}{\milli\meter}).  The 0D solver is the same code used as the inner 0D sub-problem of the hybrid iteration, but run in stand-alone mode without the 2D feedback channel so that the 0D reference is free of the spatial information carried by the 2D densities.  Figure~\ref{fig:benchmark-neutrals} overlays the ICP volume-averaged neutral species from both models across power and pressure sweeps.
 
 \begin{figure}[H]
   \centering
@@ -2616,7 +2616,7 @@ Figure~\ref{fig:benchmark-charged-indiv} shows each charged-species diagnostic i
 \begin{figure}[H]
   \centering
   \includegraphics[width=0.98\textwidth]{fig_benchmark_charged_individual}
-  \caption{Individual charged species benchmark with ratio summary table.  Green cells indicate agreement within 2$\times$ of the 0D reference; yellow within 5$\times$; red outside 5$\times$.  The overall pattern --- agreement within 2$\times$ for ten of twelve species and diagnostics --- is the quantitative validation of the Global--2D coupled architecture.}
+  \caption{Individual charged species benchmark with ratio summary table.  Green cells indicate agreement within 2$\times$ of the 0D reference; yellow within 5$\times$; red outside 5$\times$.  The overall pattern --- agreement within 2$\times$ for ten of twelve species and diagnostics --- is the quantitative validation of the Global--2D hybrid architecture.}
   \label{fig:benchmark-charged-indiv}
 \end{figure}
 
@@ -2627,7 +2627,7 @@ The principal discrepancies between the 0D and 2D models arise from (i)~spatial 
 \label{sec:ar-mixture}
 %======================================================================
 
-To test the framework's handling of a second major gas species, a 50/50 SF$_6$/Ar mixture at the reference operating point (700\,W, 10\,mTorr) was simulated with the full Global--2D coupled iteration.  Figure~\ref{fig:ar-mixture} presents the 2D [F] and [Ar*] metastable density maps.
+To test the framework's handling of a second major gas species, a 50/50 SF$_6$/Ar mixture at the reference operating point (700\,W, 10\,mTorr) was simulated with the full Global--2D hybrid coupling.  Figure~\ref{fig:ar-mixture} presents the 2D [F] and [Ar*] metastable density maps.
 
 \begin{figure}[H]
   \centering
@@ -2682,7 +2682,7 @@ Figure~\ref{fig:residuals} shows the convergence history and spatial residual ma
   \label{fig:residuals}
 \end{figure}
 
-The two residual diagnostics together locate the model deficiencies precisely: panel (a) shows that the radial over-prediction of [F] is confined to the outer half of the wafer --- exactly where the ambipolar transport of negative ions (which the present solver omits) would otherwise enhance the neutral loss rate --- and panel (b) confirms that the absolute [F] prediction is well inside a factor-of-two tolerance across the full power range.  The systematic under-prediction at 200 W reflects the E-to-H mode transition that the steady-state coupled framework cannot capture.  Neither deficiency is a numerical artefact: the Picard iteration converges to $|\Delta T_e|/T_e < 10^{-3}$ within 20 iterations at every operating point.
+The two residual diagnostics together locate the model deficiencies precisely: panel (a) shows that the radial over-prediction of [F] is confined to the outer half of the wafer --- exactly where the ambipolar transport of negative ions (which the present solver omits) would otherwise enhance the neutral loss rate --- and panel (b) confirms that the absolute [F] prediction is well inside a factor-of-two tolerance across the full power range.  The systematic under-prediction at 200 W reflects the E-to-H mode transition that the steady-state hybrid framework cannot capture.  Neither deficiency is a numerical artefact: the Picard iteration converges to $|\Delta T_e|/T_e < 10^{-3}$ within 20 iterations at every operating point.
 
 
 %======================================================================
