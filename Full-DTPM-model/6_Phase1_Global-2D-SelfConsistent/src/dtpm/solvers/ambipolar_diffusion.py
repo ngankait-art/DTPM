@@ -151,21 +151,28 @@ def solve_ne_ambipolar(Te, P_abs, mesh, inside, bc_type, ij_to_flat, flat_to_ij,
     D_i_base = kB * Tgas / (M_ion * nu_in) if nu_in > 0 else 0.01
     Ti_eV = Tgas * kB / eC
 
-    # Vectorised D_a with electronegative correction
+    # Vectorised D_a with electronegative correction.
+    # `alpha` may be a scalar (baseline L1 path) OR a 2D (Nr, Nz) field
+    # (Path D — electronegative-ambipolar with spatial resolution). The
+    # broadcast below handles both cases transparently.
     Te_safe = np.where(inside, np.maximum(Te, 0.5), 0.5)
     Ti_safe = max(Ti_eV, 0.01)
     D_a_ep = D_i_base * (1.0 + Te_safe / Ti_safe)
-    # correction = (1 + alpha) / (1 + alpha * Ti/Te)
-    correction = (1.0 + alpha) / (1.0 + alpha * Ti_safe / Te_safe)
+    alpha_arr = np.asarray(alpha)  # shape () for scalar, (Nr,Nz) for 2D
+    correction = (1.0 + alpha_arr) / (1.0 + alpha_arr * Ti_safe / Te_safe)
     D_a = np.where(inside, D_a_ep * correction, 0.0)
 
+    # Diagnostic scalar summary — works for both scalar and 2D alpha
+    if alpha_arr.ndim == 0:
+        alpha_log = float(alpha_arr)
+    else:
+        alpha_log = float(np.mean(alpha_arr[inside])) if np.any(inside) else 0.0
+    Te_mean = float(np.mean(Te_safe[inside])) if np.any(inside) else 0.5
+    corr_log = float(np.mean(correction[inside])) if np.any(inside) else 1.0
     logger.info(
-        "Ambipolar D_a: alpha=%.3f, Te_avg=%.2f eV, Ti=%.3f eV, "
-        "correction=%.3f, D_a_max=%.2e m^2/s",
-        alpha, float(np.mean(Te_safe[inside])) if np.any(inside) else 0.0,
-        Ti_safe,
-        float((1.0 + alpha) / (1.0 + alpha * Ti_safe
-                               / max(float(np.mean(Te_safe[inside])) if np.any(inside) else 0.5, 0.5))),
+        "Ambipolar D_a: alpha_mean=%.3f, Te_avg=%.2f eV, Ti=%.3f eV, "
+        "correction_mean=%.3f, D_a_max=%.2e m^2/s",
+        alpha_log, Te_mean, Ti_safe, corr_log,
         D_a.max() if D_a.size else 0.0,
     )
 

@@ -1,0 +1,46 @@
+{
+  "mettler_target_cm3": 377400000000000.0,
+  "operating_point": "1000W / 10mTorr / 90% SF6 / 200W bias / R_coil=0.8",
+  "modes": {
+    "scalar": {
+      "nF_centre_wafer_cm3": 165909182653530.97,
+      "F_drop_pct": 66.81275724868037,
+      "eta_computed": 0.9481549158755994,
+      "V_peak_final": 175.67347799625048,
+      "P_abs_final": 948.1549158755995,
+      "residual_pct": -56.03890231755936,
+      "alpha_local_min": 0.785876581799447,
+      "alpha_local_mean": 9.540409494161507,
+      "alpha_local_max": 26.67230135428547,
+      "alpha_0D": 0.01725246240255503,
+      "elapsed_sec": 75.31651997566223
+    },
+    "renorm": {
+      "nF_centre_wafer_cm3": 165825240988170.78,
+      "F_drop_pct": 66.818703766708,
+      "eta_computed": 0.9481120605646697,
+      "V_peak_final": 175.60091685063557,
+      "P_abs_final": 948.1120605646697,
+      "residual_pct": -56.06114441224939,
+      "alpha_local_min": 0.7847856156076563,
+      "alpha_local_mean": 9.547176295060625,
+      "alpha_local_max": 26.56753384598909,
+      "alpha_0D": 0.017252480770191536,
+      "elapsed_sec": 75.32217979431152
+    },
+    "raw": {
+      "nF_centre_wafer_cm3": 151975055109884.72,
+      "F_drop_pct": 59.73891920215746,
+      "eta_computed": 0.9506476830771851,
+      "V_peak_final": 180.05542799985517,
+      "P_abs_final": 950.6476830771855,
+      "residual_pct": -59.73103998148259,
+      "alpha_local_min": 0.8421967648987033,
+      "alpha_local_mean": 7.698943654418684,
+      "alpha_local_max": 12.644795171352825,
+      "alpha_0D": 0.017251121844457398,
+      "elapsed_sec": 75.66649222373962
+    }
+  },
+  "wall_clock_parallel_sec": 77.29251408576965
+}

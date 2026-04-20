@@ -181,9 +181,31 @@ def run(state, config):
     logger.info(f"  0D: Te={result_0D['Te']:.2f}eV, ne={result_0D['ne']:.2e}m^-3, "
                 f"alpha={alpha_0D:.2f}")
     # L1 correction: electronegative ambipolar diffusion (Lieberman 2005 §10.3).
-    # The scalar alpha from the 0D closure is threaded uniformly into the 2D
-    # ambipolar solver.  A 2D alpha(r,z) field would be a Phase-3 upgrade.
-    alpha_2D = alpha_0D
+    #
+    # Path D (Phase-1b): optionally use a full 2D alpha(r,z) field rather
+    # than the scalar alpha_0D. The 2D alpha is the spatial map
+    # n_-(r,z) / n_e(r,z) already computed inside solve_multispecies_transport
+    # via the local attachment/recombination balance. It is fed back into
+    # solve_ne_ambipolar on the NEXT Picard iter — a one-iteration lag that
+    # converges naturally with the rest of the self-consistent loop.
+    #
+    # Enabled by config.chemistry.use_2d_alpha (default False, preserving
+    # the scalar-alpha baseline bit-for-bit).
+    # use_2d_alpha: False | True ("renorm", default) | "raw"
+    #   "renorm" preserves the local 2D shape but rescales the volume average
+    #   to the 0D alpha (transport-corrected, physically correct)
+    #   "raw" uses ions['alpha'] directly — diagnostic only, over-estimates
+    #   electronegativity because it omits transport loss.
+    _alpha_mode = chem_cfg.get('use_2d_alpha', False)
+    if isinstance(_alpha_mode, bool):
+        use_2d_alpha = _alpha_mode
+        alpha_mode = 'renorm' if _alpha_mode else 'off'
+    else:
+        alpha_mode = str(_alpha_mode).lower()
+        use_2d_alpha = alpha_mode in ('renorm', 'raw', 'true', '1')
+    alpha_2D = alpha_0D  # scalar initial; may be replaced each iter if use_2d_alpha
+    if use_2d_alpha:
+        logger.info(f"M11: 2D alpha(r,z) field feedback ENABLED (mode={alpha_mode}, Path D).")
 
     ne = prescribe_bessel_cosine(result_0D['ne'], mesh, inside,
                                  R_icp, L_proc, L_apt, L_icp)
@@ -319,6 +341,45 @@ def run(state, config):
         nF = chem_result['nF']
         nSF6 = chem_result['nSF6']
         F_drop = chem_result['F_drop_pct']
+
+        # Path D: update alpha_2D from the 2D ion fields for the NEXT Picard
+        # iteration's ambipolar solve. The raw `ions['alpha']` from
+        # solve_multispecies_transport uses a LOCAL attachment/recombination
+        # quadratic closure that ignores transport loss, so its volume-
+        # average is systematically too high. We preserve the relative
+        # spatial SHAPE of that field but RENORMALISE the volume average
+        # to the 0D alpha (which correctly accounts for wall-transport loss
+        # in a finite reactor). This is the physically-honest 2D extension
+        # of the scalar L1 correction.
+        if use_2d_alpha and 'ions' in chem_result and 'alpha' in chem_result['ions']:
+            alpha_local = np.asarray(chem_result['ions']['alpha'])
+            if alpha_mode == 'raw':
+                # Diagnostic: use the local attachment/recombination quadratic
+                # directly. Over-estimates alpha because transport loss is
+                # ignored; NOT physically correct but useful for sensitivity.
+                alpha_field_new = np.where(inside, alpha_local, 0.0)
+                scale = 1.0
+            elif np.any(inside):
+                a_in = alpha_local[inside]
+                a_mean_local = float(np.mean(a_in)) if a_in.size else 1.0
+                a_mean_local = max(a_mean_local, 1e-12)
+                scale = alpha_0D / a_mean_local  # renormalise to 0D volume avg
+                alpha_shape = np.where(inside, alpha_local, 0.0)
+                alpha_field_new = alpha_shape * scale
+            else:
+                alpha_field_new = np.full_like(alpha_local, alpha_0D)
+                scale = 1.0
+            if k_iter == 0:
+                alpha_2D = alpha_field_new
+            else:
+                # Blend 70% new / 30% previous to dampen Picard oscillation
+                alpha_2D = 0.7 * alpha_field_new + 0.3 * np.asarray(alpha_2D)
+            if k_iter in (0, max_picard - 1) or k_iter % 5 == 0:
+                a = alpha_2D[inside] if np.ndim(alpha_2D) > 0 else np.array([alpha_2D])
+                logger.info(
+                    f"  Path-D alpha(r,z): min={a.min():.3e}, mean={a.mean():.3e}, "
+                    f"max={a.max():.3e}, renorm-scale={scale:.3e} (alpha_0D={alpha_0D:.3e})"
+                )
 
         # ────────────────────────────────────────────────────────────────
         # Step 7: Re-run FDTD periodically if sigma has drifted
