@@ -742,13 +742,24 @@ def gen_axial_F_profile(power_data, mesh, inside, tel, out_dir):
     print("  fig_axial_F_profile")
 
 
-def gen_absolute_validation_4panel(power_data, out_dir):
+def gen_absolute_validation_4panel(power_data, out_dir, power_data_90=None,
+                                   power_data_30=None):
     """4-panel validation matching Stage 10 Fig 7.
 
-    (a) Absolute [F] — Mettler Fig 4.17 (1000 W) overlay
-    (b) Source-sink balance (normalised to 1000 W — Mettler operating point)
-    (c) n_e and SF_6 depletion vs power (twin-axis)
-    (d) [F] drop vs power — Mettler reference line
+    (a) Absolute [F] — composition-matched model curves vs Mettler Fig 4.17
+        at 1000 W. If `power_data_90` and/or `power_data_30` are given,
+        they are plotted as composition-labelled model curves alongside
+        the Mettler anchors.
+    (b) Source-sink balance (normalised to 1000 W Mettler operating point);
+        uses the primary `power_data` argument (caption should declare the
+        composition, e.g. 90 % SF6).
+    (c) n_e and SF_6 depletion vs power (twin-axis) — same composition as (b).
+    (d) [F] drop vs power — composition-matched model curves vs Mettler's
+        four 1000 W anchor markers (Fig 4.17, not extrapolated across power).
+
+    Backward compatibility: if only `power_data` is passed, the prior
+    single-curve behaviour is preserved and the Mettler comparison is
+    clearly labelled as the primary composition.
     """
     if not power_data:
         return
@@ -761,23 +772,46 @@ def gen_absolute_validation_4panel(power_data, out_dir):
     SF6_0 = 3.24e14 * 10 / 10  # baseline SF6 at 10 mTorr, 313 K ~ 3.24e14 cm-3
     sf6_depl = [(1 - s / SF6_0) * 100 if s > 0 else 0 for s in SF6_icp]
 
+    # Extract composition-matched curves for panels (a) and (d) if provided
+    def _extract(pd, key):
+        return [e.get('summary', {}).get(key, 0) for e in pd] if pd else None
+    x_90 = [e['value'] for e in power_data_90] if power_data_90 else None
+    nF_c_90 = _extract(power_data_90, 'nF_centre_wafer_cm3')
+    Fdrop_90 = _extract(power_data_90, 'F_drop_pct')
+    x_30 = [e['value'] for e in power_data_30] if power_data_30 else None
+    nF_c_30 = _extract(power_data_30, 'nF_centre_wafer_cm3')
+    Fdrop_30 = _extract(power_data_30, 'F_drop_pct')
+
     # Mettler Fig 4.17 reference values at 1000 W / 10 mTorr / 200 W bias
     # (wafer-centre [F], probe-direct, Mettler 2025 Ch 4.3.2):
     METTLER_1000W_90 = 3.774e14   # 90 % SF6, bias on
     METTLER_1000W_30 = 1.297e14   # 30 % SF6, bias on
 
-    # (a) Absolute [F] — 1000 W Mettler anchor
-    axes[0, 0].semilogy(x, F_icp, 'g-o', lw=2.5, ms=7, label='Model — ICP avg')
-    axes[0, 0].plot(1000, METTLER_1000W_90, '^', ms=12, color='red',
-                    label=f'Mettler Fig 4.17 (1000 W, 90 % SF$_6$): {METTLER_1000W_90:.2e}')
-    axes[0, 0].plot(1000, METTLER_1000W_30, 'v', ms=12, color='royalblue',
-                    label=f'Mettler Fig 4.17 (1000 W, 30 % SF$_6$): {METTLER_1000W_30:.2e}')
-    axes[0, 0].set_xlabel('RF Power (W)')
-    axes[0, 0].set_ylabel('[F] (cm$^{-3}$)')
-    axes[0, 0].set_title('(a) Absolute [F] — Mettler Fig 4.17 anchor at 1000 W',
-                         fontsize=11, fontweight='bold')
-    axes[0, 0].legend(fontsize=8, loc='lower right')
-    axes[0, 0].grid(True, alpha=0.3, which='both')
+    # (a) Absolute wafer-centre [F] vs power — composition-matched model
+    # curves against Mettler Fig. 4.17 anchors at 1000 W.
+    # Mettler's [F]_c is probe-direct WAFER-CENTRE — use nF_centre_wafer_cm3,
+    # not ICP volume-averaged F_icp (which is ~4x higher and apples-to-oranges).
+    ax = axes[0, 0]
+    if x_90 is not None and nF_c_90 is not None:
+        ax.semilogy(x_90, nF_c_90, '-o', color='tab:red', lw=2.2, ms=7,
+                    label='Model — 90% SF$_6$ (wafer centre)')
+    if x_30 is not None and nF_c_30 is not None:
+        ax.semilogy(x_30, nF_c_30, '-s', color='tab:blue', lw=2.2, ms=7,
+                    label='Model — 30% SF$_6$ (wafer centre)')
+    ax.plot(1000, METTLER_1000W_90, '^', ms=14, color='tab:red', mec='black',
+            mew=1.2, label=f'Mettler 90% SF$_6$ on: {METTLER_1000W_90:.2e}',
+            zorder=5)
+    ax.plot(1000, METTLER_1000W_30, 'v', ms=14, color='tab:blue', mec='black',
+            mew=1.2, label=f'Mettler 30% SF$_6$ on: {METTLER_1000W_30:.2e}',
+            zorder=5)
+    ax.axvline(1000, ls='--', color='gray', alpha=0.5, lw=0.9,
+               label='Mettler anchor power')
+    ax.set_xlabel('RF Power (W)')
+    ax.set_ylabel('Wafer-centre [F] (cm$^{-3}$)')
+    ax.set_title('(a) Wafer-centre [F] — model vs Mettler Fig 4.17 at 1000 W',
+                 fontsize=11, fontweight='bold')
+    ax.legend(fontsize=8, loc='upper left', framealpha=0.92)
+    ax.grid(True, alpha=0.3, which='both')
 
     # (b) Source-sink balance (normalised to 1000 W, Mettler operating point)
     i_ref = x.index(1000) if 1000 in x else len(x) // 2
@@ -809,35 +843,47 @@ def gen_absolute_validation_4panel(power_data, out_dir):
     ax_c2.tick_params(axis='y', labelcolor='red')
     ax_c.set_title('(c) $n_e$ and SF$_6$ depletion', fontsize=11, fontweight='bold')
 
-    # (d) [F] drop vs power.  Mettler's F-drop is composition-dependent
-    # across 67--75 % (Ch. 4.3.2, explicit range), NOT a single 74 % value:
-    # 90 % SF6 bias-on  74.8%;  90 % SF6 bias-off 74.5%;
-    # 30 % SF6 bias-on  75.0%;  30 % SF6 bias-off 67.2%  (all at 1000 W).
-    # Show the full composition-dependent band and mark each of the four
-    # direct-probe anchors individually so the single-flat-line error that
-    # appeared in prior revisions is not repeated.
-    METTLER_FDROP_BAND = (67.2, 75.0)  # (min, max) across Mettler's 4 conds
+    # (d) [F] drop vs power.
+    # Scientific note: Mettler did NOT perform a TEL power sweep. Her
+    # F-drop data exists ONLY at 1000 W, across four (composition x bias)
+    # combinations (Fig. 4.17 / Ch. 4.3.2): 74.8%, 74.5%, 75.0%, 67.2%.
+    # Three of these (74.5/74.8/75.0) cluster within 0.5 pp of each other
+    # so plotting at identical x=1000 produces indistinguishable overlap.
+    # Visualisation fix: small symmetric x-jitter around 1000 W plus
+    # composition-colour + fill (bias-on filled, bias-off open) so each of
+    # the four anchors is individually distinguishable. The jitter is
+    # visual-only; the actual data are all at 1000 W (marked by the dashed
+    # vertical line).
+    # Mettler Fig. 4.17 F-drop anchors, jittered for visual distinguishability
+    # (three values cluster within 0.5 pp otherwise they would overlap).
     METTLER_FDROP_POINTS = [
-        (1000, 74.8, '90% SF$_6$ on'),
-        (1000, 74.5, '90% SF$_6$ off'),
-        (1000, 75.0, '30% SF$_6$ on'),
-        (1000, 67.2, '30% SF$_6$ off'),
+        # (x_jitter, value, label,                              color, marker, fill)
+        (984,  74.5, r'Mettler 90% SF$_6$ off (74.5%)', 'tab:red',  '^', False),
+        (995,  74.8, r'Mettler 90% SF$_6$ on (74.8%)',  'tab:red',  '^', True),
+        (1005, 67.2, r'Mettler 30% SF$_6$ off (67.2%)', 'tab:blue', 's', False),
+        (1016, 75.0, r'Mettler 30% SF$_6$ on (75.0%)',  'tab:blue', 's', True),
     ]
-    axes[1, 1].axhspan(*METTLER_FDROP_BAND, color='tab:green', alpha=0.18,
-                       label=f'Mettler range ({METTLER_FDROP_BAND[0]:.1f}'
-                             f'--{METTLER_FDROP_BAND[1]:.1f}\\%, comp.-dep.)')
-    markers = ['^', 'v', 's', 'D']
-    for (p, d, lab), m in zip(METTLER_FDROP_POINTS, markers):
-        axes[1, 1].plot(p, d, m, color='darkgreen', ms=9, mew=1.5, mfc='white',
-                        label=f'Mettler 1000 W: {lab} ({d:.1f}\\%)')
-    axes[1, 1].plot(x, F_drop, 'r-o', lw=2.5, ms=7, label='Model (fixed-BC, $\\gamma_\\mathrm{Al}=0.18$)')
-    axes[1, 1].set_xlabel('RF Power (W)')
-    axes[1, 1].set_ylabel('[F] drop (%)')
-    axes[1, 1].set_title('(d) [F] drop vs power — Mettler comp.-dep. range',
-                         fontsize=11, fontweight='bold')
-    axes[1, 1].legend(fontsize=7, loc='lower right')
-    axes[1, 1].grid(True, alpha=0.3)
-    axes[1, 1].set_ylim(55, 85)
+    ax = axes[1, 1]
+    # Composition-matched model curves (same colour convention as panel a)
+    if x_90 is not None and Fdrop_90 is not None:
+        ax.plot(x_90, Fdrop_90, color='tab:red', marker='o', lw=2.2, ms=6,
+                label=r'Model 90% SF$_6$ (bias-on)')
+    if x_30 is not None and Fdrop_30 is not None:
+        ax.plot(x_30, Fdrop_30, color='tab:blue', marker='s', lw=2.2, ms=6,
+                label=r'Model 30% SF$_6$ (bias-on)')
+    ax.axvline(1000, ls='--', color='gray', alpha=0.6, lw=1.0, zorder=1,
+               label='Mettler anchor: 1000 W (single datum)')
+    for xj, d, lab, c, mk, fill in METTLER_FDROP_POINTS:
+        ax.plot(xj, d, marker=mk, ms=12, mew=1.8,
+                mfc=c if fill else 'white', mec=c, color=c, linestyle='none',
+                label=lab, zorder=4)
+    ax.set_xlabel('RF Power (W)')
+    ax.set_ylabel('[F] drop (%)')
+    ax.set_title('(d) [F] drop vs power — composition-matched vs Mettler 1000 W',
+                 fontsize=11, fontweight='bold')
+    ax.legend(fontsize=7, loc='lower left', framealpha=0.92)
+    ax.grid(True, alpha=0.3)
+    ax.set_ylim(55, 80)
 
     fig.suptitle('Absolute [F] validation + source-sink analysis',
                  fontsize=14, fontweight='bold', y=1.01)
@@ -1265,8 +1311,15 @@ def gen_SF6_Ar_mixture(ar_data, mesh, inside, tel, out_dir):
 
 def gen_residuals_stage10_style(power_data, mesh, inside, out_dir):
     """Two-panel residual diagnostics anchored at Mettler's 1000 W operating
-    point (Fig. 4.17 direct-probe values), not the 700 W Fig. 4.5 qualitative
-    cluster the prior version used.
+    point (Fig. 4.17 TEL direct-probe values).
+
+    The prior version of this plot benchmarked against Mettler's Fig. 4.5
+    cluster — INVALID: Fig. 4.5 is from Mettler's Helicon source (Ch. 4.1),
+    at 50 mTorr / 50% SF6 / no bias, with y-axis = probe self-heating rate
+    dT/dt in deg C/s, not [F] density. Different reactor, different
+    conditions, largely a different quantity. The only valid TEL benchmarks
+    in Mettler 2025 are Fig. 4.14 (normalised shape) and Fig. 4.17 (absolute
+    wafer-centre [F]).
 
     (a) Normalised-shape residual at 1000 W vs Mettler Fig. 4.17 direct-probe
         profile (5 radial sampling points 0, 25, 50, 75, 100 mm).  Wide y-range
@@ -1295,72 +1348,115 @@ def gen_residuals_stage10_style(power_data, mesh, inside, out_dir):
     F_norm_at_mettler = np.interp(METTLER_RADIAL_R_MM, r_mm_all, F_norm)
     residual_pct = 100.0 * (F_norm_at_mettler - METTLER_RADIAL_NORM) / METTLER_RADIAL_NORM
 
-    # --- Panel (b): wafer-centre ratio vs power against Mettler Fig. 4.17 -
-    # Mettler's TEL data is probe-direct at 1000 W only; the ratio at every
-    # power uses the 1000 W anchor (3.774e14 cm^-3, 90% SF6 bias-on).
-    METTLER_1000W_90 = 3.774e14
-    xp = [e['value'] for e in power_data]
-    F_c_model = np.array([e.get('summary', {}).get('F_icp',
-                          e.get('summary', {}).get('nF_centre_wafer_cm3', 0))
-                          for e in power_data])
-    ratio = F_c_model / METTLER_1000W_90
+    # --- Panel (b): 4-bar comparison at 1000 W against Mettler Fig. 4.17 -
+    # Mettler's TEL dataset has NO power sweep. Her wafer-centre [F] exists
+    # at a single operating condition (1000 W / 10 mTorr / 200 W bias) in
+    # four composition x bias combinations (Fig. 4.17). Any "ratio vs power"
+    # plot would compare model(P) against a constant Mettler(1000 W), which
+    # is a model-internal trend masquerading as a benchmark. The honest
+    # comparison is a 4-bar chart at the four real Mettler anchors.
+    MettlerFig417 = [
+        # (label_short,         mettler_cm3,  model_summary_path)
+        ('90% SF$_6$ off',  2.327e14, 'mettler_composition/90pct_SF6/bias_off/summary.json'),
+        ('90% SF$_6$ on',   3.774e14, 'mettler_composition/90pct_SF6/bias_on/summary.json'),
+        ('30% SF$_6$ off',  0.616e14, 'mettler_composition/30pct_SF6/bias_off/summary.json'),
+        ('30% SF$_6$ on',   1.297e14, 'mettler_composition/30pct_SF6/bias_on/summary.json'),
+    ]
+    # Load the 4 model values from results/mettler_composition/
+    RESULTS_BASE = os.path.join(PROJECT_ROOT, 'results')
+    model_vals = []
+    for _, _, rel in MettlerFig417:
+        p = os.path.join(RESULTS_BASE, rel)
+        if os.path.isfile(p):
+            with open(p) as f:
+                s = json.load(f)
+            model_vals.append(s.get('nF_centre_wafer_cm3', 0))
+        else:
+            model_vals.append(0)
+    mettler_vals = [m for _, m, _ in MettlerFig417]
+    labels = [lab for lab, _, _ in MettlerFig417]
+    ratios = [(mv/mt if mt > 0 else 0) for mv, mt in zip(model_vals, mettler_vals)]
 
-    # --- Figure ------------------------------------------------------------
-    fig, axes = plt.subplots(1, 2, figsize=(13, 5))
+    # User-specified fixed y-ranges:
+    #   panel (a): [-50, 150] % — accommodates the 132 % outer-radius outlier
+    #              with clear headroom
+    #   panel (b): [0, 3.5]    — centred on the factor-2 band
+    PANEL_A_YLIM = (-50.0, 150.0)
+    PANEL_B_YLIM = (0.0, 3.5)
 
-    # Panel (a): shape residual on a wide y-range with nested context bands
+    # --- Figure: tall enough that axes don't collapse when suptitle + --------
+    #             legends are rendered.
+    fig, axes = plt.subplots(1, 2, figsize=(14, 6.2))
+
+    # Panel (a): shape residual on a wide y-range with nested context bands.
+    # Label strings use the percent sign literally (no LaTeX escape) because
+    # matplotlib axes labels are plain text; writing `\%` would otherwise
+    # render as the backslash + percent seen in earlier versions.
     ax = axes[0]
-    ax.axhspan(-10, 10, color='tab:green', alpha=0.18, label='$\\pm 10$\\% (tight)')
+    ax.axhspan(-10, 10, color='tab:green', alpha=0.18, label=r'$\pm 10\%$ (tight)')
     ax.axhspan(-25, -10, color='tab:olive', alpha=0.10)
-    ax.axhspan(10, 25, color='tab:olive', alpha=0.10, label='$\\pm 25$\\% (order-of-mag.)')
+    ax.axhspan(10, 25, color='tab:olive', alpha=0.10, label=r'$\pm 25\%$ (order-of-mag.)')
     bar_colors = ['#2ca02c' if abs(v) <= 10 else ('#b8860b' if abs(v) <= 25 else '#d62728')
                   for v in residual_pct]
     ax.bar(METTLER_RADIAL_R_MM, residual_pct, width=12, color=bar_colors,
            edgecolor='black', linewidth=0.6, zorder=3)
     ax.axhline(0, color='k', lw=0.8)
+    span = PANEL_A_YLIM[1] - PANEL_A_YLIM[0]
+    label_offset = span * 0.02
     for r_val, res in zip(METTLER_RADIAL_R_MM, residual_pct):
         va = 'bottom' if res >= 0 else 'top'
-        offset = 2.0 if res >= 0 else -2.0
-        ax.text(r_val, res + offset, f'{res:+.1f}\\%', ha='center', va=va,
+        dy = label_offset if res >= 0 else -label_offset
+        ax.text(r_val, res + dy, f'{res:+.1f}%', ha='center', va=va,
                 fontsize=10, fontweight='bold')
     ax.set_xlabel('$r$ (mm)', fontsize=13)
-    ax.set_ylabel('Normalised-shape model error (\\%)', fontsize=13)
+    ax.set_ylabel('Normalised-shape model error (%)', fontsize=13)
     ax.set_title(f'(a) Normalised-shape residual at {title_power} W',
                  fontsize=13, fontweight='bold')
-    ax.set_ylim(-50, 50)
-    ax.legend(loc='upper left', fontsize=10)
+    ax.set_ylim(*PANEL_A_YLIM)
+    ax.legend(loc='upper left', fontsize=9)
     ax.grid(True, alpha=0.3, axis='y')
 
-    # Panel (b): absolute ratio vs power with factor-2 band and D6 annotation
+    # Panel (b): 4-bar comparison at the four Mettler Fig. 4.17 anchors
+    # (all at 1000 W / 10 mTorr / 200 W bias when bias-on). This is what
+    # Mettler actually measured; no power sweep is implied.
     ax = axes[1]
+    x_pos = np.arange(len(labels))
+    # Nested context bands: factor-2 (green) and factor-4 (orange, spans
+    # 0.25--0.5 and 2.0--4.0) so the current 0.42--0.56 ratios read as a
+    # clear magnitude deficit, not a catastrophic mismatch.
     ax.axhspan(0.5, 2.0, color='tab:green', alpha=0.18, label='Factor-2 band')
-    ax.axhspan(0.25, 0.5, color='tab:orange', alpha=0.10, label='Factor-4 band')
-    ax.plot(xp, ratio, '-o', color='#d62728', lw=2.2, ms=9,
-            label='Model / Mettler 1000 W anchor', zorder=3)
+    ax.axhspan(0.25, 0.5, color='tab:orange', alpha=0.12, label='Factor-4 band')
+    ax.axhspan(2.0, 4.0, color='tab:orange', alpha=0.12)
+    ratio_colors = ['#2ca02c' if 0.5 <= r <= 2.0 else
+                    ('#b8860b' if 0.25 <= r <= 4.0 else '#d62728')
+                    for r in ratios]
+    bars = ax.bar(x_pos, ratios, width=0.65, color=ratio_colors,
+                  edgecolor='black', linewidth=0.6, zorder=3)
     ax.axhline(1.0, color='k', lw=0.9, ls='--', label='Perfect agreement')
-    # Annotate the 1000 W point as the Mettler anchor (ratio = model/Mettler
-    # at 1000 W = 1-|residual|/100)
-    i1000 = xp.index(1000) if 1000 in xp else len(xp) // 2
-    ax.annotate(f'Mettler anchor\n(1000 W, ratio={ratio[i1000]:.2f})',
-                xy=(1000, ratio[i1000]), xytext=(800, ratio[i1000] + 0.4),
-                fontsize=9, ha='center',
-                arrowprops=dict(arrowstyle='->', color='black', lw=0.8))
-    ax.set_xlabel('Power (W)', fontsize=13)
+    # Annotate each bar with the ratio value
+    for xp_i, r in zip(x_pos, ratios):
+        ax.text(xp_i, r + 0.05, f'{r:.2f}', ha='center', va='bottom',
+                fontsize=11, fontweight='bold')
+    ax.set_xticks(x_pos)
+    ax.set_xticklabels(labels, fontsize=10)
+    ax.set_xlabel('Mettler Fig. 4.17 condition (all at 1000 W)', fontsize=13)
     ax.set_ylabel('Wafer-centre [F] — Model / Mettler', fontsize=13)
-    ax.set_title('(b) Wafer-centre ratio vs Mettler 1000 W direct-probe anchor',
+    ax.set_title('(b) Model/Mettler ratio at the four Fig. 4.17 conditions',
                  fontsize=12, fontweight='bold')
-    ax.set_ylim(0, max(2.2, ratio.max() * 1.15))
-    ax.legend(loc='upper left', fontsize=10)
-    ax.grid(True, alpha=0.3)
+    ax.set_ylim(0, PANEL_B_YLIM[1])
+    ax.legend(loc='upper right', fontsize=9)
+    ax.grid(True, alpha=0.3, axis='y')
 
-    fig.suptitle('Model residuals vs Mettler Fig. 4.17 direct-probe data '
-                 '(1000 W anchor) — D6 FAIL: scalar $\\gamma_\\mathrm{Al}$ cannot close',
-                 fontsize=13, fontweight='bold', y=1.02)
-    fig.tight_layout()
-    fig.savefig(os.path.join(out_dir, 'fig_residuals.png'), dpi=200, bbox_inches='tight')
-    fig.savefig(os.path.join(out_dir, 'fig_residuals.pdf'), bbox_inches='tight')
+    # Short one-line suptitle so it doesn't steal vertical space from the axes
+    fig.suptitle('Model residuals vs Mettler Fig. 4.17 (1000 W direct-probe anchor)',
+                 fontsize=13, fontweight='bold')
+    fig.tight_layout(rect=(0, 0, 1, 0.95))
+    fig.savefig(os.path.join(out_dir, 'fig_residuals.png'), dpi=200)
+    fig.savefig(os.path.join(out_dir, 'fig_residuals.pdf'))
     plt.close(fig)
-    print("  fig_residuals  (re-anchored to Mettler Fig. 4.17 at 1000 W)")
+    print("  fig_residuals  (re-anchored to Mettler Fig. 4.17 at 1000 W, "
+          f"panel-a ylim [{PANEL_A_YLIM[0]:.0f}, {PANEL_A_YLIM[1]:.0f}], "
+          f"panel-b ylim [{PANEL_B_YLIM[0]:.0f}, {PANEL_B_YLIM[1]:.0f}])")
 
 
 def load_ar_mixture_data(ar_dir):

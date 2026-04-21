@@ -41,6 +41,34 @@ def _load_point(point_dir):
     return summary, fields
 
 
+def _load_sweep_dir(sweep_dir):
+    """Load all P####W points in a sweep directory into the power_data list
+    shape expected by gen_absolute_validation_4panel / gen_residuals."""
+    if not os.path.isdir(sweep_dir):
+        return []
+    power_data = []
+    for entry in sorted(os.listdir(sweep_dir)):
+        if not (entry.startswith('P') and entry.endswith('W')):
+            continue
+        point_dir = os.path.join(sweep_dir, entry)
+        if not os.path.isdir(point_dir):
+            continue
+        try:
+            power = int(entry[1:-1])
+        except ValueError:
+            continue
+        loaded = _load_point(point_dir)
+        if loaded is None:
+            continue
+        summary, fields = loaded
+        power_data.append({
+            'value': power,
+            'summary': summary,
+            'fields': fields,
+        })
+    return sorted(power_data, key=lambda r: r['value'])
+
+
 def main():
     setup_style()
     out_dir = os.path.join(PROJECT_ROOT, 'docs', 'report', 'figures')
@@ -59,40 +87,41 @@ def main():
         tel['L_proc'], tel['L_proc'] + tel['L_apt'], L_total,
         R_wafer=tel.get('R_wafer', 0.075))
 
-    # Iterate P0200W..P1200W; each subdir has summary.json + nF.npy
-    sweep_base = os.path.join(PROJECT_ROOT, 'results', 'sweeps',
-                              'power_1000W_biased')
-    power_data = []
-    for entry in sorted(os.listdir(sweep_base)):
-        if not (entry.startswith('P') and entry.endswith('W')):
-            continue
-        point_dir = os.path.join(sweep_base, entry)
-        if not os.path.isdir(point_dir):
-            continue
-        try:
-            power = int(entry[1:-1])
-        except ValueError:
-            continue
-        loaded = _load_point(point_dir)
-        if loaded is None:
-            continue
-        summary, fields = loaded
-        power_data.append({
-            'value': power,
-            'summary': summary,
-            'fields': fields,
-        })
-    power_data.sort(key=lambda r: r['value'])
-    print(f"  Loaded {len(power_data)} power points "
-          f"({power_data[0]['value']}--{power_data[-1]['value']} W); "
-          f"nF fields loaded for "
-          f"{sum(1 for r in power_data if 'F' in r['fields'])} points")
+    sweep_base = os.path.join(PROJECT_ROOT, 'results', 'sweeps')
 
-    # (1) Absolute [F] + source-sink 4-panel — 1000 W anchor
-    gen_absolute_validation_4panel(power_data, out_dir)
+    # Primary dataset: 90% SF6 (matches the main Mettler Fig 4.17 anchor
+    # at 3.774e14 cm^-3). Panels (b, c, residuals-a) use this.
+    power_data_90 = _load_sweep_dir(os.path.join(sweep_base, 'power_90pct_SF6_biased'))
+    # Secondary dataset: 30% SF6 (second Mettler Fig 4.17 anchor at 1.297e14).
+    power_data_30 = _load_sweep_dir(os.path.join(sweep_base, 'power_30pct_SF6_biased'))
+    # Legacy 70% SF6 sweep — only used as a fallback if neither matched
+    # composition is available.
+    power_data_70 = _load_sweep_dir(os.path.join(sweep_base, 'power_1000W_biased'))
 
-    # (2) Residuals 2-panel — 1000 W anchor against Mettler Fig. 4.17
-    gen_residuals_stage10_style(power_data, mesh, inside, out_dir)
+    if power_data_90:
+        primary = power_data_90
+        primary_label = '90% SF6'
+    elif power_data_30:
+        primary = power_data_30
+        primary_label = '30% SF6'
+    else:
+        primary = power_data_70
+        primary_label = '70% SF6 (legacy)'
+    print(f"  Primary (panels b/c/residuals-a): {primary_label} "
+          f"({len(primary)} points)")
+    if power_data_90:
+        print(f"  90% SF6 sweep (panels a/d): {len(power_data_90)} points")
+    if power_data_30:
+        print(f"  30% SF6 sweep (panels a/d): {len(power_data_30)} points")
+
+    # (1) Absolute [F] + source-sink 4-panel — composition-matched
+    gen_absolute_validation_4panel(
+        primary, out_dir,
+        power_data_90=power_data_90 if power_data_90 else None,
+        power_data_30=power_data_30 if power_data_30 else None)
+
+    # (2) Residuals 2-panel — uses primary for the radial shape at 1000 W
+    gen_residuals_stage10_style(primary, mesh, inside, out_dir)
 
     print("Done.")
 

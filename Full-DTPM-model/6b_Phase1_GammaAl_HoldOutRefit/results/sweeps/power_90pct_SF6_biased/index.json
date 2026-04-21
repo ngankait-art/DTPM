@@ -1,0 +1,90 @@
+[
+  {
+    "composition": "power_90pct_SF6_biased",
+    "power": 200,
+    "frac_Ar": 0.1,
+    "F_drop_pct": 66.45401419657676,
+    "nF_centre_wafer_cm3": 83862947998698.11,
+    "elapsed_sec": 154.34105801582336
+  },
+  {
+    "composition": "power_90pct_SF6_biased",
+    "power": 300,
+    "frac_Ar": 0.1,
+    "F_drop_pct": 72.1215759892597,
+    "nF_centre_wafer_cm3": 100136225281597.02,
+    "elapsed_sec": 163.17492389678955
+  },
+  {
+    "composition": "power_90pct_SF6_biased",
+    "power": 400,
+    "frac_Ar": 0.1,
+    "F_drop_pct": 74.66931597117907,
+    "nF_centre_wafer_cm3": 114105284230018.83,
+    "elapsed_sec": 164.33624696731567
+  },
+  {
+    "composition": "power_90pct_SF6_biased",
+    "power": 500,
+    "frac_Ar": 0.1,
+    "F_drop_pct": 75.35371710867629,
+    "nF_centre_wafer_cm3": 123614849730566.58,
+    "elapsed_sec": 162.2587070465088
+  },
+  {
+    "composition": "power_90pct_SF6_biased",
+    "power": 600,
+    "frac_Ar": 0.1,
+    "F_drop_pct": 75.67830499071066,
+    "nF_centre_wafer_cm3": 131193210674609.77,
+    "elapsed_sec": 161.16074776649475
+  },
+  {
+    "composition": "power_90pct_SF6_biased",
+    "power": 700,
+    "frac_Ar": 0.1,
+    "F_drop_pct": 75.88482028109502,
+    "nF_centre_wafer_cm3": 138407117978854.42,
+    "elapsed_sec": 161.76745104789734
+  },
+  {
+    "composition": "power_90pct_SF6_biased",
+    "power": 800,
+    "frac_Ar": 0.1,
+    "F_drop_pct": 76.03991363714027,
+    "nF_centre_wafer_cm3": 145277414432576.03,
+    "elapsed_sec": 162.25338006019592
+  },
+  {
+    "composition": "power_90pct_SF6_biased",
+    "power": 900,
+    "frac_Ar": 0.1,
+    "F_drop_pct": 76.16414060676031,
+    "nF_centre_wafer_cm3": 151923648650364.12,
+    "elapsed_sec": 161.96262407302856
+  },
+  {
+    "composition": "power_90pct_SF6_biased",
+    "power": 1000,
+    "frac_Ar": 0.1,
+    "F_drop_pct": 76.26825618606546,
+    "nF_centre_wafer_cm3": 158645097775314.7,
+    "elapsed_sec": 139.90852093696594
+  },
+  {
+    "composition": "power_90pct_SF6_biased",
+    "power": 1100,
+    "frac_Ar": 0.1,
+    "F_drop_pct": 76.35589378934604,
+    "nF_centre_wafer_cm3": 165544957081291.7,
+    "elapsed_sec": 138.71548533439636
+  },
+  {
+    "composition": "power_90pct_SF6_biased",
+    "power": 1200,
+    "frac_Ar": 0.1,
+    "F_drop_pct": 76.39576347957183,
+    "nF_centre_wafer_cm3": 167867082093868.12,
+    "elapsed_sec": 137.98934888839722
+  }
+]
