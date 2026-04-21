@@ -1,0 +1,31 @@
+% Replacement content for the §5.5 Limitations description list items L5 (bias)
+% and any references to L6 (prescribed eta).  L1-L4 remain unchanged.
+%
+% The intro paragraph of §sec:hybrid-limits is also updated to reflect that
+% the self-consistent-eta rewrite (§\ref{sec:selfconsistent-eta}) and the
+% m12 bias-sheath extension (§\ref{sec:m12-bias-sheath}) have RESOLVED two
+% limitations that the prior revision carried.  The revised limitation list
+% is now four items (L1-L4), not five.
+
+\item[\textsc{L5.\ Kinetic-regime chemistry only.}] All Phase-1 simulations
+produce centre-of-wafer [F] in the few-$\times 10^{20}$~m$^{-3}$ range, safely
+below Mettler's $\sim 1.1 \times 10^{21}$~m$^{-3}$ diffusion-limited threshold
+(his Fig.~4.9 and Table~4.4)~\cite{Mettler2025}, so the present [F] predictions
+compare cleanly to his kinetic-regime probe data.  Extending to higher
+densities (e.g.\ higher power, or NF$_3$ chemistry) would require coupling a
+near-surface reactant-product transport equation (WF$_6$ or SiF$_4$) to
+resolve the depletion layer.
+
+% ------------------------------------------------------------------------
+% RESOLVED in the present revision (documented for traceability):
+%
+% (Superseded L5 from prior revision) "No wafer-bias sheath." — Resolved by
+%   the new m12_ccp_bias_sheath module.  See §\ref{sec:m12-bias-sheath}.
+%
+% (Superseded L6 from prior revision) "Prescribed power-coupling efficiency." —
+%   Resolved by the Lieberman coupled-circuit rewrite in m01/m11.  See
+%   §\ref{sec:selfconsistent-eta}.
+%
+% The present revision therefore lists four principal limitations (L1-L4)
+% plus one kinetic-regime scope-note (L5 above).
+% ------------------------------------------------------------------------

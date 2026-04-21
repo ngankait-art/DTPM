@@ -1,0 +1,123 @@
+{
+  "decision": "FAIL",
+  "reason": "at least one held-out has |residual_F| > 15%",
+  "gamma_al_star": 0.02,
+  "literature_bounds": [
+    0.01,
+    0.4
+  ],
+  "tolerances": {
+    "mag_pct": 10.0,
+    "shape_pp": 5.0,
+    "fail_mag_pct": 15.0
+  },
+  "fit_point_row": {
+    "gamma_Al": 0.02,
+    "condition": "90pct_SF6_bias_on",
+    "nF_centre_wafer_cm3": 295634027053545.94,
+    "F_drop_pct": 29.15014328034434,
+    "mettler_nF_c_cm3": 377400000000000.0,
+    "mettler_F_drop_pct": 74.8,
+    "residual_F_pct": -21.66559961485269,
+    "residual_drop_pp": -45.64985671965566,
+    "eta": 0.9476808501286506,
+    "I_peak_A": 11.436689847957474,
+    "elapsed_sec": 153.00068402290344
+  },
+  "held_out_rows": [
+    {
+      "gamma_Al": 0.02,
+      "condition": "90pct_SF6_bias_off",
+      "nF_centre_wafer_cm3": 219110829902317.75,
+      "F_drop_pct": 28.09020522860932,
+      "mettler_nF_c_cm3": 232700000000000.0,
+      "mettler_F_drop_pct": 74.5,
+      "residual_F_pct": -5.839780875669209,
+      "residual_drop_pp": -46.40979477139068,
+      "eta": 0.9475944071797466,
+      "I_peak_A": 11.44613393468001,
+      "elapsed_sec": 140.40473818778992
+    },
+    {
+      "gamma_Al": 0.02,
+      "condition": "30pct_SF6_bias_on",
+      "nF_centre_wafer_cm3": 138122573154907.94,
+      "F_drop_pct": 26.507816380998506,
+      "mettler_nF_c_cm3": 129700000000000.0,
+      "mettler_F_drop_pct": 75.0,
+      "residual_F_pct": 6.493888322982219,
+      "residual_drop_pp": -48.492183619001494,
+      "eta": 0.9522808893695175,
+      "I_peak_A": 10.92235215400996,
+      "elapsed_sec": 155.92924785614014
+    },
+    {
+      "gamma_Al": 0.02,
+      "condition": "30pct_SF6_bias_off",
+      "nF_centre_wafer_cm3": 80049955716209.5,
+      "F_drop_pct": 28.16764079464501,
+      "mettler_nF_c_cm3": 61600000000000.0,
+      "mettler_F_drop_pct": 67.2,
+      "residual_F_pct": 29.95122681202841,
+      "residual_drop_pp": -39.03235920535499,
+      "eta": 0.9521009039213258,
+      "I_peak_A": 10.942931060583597,
+      "elapsed_sec": 139.74038100242615
+    }
+  ],
+  "fixed_baseline_rows": [
+    {
+      "gamma_Al": 0.18,
+      "condition": "90pct_SF6_bias_on",
+      "nF_centre_wafer_cm3": 158645097775314.7,
+      "F_drop_pct": 76.26825618606546,
+      "mettler_nF_c_cm3": 377400000000000.0,
+      "mettler_F_drop_pct": 74.8,
+      "residual_F_pct": -57.96367308550221,
+      "residual_drop_pp": 1.4682561860654602,
+      "eta": 0.9481607936003745,
+      "I_peak_A": 11.3841124379138,
+      "elapsed_sec": 128.88331985473633
+    },
+    {
+      "gamma_Al": 0.18,
+      "condition": "90pct_SF6_bias_off",
+      "nF_centre_wafer_cm3": 97624722879518.75,
+      "F_drop_pct": 77.58716396030181,
+      "mettler_nF_c_cm3": 232700000000000.0,
+      "mettler_F_drop_pct": 74.5,
+      "residual_F_pct": -58.04696051589224,
+      "residual_drop_pp": 3.087163960301808,
+      "eta": 0.9480870346429187,
+      "I_peak_A": 11.392208451073179,
+      "elapsed_sec": 129.6778109073639
+    },
+    {
+      "gamma_Al": 0.18,
+      "condition": "30pct_SF6_bias_on",
+      "nF_centre_wafer_cm3": 64324079831077.15,
+      "F_drop_pct": 74.38647032368972,
+      "mettler_nF_c_cm3": 129700000000000.0,
+      "mettler_F_drop_pct": 75.0,
+      "residual_F_pct": -50.405489721605896,
+      "residual_drop_pp": -0.6135296763102787,
+      "eta": 0.952106089132198,
+      "I_peak_A": 10.942338743134634,
+      "elapsed_sec": 129.70169401168823
+    },
+    {
+      "gamma_Al": 0.18,
+      "condition": "30pct_SF6_bias_off",
+      "nF_centre_wafer_cm3": 34261541921904.773,
+      "F_drop_pct": 77.53041163467584,
+      "mettler_nF_c_cm3": 61600000000000.0,
+      "mettler_F_drop_pct": 67.2,
+      "residual_F_pct": -44.3806137631416,
+      "residual_drop_pp": 10.33041163467584,
+      "eta": 0.9519714435597262,
+      "I_peak_A": 10.957709208620413,
+      "elapsed_sec": 128.33746099472046
+    }
+  ],
+  "markdown_table": "| Condition | gamma_Al | Model [F]_c (cm^-3) | Mettler [F]_c (cm^-3) | res_F | Model F-drop | Mettler F-drop | res_drop |\n|---|---|---|---|---|---|---|---|\n| FIT 90pct_SF6_bias_on | 0.020 | 2.956e+14 | 3.774e+14 | -21.7% | 29.15% | 74.80% | -45.65 pp |\n| HELD-OUT 90pct_SF6_bias_off | 0.020 | 2.191e+14 | 2.327e+14 | -5.8% | 28.09% | 74.50% | -46.41 pp |\n| HELD-OUT 30pct_SF6_bias_on | 0.020 | 1.381e+14 | 1.297e+14 | +6.5% | 26.51% | 75.00% | -48.49 pp |\n| HELD-OUT 30pct_SF6_bias_off | 0.020 | 8.005e+13 | 6.160e+13 | +30.0% | 28.17% | 67.20% | -39.03 pp |"
+}

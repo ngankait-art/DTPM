@@ -1,0 +1,38 @@
+{
+  "condition": "90% SF6 / 200 W bias / R_coil=0.8 / gamma_Al=0.18",
+  "gamma_quartz_grid": [
+    0.0001,
+    0.001,
+    0.005,
+    0.02
+  ],
+  "points": [
+    {
+      "gamma_quartz": 0.0001,
+      "nF_centre_wafer_cm3": 160569139343113.84,
+      "F_drop_pct": 76.30609131331938,
+      "elapsed_sec": 100.82897400856018
+    },
+    {
+      "gamma_quartz": 0.001,
+      "nF_centre_wafer_cm3": 158645097775314.7,
+      "F_drop_pct": 76.26825618606546,
+      "elapsed_sec": 101.05499172210693
+    },
+    {
+      "gamma_quartz": 0.005,
+      "nF_centre_wafer_cm3": 150933525450210.2,
+      "F_drop_pct": 76.10260093266788,
+      "elapsed_sec": 100.74969696998596
+    },
+    {
+      "gamma_quartz": 0.02,
+      "nF_centre_wafer_cm3": 125730605921757.95,
+      "F_drop_pct": 75.48031171185814,
+      "elapsed_sec": 101.10341119766235
+    }
+  ],
+  "F_centre_spread_pct": 27.708872605796458,
+  "verdict": "gamma_quartz FLIPS the conclusion \u2014 must be included in the refit.",
+  "wall_clock_sec": 102.87097096443176
+}

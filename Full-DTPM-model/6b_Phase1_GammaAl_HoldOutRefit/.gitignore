@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+*.egg-info/
+
+# macOS
+.DS_Store
+
+# LaTeX build artefacts (main.tex -> main.pdf is rebuilt from source)
+docs/report/main.aux
+docs/report/main.log
+docs/report/main.out
+docs/report/main.toc
+docs/report/*.synctex.gz
+docs/report/*.bbl
+docs/report/*.blg
+docs/report/*.fdb_latexmk
+docs/report/*.fls
+
+# Temporary/scratch
+*.tmp
+*.bak
+*~
+
+# Keep final PDFs (intentionally versioned)
+!docs/report/main.pdf
+!docs/report/*.pdf

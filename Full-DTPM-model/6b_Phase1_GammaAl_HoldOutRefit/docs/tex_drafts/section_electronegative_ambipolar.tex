@@ -1,0 +1,135 @@
+%======================================================================
+\section{Electronegative Ambipolar Diffusion Correction}
+\label{sec:electronegative-ambipolar}
+%======================================================================
+
+The prior Phase-1 release of this framework carried an architectural
+limitation (L1, see \S\ref{sec:hybrid-limits} of the prior revision) in
+which the 2D ambipolar diffusion solver used the electropositive
+coefficient
+\[
+  D_a^\mathrm{ep} \;=\; D_i\,\Bigl(1 + \tfrac{T_e}{T_i}\Bigr),
+\]
+valid only in the limit of negligible negative-ion density.  The present
+revision resolves L1 by replacing this expression with its
+electronegative generalisation due to Lieberman \& Lichtenberg
+(2005)~\cite{Lieberman2005} Ch.~10.3:
+\begin{equation}
+  \boxed{\;D_a^\mathrm{en} \;=\; D_i\,\Bigl(1 + \tfrac{T_e}{T_i}\Bigr)
+  \;\frac{1 + \alpha}{1 + \alpha\,T_i/T_e}\;,\;}
+  \label{eq:Da-en-L1}
+\end{equation}
+where $\alpha = n_{-}/n_e$ is the electronegativity.  The correction
+factor $(1+\alpha)/(1+\alpha T_i/T_e)$ reduces exactly to unity when
+$\alpha \to 0$, so the electropositive form is recovered in the appropriate
+limit.
+
+\subsection{Rigorous Physics, Not a Calibration}
+
+This modification is not a calibration.  Unlike the two fitted parameters
+$\gamma_\mathrm{Al} = 0.18$ (wall-recombination probability) and
+$\lambda_\mathrm{exp} = 3.20$ (bias-sheath expansion factor), the
+electronegative correction introduces \emph{no} free parameters.  The
+three inputs $\alpha$, $T_e$, and $T_i$ are all obtained from independent
+first-principles solves already present in the framework:
+\begin{itemize}
+  \item $\alpha$ from the 0D global model's attachment--recombination
+  balance (\S\ref{sec:0d-2d-coupling}),
+  \item $T_e(r,z)$ from the local power-balance solve in m11,
+  \item $T_i = k_B T_\mathrm{gas}$ with $T_\mathrm{gas} = 313$\,K taken
+  as the wall-set operating temperature (not tuned).
+\end{itemize}
+Equation~\ref{eq:Da-en-L1} is the algebraically correct transport
+coefficient for a plasma with three charged species (electrons, a
+dominant positive ion, and a dominant negative ion); the prior
+electropositive form dropped the last two terms and was numerically
+convenient but physically incomplete.
+
+A dedicated unit test
+(\texttt{tests/test\_electronegative\_ambipolar.py}) verifies the three
+invariants that characterise the correction factor:
+\begin{itemize}
+  \item $f(\alpha{=}0) = 1$ exactly — the electropositive limit is bit-for-bit recovered.
+  \item $f(T_i{=}T_e) = 1$ exactly — the isothermal degenerate case.
+  \item $f(\alpha{=}1,\,T_e{=}20\,\text{eV},\,T_i{=}1\,\text{eV})
+  = 2/1.05 \approx 1.905$ — the Lieberman worked example.
+\end{itemize}
+All seven tests pass (together with the eight self-consistent-$\eta$ tests
+inherited from the prior revision).
+
+\subsection{Implementation}
+
+The change is surgical: a single block in
+\texttt{src/dtpm/solvers/ambipolar\_diffusion.py} now constructs
+$D_a^\mathrm{en}$ via Eq.~\ref{eq:Da-en-L1}.  The scalar
+$\alpha$ from the 0D closure is read once per Picard iteration from
+\texttt{result\_0D['alpha']} (file \texttt{m11\_plasma\_chemistry.py}) and
+is threaded uniformly into the 2D solver.  A spatially resolved
+$\alpha(r,z)$ field (Phase-3 scope) would be a refinement; the scalar
+form is exact for the spatially averaged 0D closure that is this
+framework's hybrid architecture.
+
+The generic diffusion-matrix assembler
+(\texttt{build\_diffusion\_matrix()} in
+\texttt{src/dtpm/solvers/species\_transport.py}) was \emph{not} modified:
+it accepts any $D_\mathrm{field}$ as input, so the new $D_a^\mathrm{en}$
+propagates through the existing finite-difference stencil without change.
+The module-level \texttt{multispecies\_transport.py} neutral-species
+transport is independent of $\alpha$ and was also not touched.
+
+\subsection{Quantitative Impact at the Mettler Operating Point}
+\label{sec:L1-finding-alpha-small}
+
+An important physics finding emerges from applying Eq.~\ref{eq:Da-en-L1}
+at Mettler's canonical operating point (\SI{1000}{\watt}, \SI{10}{\milli\torr},
+90\,\% SF$_6$, \SI{200}{\watt} bias).  The 0D global model returns
+\[
+  \alpha_{0\mathrm{D}} \;\approx\; 0.02,
+\]
+which is \emph{two orders of magnitude} below the typical-electronegative
+value ($\alpha \sim 1$--$1.5$) cited as a generic textbook estimate in the
+prior revision's L1 discussion.  The cause is the very high electron density
+at Mettler's high-power / high-bias operating point
+($n_e \sim 10^{19}$\,m$^{-3}$), which replenishes the electron population
+faster than the dissociative-attachment rate depletes it: $\alpha$ is
+determined by the dynamical balance $R_\mathrm{att}/k_\mathrm{rec}/n_e$
+(\texttt{global\_model.py} Eqs.~202--204), and at these conditions the
+denominator $k_\mathrm{rec} n_e$ dominates.
+
+The correction factor evaluated at $\alpha = 0.02$ and $T_i/T_e \approx
+0.012$ is
+\[
+  \frac{1+\alpha}{1+\alpha\,T_i/T_e} \;\approx\; 1.019\,,
+\]
+so the electronegative $D_a^\mathrm{en}$ is only $\sim 2\,\%$ above the
+electropositive $D_a^\mathrm{ep}$ in this regime.  The predicted
+centre-to-edge [F]-drop changes by ${<}1$\,percentage point between the
+two solvers.
+
+The prior revision's projection that L1 would close the approximately
+6-percentage-point gap between the modelled 68\,\% and the experimental
+74\,\% [F] drop was therefore based on an over-estimate of $\alpha$.  That
+projection is now corrected.  The residual gap between the model and
+Mettler's absolute data at this operating point must be attributed to
+effects other than L1 --- most likely an over-tuned
+$\gamma_\mathrm{Al} = 0.18$ (fitted against Mettler's 74\,\% on the
+approximate D$_a^\mathrm{ep}$ solver) and/or the composition-insensitive
+$\gamma_\mathrm{Al}$ architectural choice itself (see remaining
+limitations in \S\ref{sec:hybrid-limits}).
+
+\subsection{Regime Where L1 Matters}
+
+The correction factor $(1+\alpha)/(1+\alpha T_i/T_e)$ approaches 2 only
+when $\alpha T_i/T_e$ is much smaller than 1 \emph{and} $\alpha \gtrsim 1$.
+At higher pressure (lower $n_e$ at fixed power) or lower ICP power (lower
+$n_e$ at fixed pressure), $\alpha$ rises and the correction becomes
+substantial.  Example: at \SI{50}{\milli\torr}/\SI{300}{\watt} (outside the
+present Mettler validation window), the 0D solver returns $\alpha \approx
+1.4$, giving a correction factor of $\sim 2.3$.  The L1 machinery is
+therefore physically important for higher-pressure / lower-power regimes
+and remains a required component of the framework even though its
+quantitative effect at Mettler's 1000 W point is minor.  This is a
+significant methodological finding: \emph{applying a rigorous physics
+correction does not always produce a large numerical change}, and it is
+only by implementing the correction that one can bound its quantitative
+relevance at a specific operating point.

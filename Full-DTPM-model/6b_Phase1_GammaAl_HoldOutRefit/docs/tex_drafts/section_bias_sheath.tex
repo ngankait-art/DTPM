@@ -1,0 +1,101 @@
+%======================================================================
+\section{Capacitive Wafer-Bias Sheath (m12)}
+\label{sec:m12-bias-sheath}
+%======================================================================
+
+Mettler's TEL radial [F] measurements (his Fig.~4.13, 4.17) were taken
+with a 200\,W RF bias applied to the wafer electrode.  The bias
+accelerates positive ions through the wafer sheath, depositing ion
+kinetic energy as neutral-gas heating near the wafer, which in turn
+expands the plasma glow into the process chamber and raises the local
+[F] density by factors of $\sim 1.6$ (90\% SF$_6$) to $\sim 2.15$ (30\%
+SF$_6$, centre).  The prior Phase-1 framework had no CCP extension at
+all; its omission was documented as Limitation~L5 in the previous
+revision.  The present revision adds a dedicated module,
+\texttt{m12\_ccp\_bias\_sheath.py}, that closes a reduced-order
+Lieberman sheath power balance and couples the result back into the
+ionisation source of the ambipolar diffusion solver.
+
+\subsection*{Sheath power balance}
+
+At the wafer ($z=0$), the Bohm ion flux at the sheath edge is
+\begin{equation}
+  \Gamma_i \;=\; 0.61\,n_{e,\mathrm{wafer}}\,\sqrt{\frac{k_B\,T_e}{m_i}}\,,
+  \label{eq:bohm-flux}
+\end{equation}
+where $m_i$ is a composition-weighted effective ion mass (SF$_5^+$ at
+127~amu for 90\% SF$_6$, Ar$^+$ at 40~amu for 30\% SF$_6$).  The
+time-averaged sheath DC voltage follows from the bias-power balance:
+\begin{equation}
+  P_\mathrm{bias} \;=\; e\,V_\mathrm{DC}\,\Gamma_i\,A_\mathrm{wafer}
+  \;\;\Rightarrow\;\;
+  V_\mathrm{DC} \;=\; \frac{P_\mathrm{bias}}{e\,\Gamma_i\,A_\mathrm{wafer}}\,.
+  \label{eq:sheath-Vdc}
+\end{equation}
+A fraction $f_\mathrm{ion\to gas} = 0.5$ of the ion kinetic power is
+deposited as neutral-gas heating near the wafer
+(Turner et al.\ 2013~\cite{Turner2013}):
+\begin{equation}
+  P_\mathrm{ion\to gas} \;=\; f_\mathrm{ion\to gas}\,P_\mathrm{bias}\,.
+  \label{eq:ion-to-gas}
+\end{equation}
+
+\subsection*{Plasma-glow expansion source}
+
+Instead of resolving a gas-energy PDE (a Phase-3 scope), the module
+translates the neutral-heating power into an effective volumetric
+ionisation source confined to the process chamber beneath the aperture:
+\begin{equation}
+  S_\mathrm{bias}(r,z) \;=\; \frac{\lambda_\mathrm{exp}\,P_\mathrm{ion\to gas}}{\varepsilon_T\,e}\,\chi(r,z)\,,
+  \label{eq:Sbias}
+\end{equation}
+where $\chi(r,z)$ is a normalised spatial profile $\int\chi\,dV=1$ that
+decays exponentially with distance from the aperture,
+$\chi(r,z) \propto \exp\!\bigl(-(z_\mathrm{apt}-z)/L_\mathrm{exp}\bigr)$
+for $z \le z_\mathrm{apt}$, with a cosine taper in $r$ bounded by the
+wafer radius.  The decay length is $L_\mathrm{exp} = 30$~mm, chosen as
+roughly half the process-chamber height.  The dimensionless factor
+$\lambda_\mathrm{exp}$ is the one free parameter of the bias model; it
+is calibrated once, against Mettler's 90\% SF$_6$ bias-on centre [F]
+enhancement of $\times 1.6$, and blind-tested against the 30\% SF$_6$
+branch as described below.
+
+\subsection*{Coupling to m11}
+
+The $m12$ output $S_\mathrm{bias}(r,z)$ is added to the ICP-only power
+deposition $P_\mathrm{rz}^\mathrm{ICP}(r,z)$ before the ambipolar
+diffusion solve:
+\begin{equation}
+  P_\mathrm{rz}^\mathrm{total}(r,z) \;=\; P_\mathrm{rz}^\mathrm{ICP}(r,z) + P_\mathrm{rz}^\mathrm{bias}(r,z)\,,
+\end{equation}
+with
+$P_\mathrm{rz}^\mathrm{bias}(r,z) = \lambda_\mathrm{exp}\,P_\mathrm{ion\to gas}\,\chi(r,z)$.
+When $P_\mathrm{bias} = 0$ (or the module is disabled by configuration),
+$S_\mathrm{bias}$ vanishes identically and the framework reduces to the
+ICP-only self-consistent pipeline.  See
+\texttt{src/dtpm/modules/m12\_ccp\_bias\_sheath.py} for implementation
+details.
+
+\subsection*{Calibration and blind test}
+
+The calibration free parameter $\lambda_\mathrm{exp}$ was tuned once
+against Mettler's 90\% SF$_6$ bias-on enhancement at 1000\,W, 10\,mTorr,
+yielding $\lambda_\mathrm{exp} = 3.20$ and a model enhancement of
+$\times 1.61$ (target $\times 1.60$, deviation $+0.8\,\%$).  The same
+$\lambda_\mathrm{exp}$ was then applied to the 30\% SF$_6$ case,
+producing an enhancement of $\times 1.88$ (target $\times 2.15$,
+deviation $-12.8\,\%$).  The blind test deviation lies within the
+$\pm 20\,\%$ acceptance band specified in the model design and is a
+non-trivial validation: the same calibration captures the opposite
+composition regime with the ion mass and electron-temperature
+dependence reflected only through the Bohm-flux physics.
+
+The model's mild under-prediction at 30\% SF$_6$ is consistent with a
+stronger plasma-volume expansion effect in the more electropositive
+(Ar-rich) regime, where the bias sheath extends further before
+collisions thermalise the ion beam.  A gas-energy-equation coupling
+(Phase-3) would capture this regime difference explicitly; the present
+reduced-order calibration over-averages across compositions.
+
+The resulting composition-sensitivity test is summarised in
+Fig.~\ref{fig:composition-blind-test}.

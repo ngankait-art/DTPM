@@ -1,0 +1,20 @@
+[
+  {
+    "label": "90pct_SF6",
+    "frac_Ar": 0.1,
+    "nF_centre_off_cm3": 97624722879518.75,
+    "nF_centre_on_cm3": 158645097775314.7,
+    "enhancement": 1.625050428784344,
+    "mettler_target": 1.6,
+    "dev_pct": 1.5656517990214835
+  },
+  {
+    "label": "30pct_SF6",
+    "frac_Ar": 0.7,
+    "nF_centre_off_cm3": 34261541921904.773,
+    "nF_centre_on_cm3": 64324079831077.15,
+    "enhancement": 1.8774426433491072,
+    "mettler_target": 2.15,
+    "dev_pct": -12.677086355855483
+  }
+]
