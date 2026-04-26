@@ -25,16 +25,20 @@ cluster/
 
 ## 1. One-time bootstrap
 
-### 1a. SSH to Delta and pick a working directory under `$SCRATCH`
+### 1a. SSH to Delta and create the working directory
 
 ```bash
 ssh $USER@login.delta.ncsa.illinois.edu
-mkdir -p $SCRATCH/dtpm-lxcat
-cd $SCRATCH/dtpm-lxcat
+mkdir -p /u/mae5/projects/DTPM
+cd /u/mae5/projects/DTPM
 ```
 
-`$HOME` on Delta is 25 GB; the conda env alone is ~3 GB. Always work under
-`$SCRATCH` (or `$WORK` if you have it), not `$HOME`.
+The conda env created by `bootstrap.sh` is ~3 GB; the clone is ~363 MB;
+the regenerated dataset is ~200 MB. Confirm the parent filesystem has
+enough quota: `quota -s` (or `du -sh /u/mae5` to spot-check current usage).
+If the home filesystem is tight, symlink the conda env elsewhere with
+`conda config --append envs_dirs $SCRATCH/conda-envs` before running
+`bootstrap.sh`.
 
 ### 1b. Find your account name
 
@@ -44,14 +48,16 @@ accounts                 # Delta utility — lists your bxxx-delta-cpu / -gpu al
 
 You'll have one CPU account and (probably) one GPU account. Note both.
 
-### 1c. Clone the repo and check out the feat branch
+### 1c. Clone the repo as `DTPM_phase1` and check out the feat branch
 
 ```bash
-git clone https://github.com/ngankait-art/DTPM.git
-cd DTPM
+git clone https://github.com/ngankait-art/DTPM.git DTPM_phase1
+cd DTPM_phase1
 git checkout feat/phase1-global-2d-and-sf6ar-chemistry
 git pull
 ```
+
+Final layout: `/u/mae5/projects/DTPM/DTPM_phase1/` is the repo root.
 
 ### 1d. Fill in the account placeholders
 

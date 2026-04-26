@@ -4,7 +4,7 @@
 #
 # Run from the repo root after `git clone` and `git checkout` of the feat
 # branch. Example:
-#   cd $SCRATCH/$USER/dtpm-lxcat/DTPM
+#   cd /u/mae5/projects/DTPM/DTPM_phase1
 #   bash Full-DTPM-model/6b_Phase1_GammaAl_HoldOutRefit/cluster/env/bootstrap.sh
 
 set -euo pipefail
