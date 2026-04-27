@@ -1,0 +1,14 @@
+========================================================================
+  Parallel ablation — mode=legacy
+  5 configs x 3 seeds, 5 workers
+  Output: /Users/kaingan8/Downloads/SF6_unified/active_projects/sf6_2d_icp/Full-DTPM-model/6b_Phase1_GammaAl_HoldOutRefit/results/ml_ablation_legacy
+========================================================================
+  [OK] bias_only: nF=0.00601+/-0.00065  nSF6=0.00566
+  [OK] none: nF=0.02183+/-0.00073  nSF6=0.02108
+  [OK] epochs_only: nF=0.02052+/-0.00031  nSF6=0.02008
+  [OK] reg_only: nF=0.02217+/-0.00142  nSF6=0.02131
+  [OK] all_three: nF=0.00612+/-0.00051  nSF6=0.00597
+
+  Wall-clock: 109907.8s (1831.8 min)
+  JSON: /Users/kaingan8/Downloads/SF6_unified/active_projects/sf6_2d_icp/Full-DTPM-model/6b_Phase1_GammaAl_HoldOutRefit/results/ml_ablation_legacy/ablation_results.json
+  MD:   /Users/kaingan8/Downloads/SF6_unified/active_projects/sf6_2d_icp/Full-DTPM-model/6b_Phase1_GammaAl_HoldOutRefit/results/ml_ablation_legacy/ablation_results.md

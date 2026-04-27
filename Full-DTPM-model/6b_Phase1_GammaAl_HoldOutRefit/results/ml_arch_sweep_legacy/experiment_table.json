@@ -1,0 +1,272 @@
+{
+  "experiments": [
+    {
+      "name": "E0_baseline",
+      "nF_rmse_mean": 0.02227,
+      "nF_rmse_std": 0.00202,
+      "nSF6_rmse_mean": 0.0218,
+      "nSF6_rmse_std": 0.00398,
+      "time_s": 9469,
+      "n_runs": 3,
+      "runs": [
+        {
+          "seed_idx": 0,
+          "nF": {
+            "rmse": 0.02512
+          },
+          "nSF6": {
+            "rmse": 0.02717
+          }
+        },
+        {
+          "seed_idx": 1,
+          "nF": {
+            "rmse": 0.02064
+          },
+          "nSF6": {
+            "rmse": 0.02058
+          }
+        },
+        {
+          "seed_idx": 2,
+          "nF": {
+            "rmse": 0.02106
+          },
+          "nSF6": {
+            "rmse": 0.01765
+          }
+        }
+      ],
+      "n_epochs": 1500,
+      "use_physics_reg": false,
+      "use_huber": false,
+      "enhanced": false
+    },
+    {
+      "name": "E1_v4_recipe",
+      "nF_rmse_mean": 0.00606,
+      "nF_rmse_std": 0.00043,
+      "nSF6_rmse_mean": 0.00614,
+      "nSF6_rmse_std": 0.00042,
+      "time_s": 7975,
+      "n_runs": 3,
+      "runs": [
+        {
+          "seed_idx": 0,
+          "nF": {
+            "rmse": 0.00643
+          },
+          "nSF6": {
+            "rmse": 0.00618
+          }
+        },
+        {
+          "seed_idx": 1,
+          "nF": {
+            "rmse": 0.00546
+          },
+          "nSF6": {
+            "rmse": 0.0056
+          }
+        },
+        {
+          "seed_idx": 2,
+          "nF": {
+            "rmse": 0.00629
+          },
+          "nSF6": {
+            "rmse": 0.00663
+          }
+        }
+      ],
+      "n_epochs": 2000,
+      "use_physics_reg": true,
+      "use_huber": false,
+      "enhanced": false
+    },
+    {
+      "name": "E2_wider_deeper",
+      "nF_rmse_mean": 0.00626,
+      "nF_rmse_std": 0.00039,
+      "nSF6_rmse_mean": 0.00594,
+      "nSF6_rmse_std": 0.0005,
+      "time_s": 54990,
+      "n_runs": 3,
+      "runs": [
+        {
+          "seed_idx": 0,
+          "nF": {
+            "rmse": 0.00641
+          },
+          "nSF6": {
+            "rmse": 0.00616
+          }
+        },
+        {
+          "seed_idx": 1,
+          "nF": {
+            "rmse": 0.00572
+          },
+          "nSF6": {
+            "rmse": 0.00525
+          }
+        },
+        {
+          "seed_idx": 2,
+          "nF": {
+            "rmse": 0.00664
+          },
+          "nSF6": {
+            "rmse": 0.00642
+          }
+        }
+      ],
+      "n_epochs": 2000,
+      "use_physics_reg": true,
+      "use_huber": false,
+      "enhanced": false
+    },
+    {
+      "name": "E3_separate_heads",
+      "nF_rmse_mean": 0.00542,
+      "nF_rmse_std": 0.00069,
+      "nSF6_rmse_mean": 0.00476,
+      "nSF6_rmse_std": 0.00031,
+      "time_s": 5355,
+      "n_runs": 3,
+      "runs": [
+        {
+          "seed_idx": 0,
+          "nF": {
+            "rmse": 0.00639
+          },
+          "nSF6": {
+            "rmse": 0.00502
+          }
+        },
+        {
+          "seed_idx": 1,
+          "nF": {
+            "rmse": 0.00481
+          },
+          "nSF6": {
+            "rmse": 0.00432
+          }
+        },
+        {
+          "seed_idx": 2,
+          "nF": {
+            "rmse": 0.00507
+          },
+          "nSF6": {
+            "rmse": 0.00494
+          }
+        }
+      ],
+      "n_epochs": 2000,
+      "use_physics_reg": true,
+      "use_huber": false,
+      "enhanced": false
+    },
+    {
+      "name": "E4_residual",
+      "nF_rmse_mean": 0.0053,
+      "nF_rmse_std": 0.00094,
+      "nSF6_rmse_mean": 0.00503,
+      "nSF6_rmse_std": 0.00054,
+      "time_s": 17810,
+      "n_runs": 3,
+      "runs": [
+        {
+          "seed_idx": 0,
+          "nF": {
+            "rmse": 0.0066
+          },
+          "nSF6": {
+            "rmse": 0.00543
+          }
+        },
+        {
+          "seed_idx": 1,
+          "nF": {
+            "rmse": 0.00439
+          },
+          "nSF6": {
+            "rmse": 0.00427
+          }
+        },
+        {
+          "seed_idx": 2,
+          "nF": {
+            "rmse": 0.00492
+          },
+          "nSF6": {
+            "rmse": 0.0054
+          }
+        }
+      ],
+      "n_epochs": 2000,
+      "use_physics_reg": true,
+      "use_huber": false,
+      "enhanced": false
+    },
+    {
+      "name": "E5_enhanced_features",
+      "nF_rmse_mean": 0.01363,
+      "nF_rmse_std": 0.00161,
+      "nSF6_rmse_mean": 0.00953,
+      "nSF6_rmse_std": 0.00059,
+      "time_s": 4261,
+      "n_runs": 3,
+      "runs": [
+        {
+          "seed_idx": 0,
+          "nF": {
+            "rmse": 0.01329
+          },
+          "nSF6": {
+            "rmse": 0.00999
+          }
+        },
+        {
+          "seed_idx": 1,
+          "nF": {
+            "rmse": 0.01184
+          },
+          "nSF6": {
+            "rmse": 0.0087
+          }
+        },
+        {
+          "seed_idx": 2,
+          "nF": {
+            "rmse": 0.01575
+          },
+          "nSF6": {
+            "rmse": 0.0099
+          }
+        }
+      ],
+      "n_epochs": 2000,
+      "use_physics_reg": true,
+      "use_huber": false,
+      "enhanced": true
+    }
+  ],
+  "reference": {
+    "surrogate_lxcat_v3": {
+      "nF_rmse": 0.0112,
+      "nSF6_rmse": 0.0081
+    },
+    "surrogate_v4": {
+      "nF_rmse": 0.0029,
+      "nSF6_rmse": 0.0027
+    }
+  },
+  "recovered_from_log": true,
+  "log_path": "/Users/kaingan8/Downloads/SF6_unified/active_projects/sf6_2d_icp/Full-DTPM-model/6b_Phase1_GammaAl_HoldOutRefit/results/ml_arch_sweep_legacy/_run.log",
+  "note": "E6_huber_loss skipped \u2014 process died during E6 seed 0 (cause unknown). E6 was redundant per main.pdf finding that Huber offered no advantage over MSE.",
+  "winner_override": "E3_separate_heads",
+  "winner_override_reason": "E4_residual has marginally lower mean (0.00530 vs 0.00542, 2% gap) but 35% larger seed variance (sigma 0.00094 vs 0.00069). E3 chosen for stability, matching main.pdf v4 precedent. Mean gap is within both 1-sigma bands.",
+  "mode": "legacy"
+}

@@ -232,52 +232,9 @@ def reg_wafer_smoothness(model, data, device, enhanced=False):
 # ═══════════════════════════════════════════════════════════════
 
 def load_dataset(val_frac=0.15, enhanced=False):
-    with open(os.path.join(DS_LXCAT, 'metadata.json')) as f:
-        meta = json.load(f)
-    meta = [e for e in meta if 'error' not in e]
-    n = len(meta)
-    np.random.seed(42)
-    perm = np.random.permutation(n)
-    n_val = max(int(n * val_frac), 10)
-    val_idx = set(perm[:n_val].tolist())
-
-    cols = ['r', 'z', 'P', 'p', 'Ar', 'lnF', 'lnSF6', 'case']
-    if enhanced:
-        cols += ['Pp', 'PAr', 'pAr', 'logp', 'inv_p']
-    data = {k: [] for k in cols}
-    for entry in meta:
-        fpath = os.path.join(DS_LXCAT, entry['file'])
-        if not os.path.exists(fpath):
-            continue
-        d = np.load(fpath)
-        inside = d['inside'].astype(bool)
-        rc, zc = d['rc'], d['zc']
-        P_val = float(entry['P_rf'])
-        p_val = float(entry['p_mTorr'])
-        Ar_val = float(entry['frac_Ar'])
-        for i in range(len(rc)):
-            for j in range(len(zc)):
-                if inside[i, j]:
-                    data['r'].append(rc[i])
-                    data['z'].append(zc[j])
-                    data['P'].append(P_val)
-                    data['p'].append(p_val)
-                    data['Ar'].append(Ar_val)
-                    data['lnF'].append(np.log10(max(d['nF'][i, j], 1e6)))
-                    data['lnSF6'].append(np.log10(max(d['nSF6'][i, j], 1e6)))
-                    data['case'].append(entry['idx'])
-                    if enhanced:
-                        data['Pp'].append(P_val * p_val)
-                        data['PAr'].append(P_val * Ar_val)
-                        data['pAr'].append(p_val * Ar_val)
-                        data['logp'].append(np.log(max(p_val, 0.1)))
-                        data['inv_p'].append(1.0 / max(p_val, 0.1))
-
-    arrays = {k: np.array(v, dtype=np.float32) for k, v in data.items()}
-    arrays['case'] = arrays['case'].astype(np.int32)
-    mask = np.array([c not in val_idx for c in arrays['case']])
-    split = lambda m: {k: v[m] for k, v in arrays.items()}
-    return split(mask), split(~mask), meta, val_idx
+    """Delegates to the 6b adapter (was a stale npz-format loader referencing
+    an undefined DS_LXCAT). Mode is picked from the ML_DATASET_MODE env var."""
+    return _load_dataset_6b(mode=_ML_MODE, val_frac=val_frac, enhanced_features=enhanced)
 
 
 def to_tensors(data, device, enhanced=False):
@@ -317,9 +274,19 @@ def main():
         print("ERROR: No experiments found in sweep table.", flush=True)
         sys.exit(1)
 
-    # Select winner: lowest nF RMSE mean
-    winner = min(experiments, key=lambda e: e['nF_rmse_mean'])
-    winner_name = winner['name']
+    # Select winner: lowest nF RMSE mean, unless an explicit override is set in the table.
+    # Override exists for cases where the lowest-mean experiment has materially worse seed
+    # variance than a near-tie alternative (see e.g. legacy 2026-04-25 recovery, where
+    # E4 won by 2% on mean but had 35% larger sigma than E3).
+    if 'winner_override' in sweep:
+        winner_name = sweep['winner_override']
+        winner = next((e for e in experiments if e['name'] == winner_name), None)
+        if winner is None:
+            print(f"ERROR: winner_override '{winner_name}' not found among experiments", flush=True)
+            sys.exit(1)
+    else:
+        winner = min(experiments, key=lambda e: e['nF_rmse_mean'])
+        winner_name = winner['name']
 
     if winner_name not in ARCH_MAP:
         print(f"ERROR: Unknown architecture '{winner_name}'", flush=True)
