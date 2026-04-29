@@ -395,7 +395,7 @@ def main():
     print(f"  === ALL MODELS COMPLETE ({tt:.0f}s) ===", flush=True)
 
     # Evaluate ensemble
-    if dev.type == 'mps':
+    if dev.type in ('mps', 'cuda'):
         Xv_eval = Xv.cpu()
         Yv_np = Yv.cpu().numpy()
         models_eval = [m.cpu() for m in models]

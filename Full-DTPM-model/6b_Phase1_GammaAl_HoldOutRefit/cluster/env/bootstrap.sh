@@ -30,8 +30,8 @@ fi
 # `module avail anaconda3 cuda` on a fresh shell to confirm names.
 echo "==> Loading modules"
 module purge
-module load anaconda3_gpu        # Delta's anaconda + CUDA-aware libs
-module load cuda/12.4.0          # adjust to whatever `module avail cuda` lists
+module load miniforge3-python    # Delta's conda (anaconda3_gpu was retired)
+module load cuda/12.8            # only cuda/11.8 and cuda/12.8 remain on Delta
 echo "==> Loaded:"
 module list 2>&1 | sed 's/^/    /'
 
@@ -45,9 +45,12 @@ else
 fi
 
 # Activate using the 'source' path because `conda activate` requires conda init
-# to have run in the current shell.
+# to have run in the current shell. set +u briefly because the env's MKL
+# activate.d hook reads MKL_INTERFACE_LAYER which is unset on first activation.
+set +u
 source "$(conda info --base)/etc/profile.d/conda.sh"
 conda activate "$ENV_NAME"
+set -u
 echo "==> Active env: $(conda info --envs | awk '/\*/ {print $1}')"
 
 # --- PHASE2_ROOT export ----------------------------------------------------

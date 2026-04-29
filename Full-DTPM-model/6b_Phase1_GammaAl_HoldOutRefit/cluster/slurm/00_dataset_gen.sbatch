@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #SBATCH --job-name=dtpm-lxcat-data
-#SBATCH --account=REPLACE_WITH_DELTA_ACCOUNT_CPU
+#SBATCH --account=bgip-delta-cpu
 #SBATCH --partition=cpu
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
@@ -23,6 +23,9 @@ mkdir -p results/cluster_logs
 
 echo "==> Job $SLURM_JOB_ID on $(hostname) at $(date -Iseconds)"
 echo "==> CWD: $(pwd)"
+# sbatch jobs don't source ~/.bashrc, so set PHASE2_ROOT explicitly here.
+export PHASE2_ROOT="/projects/bgip/mae5/DTPM/DTPM_phase1/Plasma Chemistry Module/SF6_surrogate_and_LXCat/phase2_electron_kinetics"
+
 echo "==> PHASE2_ROOT: ${PHASE2_ROOT:-<UNSET>}"
 
 if [[ -z "${PHASE2_ROOT:-}" ]]; then
@@ -30,9 +33,13 @@ if [[ -z "${PHASE2_ROOT:-}" ]]; then
   exit 2
 fi
 
-# Activate the conda env (Slurm doesn't auto-activate)
+# Activate the conda env (Slurm doesn't auto-activate). set +u while activate.d
+# hooks run because libblas_mkl_activate.sh reads $MKL_INTERFACE_LAYER unset.
+module load miniforge3-python
+set +u
 source "$(conda info --base)/etc/profile.d/conda.sh"
 conda activate dtpm-lxcat
+set -u
 
 # Thread caps prevent BLAS oversubscription within the worker pool
 export OMP_NUM_THREADS=1

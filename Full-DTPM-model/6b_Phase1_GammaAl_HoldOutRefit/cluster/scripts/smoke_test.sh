@@ -10,7 +10,7 @@
 set -euo pipefail
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-SIXB_ROOT="$(cd "$HERE/.." && pwd)"
+SIXB_ROOT="$(cd "$HERE/../.." && pwd)"
 
 if [[ -z "${PHASE2_ROOT:-}" ]]; then
   echo "FAIL: PHASE2_ROOT is not set. Run cluster/env/bootstrap.sh first." >&2

@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 #SBATCH --job-name=dtpm-lxcat-arch
-#SBATCH --account=REPLACE_WITH_DELTA_ACCOUNT_GPU
+#SBATCH --account=bgip-delta-gpu
 #SBATCH --partition=gpuA100x4
 # Fallback if gpuA100x4 queue is congested (>2 h pending): swap to gpuA40x4
 ##SBATCH --partition=gpuA40x4
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
-#SBATCH --gres=gpu:a100:1
+#SBATCH --gres=gpu:1
 #SBATCH --cpus-per-task=8
 #SBATCH --mem=64G
 #SBATCH --time=12:00:00
@@ -31,13 +31,18 @@ if [[ ! -f results/.cluster_step0.done ]]; then
   exit 2
 fi
 
+export PHASE2_ROOT="/projects/bgip/mae5/DTPM/DTPM_phase1/Plasma Chemistry Module/SF6_surrogate_and_LXCat/phase2_electron_kinetics"
+
 if [[ -z "${PHASE2_ROOT:-}" ]]; then
   echo "FAIL: PHASE2_ROOT not set." >&2
   exit 2
 fi
 
+module load miniforge3-python
+set +u
 source "$(conda info --base)/etc/profile.d/conda.sh"
 conda activate dtpm-lxcat
+set -u
 
 export ML_DATASET_MODE=lxcat
 

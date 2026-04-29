@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #SBATCH --job-name=dtpm-lxcat-ablate
-#SBATCH --account=REPLACE_WITH_DELTA_ACCOUNT_CPU
+#SBATCH --account=bgip-delta-cpu
 #SBATCH --partition=cpu
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
@@ -28,13 +28,18 @@ if [[ ! -f results/.cluster_step0.done ]]; then
   exit 2
 fi
 
+export PHASE2_ROOT="/projects/bgip/mae5/DTPM/DTPM_phase1/Plasma Chemistry Module/SF6_surrogate_and_LXCat/phase2_electron_kinetics"
+
 if [[ -z "${PHASE2_ROOT:-}" ]]; then
   echo "FAIL: PHASE2_ROOT not set." >&2
   exit 2
 fi
 
+module load miniforge3-python
+set +u
 source "$(conda info --base)/etc/profile.d/conda.sh"
 conda activate dtpm-lxcat
+set -u
 
 # Critical: doc gotcha #2. Without thread caps, 5 workers × multi-threaded
 # BLAS = load average 225 and ~5x slowdown.
