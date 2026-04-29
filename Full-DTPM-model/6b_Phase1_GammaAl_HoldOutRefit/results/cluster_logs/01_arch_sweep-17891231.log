@@ -1,0 +1,10 @@
+==> Job 17891231 on gpua060.delta.ncsa.illinois.edu at 2026-04-26T17:25:28-05:00
+Lmod has detected the following error: Cannot load module "cuda/12.8" because
+these module(s) are loaded:
+   cudatoolkit
+
+While processing the following module(s):
+    Module fullname  Module Filename
+    ---------------  ---------------
+    cuda/12.8        /opt/cray/pe/lmod/modulefiles/core/cuda/12.8.lua
+

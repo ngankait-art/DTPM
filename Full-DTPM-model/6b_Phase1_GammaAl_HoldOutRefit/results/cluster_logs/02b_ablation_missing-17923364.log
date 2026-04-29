@@ -1,0 +1,10 @@
+==> Job 17923364 on cn002.delta.ncsa.illinois.edu at 2026-04-28T06:53:36-05:00
+==> Launching ablation (configs=reg_only,all_three, workers=2)
+========================================================================
+  Parallel ablation — mode=lxcat
+  2 configs x 3 seeds, 2 workers
+  Output: /projects/bgip/mae5/DTPM/DTPM_phase1/Full-DTPM-model/6b_Phase1_GammaAl_HoldOutRefit/results/ml_ablation_lxcat_missing
+========================================================================
+srun: Job step aborted: Waiting up to 32 seconds for job step to finish.
+[2026-04-28T12:53:57.007] error: *** STEP 17923364.0 ON cn002 CANCELLED AT 2026-04-28T12:53:57 DUE TO TIME LIMIT ***
+[2026-04-28T12:53:57.007] error: *** JOB 17923364 ON cn002 CANCELLED AT 2026-04-28T12:53:57 DUE TO TIME LIMIT ***

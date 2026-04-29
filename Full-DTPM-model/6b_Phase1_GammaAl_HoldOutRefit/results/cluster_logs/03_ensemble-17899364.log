@@ -1,0 +1,30 @@
+==> Job 17899364 on gpua041.delta.ncsa.illinois.edu at 2026-04-26T23:53:18-05:00
+==> CUDA visible devices: 0
+  cuda available: True
+==> Launching ensemble training
+============================================================
+  Production Ensemble Training
+  Winner: E3_separate_heads
+  Architecture: SeparateHeadsMLP (shared trunk + per-species heads)
+  nF RMSE from sweep: 0.00410+/-0.00021
+  Device: cuda (CUDA)
+============================================================
+  Train: 332860 pts, Val: 58740 pts
+  === MODEL 0/5 EXISTS — loading ===
+  === MODEL 1/5 EXISTS — loading ===
+  === MODEL 2/5 EXISTS — loading ===
+  === MODEL 3/5 EXISTS — loading ===
+  === MODEL 4/5 EXISTS — loading ===
+  === ALL MODELS COMPLETE (12s) ===
+
+============================================================
+  RESULTS: surrogate_lxcat_v4_arch
+  Winner: E3_separate_heads (SeparateHeadsMLP (shared trunk + per-species heads))
+  nF RMSE:  0.00381 (v3: 0.0112, v4: 0.0029)
+  nSF6 RMSE: 0.00134 (v3: 0.0081, v4: 0.0027)
+  nF improvement vs v3: 66.0%
+  nF gap to v4: 1.31x
+============================================================
+==> Models written: 5
+==> Step 3 complete at 2026-04-27T00:00:02-05:00
+==> All steps done. Run cluster/scripts/push_results.sh to sync to feat branch.

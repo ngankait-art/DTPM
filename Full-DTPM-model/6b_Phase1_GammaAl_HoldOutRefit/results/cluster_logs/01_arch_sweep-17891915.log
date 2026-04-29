@@ -1,0 +1,174 @@
+==> Job 17891915 on gpua018.delta.ncsa.illinois.edu at 2026-04-26T17:30:18-05:00
+==> CUDA visible devices: 0
+  cuda available: True
+==> Launching arch sweep (ML_DATASET_MODE=lxcat)
+======================================================================
+  LXCat Architecture Upgrade — Device: cuda (CUDA)
+======================================================================
+
+Loading standard features...
+
+Loading enhanced features...
+
+  === EXPERIMENT: E0_baseline ===
+    Train: torch.Size([332860, 5]), Val: torch.Size([58740, 5])
+    E0_baseline[0] [    0] t=640.70080 v=0.81650
+    E0_baseline[0] [  300] t=0.03277 v=0.02485
+    E0_baseline[0] [  600] t=0.00857 v=0.01216
+    E0_baseline[0] [  900] t=0.00445 v=0.00605
+    E0_baseline[0] [ 1200] t=0.00228 v=0.00404
+    Run 0: nF=0.02384 nSF6=0.02320
+    E0_baseline[1] [    0] t=586.72268 v=0.83617
+    E0_baseline[1] [  300] t=0.01229 v=0.00828
+    E0_baseline[1] [  600] t=0.00660 v=0.00503
+    E0_baseline[1] [  900] t=0.00324 v=0.00412
+    E0_baseline[1] [ 1200] t=0.00193 v=0.00312
+    Run 1: nF=0.01966 nSF6=0.01778
+    E0_baseline[2] [    0] t=609.60614 v=1.26377
+    E0_baseline[2] [  300] t=0.01036 v=0.00687
+    E0_baseline[2] [  600] t=0.01149 v=0.00568
+    E0_baseline[2] [  900] t=0.00270 v=0.00343
+    E0_baseline[2] [ 1200] t=0.00122 v=0.00188
+    Run 2: nF=0.01716 nSF6=0.01576
+  === E0_baseline: nF=0.02022+/-0.00275  nSF6=0.01891+/-0.00314  (928s) ===
+
+  === EXPERIMENT: E1_v4_recipe ===
+    Train: torch.Size([332860, 5]), Val: torch.Size([58740, 5])
+    E1_v4_recipe[0] [    0] t=0.10071 v=0.00796
+    E1_v4_recipe[0] [  400] t=0.00012 v=0.00018
+    E1_v4_recipe[0] [  800] t=0.00008 v=0.00017
+    E1_v4_recipe[0] [ 1200] t=0.00006 v=0.00018
+    E1_v4_recipe[0] [ 1600] t=0.00006 v=0.00019
+    Run 0: nF=0.00668 nSF6=0.00325
+    E1_v4_recipe[1] [    0] t=0.09896 v=0.00609
+    E1_v4_recipe[1] [  400] t=0.00006 v=0.00009
+    E1_v4_recipe[1] [  800] t=0.00005 v=0.00009
+    E1_v4_recipe[1] [ 1200] t=0.00004 v=0.00008
+    E1_v4_recipe[1] [ 1600] t=0.00003 v=0.00009
+    Run 1: nF=0.00489 nSF6=0.00227
+    E1_v4_recipe[2] [    0] t=0.10827 v=0.00665
+    E1_v4_recipe[2] [  400] t=0.00010 v=0.00012
+    E1_v4_recipe[2] [  800] t=0.00007 v=0.00013
+    E1_v4_recipe[2] [ 1200] t=0.00005 v=0.00014
+    E1_v4_recipe[2] [ 1600] t=0.00005 v=0.00014
+    Run 2: nF=0.00554 nSF6=0.00307
+  === E1_v4_recipe: nF=0.00570+/-0.00074  nSF6=0.00286+/-0.00043  (1970s) ===
+
+  === EXPERIMENT: E2_wider_deeper ===
+    Train: torch.Size([332860, 5]), Val: torch.Size([58740, 5])
+    E2_wider_deeper[0] [    0] t=0.08731 v=0.00820
+    E2_wider_deeper[0] [  400] t=0.00008 v=0.00018
+    E2_wider_deeper[0] [  800] t=0.00006 v=0.00018
+    E2_wider_deeper[0] [ 1200] t=0.00004 v=0.00016
+    E2_wider_deeper[0] [ 1600] t=0.00003 v=0.00015
+    Run 0: nF=0.00718 nSF6=0.00278
+    E2_wider_deeper[1] [    0] t=0.07920 v=0.00458
+    E2_wider_deeper[1] [  400] t=0.00006 v=0.00011
+    E2_wider_deeper[1] [  800] t=0.00003 v=0.00009
+    E2_wider_deeper[1] [ 1200] t=0.00003 v=0.00009
+    E2_wider_deeper[1] [ 1600] t=0.00002 v=0.00008
+    Run 1: nF=0.00503 nSF6=0.00210
+    E2_wider_deeper[2] [    0] t=0.08249 v=0.00889
+    E2_wider_deeper[2] [  400] t=0.00008 v=0.00013
+    E2_wider_deeper[2] [  800] t=0.00005 v=0.00012
+    E2_wider_deeper[2] [ 1200] t=0.00004 v=0.00011
+    E2_wider_deeper[2] [ 1600] t=0.00003 v=0.00010
+    Run 2: nF=0.00499 nSF6=0.00276
+  === E2_wider_deeper: nF=0.00573+/-0.00102  nSF6=0.00254+/-0.00032  (2281s) ===
+
+  === EXPERIMENT: E3_separate_heads ===
+    Train: torch.Size([332860, 5]), Val: torch.Size([58740, 5])
+    E3_separate_heads[0] [    0] t=0.12846 v=0.01051
+    E3_separate_heads[0] [  400] t=0.00002 v=0.00007
+    E3_separate_heads[0] [  800] t=0.00001 v=0.00006
+    E3_separate_heads[0] [ 1200] t=0.00001 v=0.00006
+    E3_separate_heads[0] [ 1600] t=0.00000 v=0.00005
+    Run 0: nF=0.00416 nSF6=0.00174
+    E3_separate_heads[1] [    0] t=0.12434 v=0.00766
+    E3_separate_heads[1] [  400] t=0.00002 v=0.00010
+    E3_separate_heads[1] [  800] t=0.00001 v=0.00006
+    E3_separate_heads[1] [ 1200] t=0.00001 v=0.00005
+    E3_separate_heads[1] [ 1600] t=0.00000 v=0.00004
+    Run 1: nF=0.00382 nSF6=0.00150
+    E3_separate_heads[2] [    0] t=0.11521 v=0.00850
+    E3_separate_heads[2] [  400] t=0.00002 v=0.00009
+    E3_separate_heads[2] [  800] t=0.00001 v=0.00007
+    E3_separate_heads[2] [ 1200] t=0.00001 v=0.00006
+    E3_separate_heads[2] [ 1600] t=0.00001 v=0.00006
+    Run 2: nF=0.00432 nSF6=0.00179
+  === E3_separate_heads: nF=0.00410+/-0.00021  nSF6=0.00168+/-0.00013  (2129s) ===
+
+  === EXPERIMENT: E4_residual ===
+    Train: torch.Size([332860, 5]), Val: torch.Size([58740, 5])
+    E4_residual[0] [    0] t=0.05767 v=0.00710
+    E4_residual[0] [  400] t=0.00004 v=0.00012
+    E4_residual[0] [  800] t=0.00002 v=0.00008
+    E4_residual[0] [ 1200] t=0.00001 v=0.00008
+    E4_residual[0] [ 1600] t=0.00001 v=0.00008
+    Run 0: nF=0.00487 nSF6=0.00198
+    E4_residual[1] [    0] t=0.06449 v=0.00540
+    E4_residual[1] [  400] t=0.00003 v=0.00009
+    E4_residual[1] [  800] t=0.00002 v=0.00006
+    E4_residual[1] [ 1200] t=0.00001 v=0.00005
+    E4_residual[1] [ 1600] t=0.00001 v=0.00005
+    Run 1: nF=0.00418 nSF6=0.00147
+    E4_residual[2] [    0] t=0.06847 v=0.00687
+    E4_residual[2] [  400] t=0.00004 v=0.00008
+    E4_residual[2] [  800] t=0.00002 v=0.00007
+    E4_residual[2] [ 1200] t=0.00001 v=0.00007
+    E4_residual[2] [ 1600] t=0.00001 v=0.00006
+    Run 2: nF=0.00442 nSF6=0.00191
+  === E4_residual: nF=0.00449+/-0.00028  nSF6=0.00179+/-0.00023  (3125s) ===
+
+  === EXPERIMENT: E5_enhanced_features ===
+    Train: torch.Size([332860, 10]), Val: torch.Size([58740, 10])
+    E5_enhanced_features[0] [    0] t=0.14016 v=0.01167
+    E5_enhanced_features[0] [  400] t=0.00017 v=0.00054
+    E5_enhanced_features[0] [  800] t=0.00013 v=0.00059
+    E5_enhanced_features[0] [ 1200] t=0.00011 v=0.00061
+    E5_enhanced_features[0] [ 1600] t=0.00009 v=0.00069
+    Run 0: nF=0.00930 nSF6=0.00839
+    E5_enhanced_features[1] [    0] t=0.12816 v=0.00787
+    E5_enhanced_features[1] [  400] t=0.00016 v=0.00058
+    E5_enhanced_features[1] [  800] t=0.00012 v=0.00060
+    E5_enhanced_features[1] [ 1200] t=0.00010 v=0.00061
+    E5_enhanced_features[1] [ 1600] t=0.00008 v=0.00061
+    Run 1: nF=0.01037 nSF6=0.00843
+    E5_enhanced_features[2] [    0] t=0.12325 v=0.01174
+    E5_enhanced_features[2] [  400] t=0.00020 v=0.00066
+    E5_enhanced_features[2] [  800] t=0.00015 v=0.00079
+    E5_enhanced_features[2] [ 1200] t=0.00012 v=0.00086
+    E5_enhanced_features[2] [ 1600] t=0.00011 v=0.00096
+    Run 2: nF=0.01215 nSF6=0.00798
+  === E5_enhanced_features: nF=0.01060+/-0.00118  nSF6=0.00827+/-0.00020  (1810s) ===
+
+  === EXPERIMENT: E6_huber_loss ===
+    Train: torch.Size([332860, 5]), Val: torch.Size([58740, 5])
+    E6_huber_loss[0] [    0] t=0.01628 v=0.00719
+    E6_huber_loss[0] [  400] t=0.00006 v=0.00018
+    E6_huber_loss[0] [  800] t=0.00004 v=0.00019
+    E6_huber_loss[0] [ 1200] t=0.00004 v=0.00018
+    E6_huber_loss[0] [ 1600] t=0.00003 v=0.00017
+    Run 0: nF=0.00620 nSF6=0.00381
+    E6_huber_loss[1] [    0] t=0.01521 v=0.00485
+    E6_huber_loss[1] [  400] t=0.00004 v=0.00010
+    E6_huber_loss[1] [  800] t=0.00003 v=0.00008
+    E6_huber_loss[1] [ 1200] t=0.00002 v=0.00008
+    E6_huber_loss[1] [ 1600] t=0.00002 v=0.00009
+    Run 1: nF=0.00518 nSF6=0.00208
+    E6_huber_loss[2] [    0] t=0.01769 v=0.00729
+    E6_huber_loss[2] [  400] t=0.00005 v=0.00015
+    E6_huber_loss[2] [  800] t=0.00004 v=0.00016
+    E6_huber_loss[2] [ 1200] t=0.00003 v=0.00016
+    E6_huber_loss[2] [ 1600] t=0.00003 v=0.00015
+    Run 2: nF=0.00577 nSF6=0.00343
+  === E6_huber_loss: nF=0.00572+/-0.00042  nSF6=0.00311+/-0.00074  (1849s) ===
+
+======================================================================
+  ALL EXPERIMENTS COMPLETE
+  Best: E3_separate_heads
+  nF RMSE: 0.00410 (v3: 0.0112, v4: 0.0029)
+  nSF6 RMSE: 0.00168 (v3: 0.0081, v4: 0.0027)
+======================================================================
+==> experiment_table.json size: 15530 bytes
+==> Step 1 complete at 2026-04-26T21:30:37-05:00

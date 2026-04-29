@@ -1,0 +1,56 @@
+==> Job 17897890 on gpua075.delta.ncsa.illinois.edu at 2026-04-26T21:56:27-05:00
+==> CUDA visible devices: 0
+  cuda available: True
+==> Launching ensemble training
+============================================================
+  Production Ensemble Training
+  Winner: E3_separate_heads
+  Architecture: SeparateHeadsMLP (shared trunk + per-species heads)
+  nF RMSE from sweep: 0.00410+/-0.00021
+  Device: cuda (CUDA)
+============================================================
+  Train: 332860 pts, Val: 58740 pts
+  === STARTING MODEL 0/5 ===
+    M0 [    0] t=0.12846 v=0.01051
+    M0 [  400] t=0.00002 v=0.00008
+    M0 [  800] t=0.00001 v=0.00006
+    M0 [ 1200] t=0.00001 v=0.00006
+    M0 [ 1600] t=0.00000 v=0.00005
+  === FINISHED MODEL 0/5 | best val = 0.000052 ===
+  === STARTING MODEL 1/5 ===
+    M1 [    0] t=0.12434 v=0.00766
+    M1 [  400] t=0.00002 v=0.00010
+    M1 [  800] t=0.00001 v=0.00006
+    M1 [ 1200] t=0.00001 v=0.00005
+    M1 [ 1600] t=0.00000 v=0.00004
+  === FINISHED MODEL 1/5 | best val = 0.000042 ===
+  === STARTING MODEL 2/5 ===
+    M2 [    0] t=0.11521 v=0.00850
+    M2 [  400] t=0.00002 v=0.00009
+    M2 [  800] t=0.00001 v=0.00007
+    M2 [ 1200] t=0.00001 v=0.00006
+    M2 [ 1600] t=0.00001 v=0.00006
+  === FINISHED MODEL 2/5 | best val = 0.000055 ===
+  === STARTING MODEL 3/5 ===
+    M3 [    0] t=0.10874 v=0.00985
+    M3 [  400] t=0.00002 v=0.00009
+    M3 [  800] t=0.00001 v=0.00008
+    M3 [ 1200] t=0.00001 v=0.00008
+    M3 [ 1600] t=0.00000 v=0.00007
+  === FINISHED MODEL 3/5 | best val = 0.000064 ===
+  === STARTING MODEL 4/5 ===
+    M4 [    0] t=0.12321 v=0.00816
+    M4 [  400] t=0.00002 v=0.00006
+    M4 [  800] t=0.00001 v=0.00007
+    M4 [ 1200] t=0.00001 v=0.00005
+    M4 [ 1600] t=0.00000 v=0.00005
+  === FINISHED MODEL 4/5 | best val = 0.000047 ===
+  === ALL MODELS COMPLETE (3932s) ===
+Traceback (most recent call last):
+  File "/projects/bgip/mae5/DTPM/DTPM_phase1/Full-DTPM-model/6b_Phase1_GammaAl_HoldOutRefit/scripts/ml/train_ensemble.py", line 491, in <module>
+    main()
+  File "/projects/bgip/mae5/DTPM/DTPM_phase1/Full-DTPM-model/6b_Phase1_GammaAl_HoldOutRefit/scripts/ml/train_ensemble.py", line 393, in main
+    Yv_np = Yv.numpy()
+            ^^^^^^^^^^
+TypeError: can't convert cuda:0 device type tensor to numpy. Use Tensor.cpu() to copy the tensor to host memory first.
+srun: error: gpua075: task 0: Exited with exit code 1

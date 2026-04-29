@@ -1,0 +1,13 @@
+==> Job 17891232 on cn100.delta.ncsa.illinois.edu at 2026-04-26T17:24:55-05:00
+==> Launching ablation (workers=5, ML_DATASET_MODE=lxcat)
+========================================================================
+  Parallel ablation — mode=lxcat
+  5 configs x 3 seeds, 5 workers
+  Output: /projects/bgip/mae5/DTPM/DTPM_phase1/Full-DTPM-model/6b_Phase1_GammaAl_HoldOutRefit/results/ml_ablation_lxcat
+========================================================================
+  [OK] bias_only: nF=0.00511+/-0.00058  nSF6=0.00279
+  [OK] none: nF=0.01941+/-0.00183  nSF6=0.01946
+  [OK] epochs_only: nF=0.01918+/-0.00142  nSF6=0.01928
+[2026-04-27T00:32:36.290] error: *** STEP 17891232.0 ON cn100 CANCELLED AT 2026-04-27T00:32:36 DUE TO TIME LIMIT ***
+[2026-04-27T00:32:36.290] error: *** JOB 17891232 ON cn100 CANCELLED AT 2026-04-27T00:32:36 DUE TO TIME LIMIT ***
+srun: Job step aborted: Waiting up to 32 seconds for job step to finish.

@@ -1,0 +1,22 @@
+==> Job 17891916 on gpua039.delta.ncsa.illinois.edu at 2026-04-26T21:43:37-05:00
+==> CUDA visible devices: 0
+  cuda available: True
+==> Launching ensemble training
+============================================================
+  Production Ensemble Training
+  Winner: E3_separate_heads
+  Architecture: SeparateHeadsMLP (shared trunk + per-species heads)
+  nF RMSE from sweep: 0.00410+/-0.00021
+  Device: cuda (CUDA)
+============================================================
+Traceback (most recent call last):
+  File "/projects/bgip/mae5/DTPM/DTPM_phase1/Full-DTPM-model/6b_Phase1_GammaAl_HoldOutRefit/scripts/ml/train_ensemble.py", line 535, in <module>
+    main()
+  File "/projects/bgip/mae5/DTPM/DTPM_phase1/Full-DTPM-model/6b_Phase1_GammaAl_HoldOutRefit/scripts/ml/train_ensemble.py", line 353, in main
+    train_d, val_d, meta, vi = load_dataset(enhanced=enhanced)
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/projects/bgip/mae5/DTPM/DTPM_phase1/Full-DTPM-model/6b_Phase1_GammaAl_HoldOutRefit/scripts/ml/train_ensemble.py", line 235, in load_dataset
+    with open(os.path.join(DS_LXCAT, 'metadata.json')) as f:
+                           ^^^^^^^^
+NameError: name 'DS_LXCAT' is not defined
+srun: error: gpua039: task 0: Exited with exit code 1

@@ -1,0 +1,4 @@
+==> Job 17886804 on cn034.delta.ncsa.illinois.edu at 2026-04-26T11:16:48-05:00
+==> CWD: /projects/bgip/mae5/DTPM/DTPM_phase1/Full-DTPM-model/6b_Phase1_GammaAl_HoldOutRefit
+==> PHASE2_ROOT: <UNSET>
+FAIL: PHASE2_ROOT not set. Did bootstrap.sh write it to ~/.bashrc?
