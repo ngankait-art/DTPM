@@ -1,0 +1,73 @@
+#!/usr/bin/env bash
+#SBATCH --job-name=dtpm-lxcat-ablate-all3
+#SBATCH --account=bgip-delta-cpu
+#SBATCH --partition=cpu
+#SBATCH --nodes=1
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=8
+#SBATCH --mem=32G
+#SBATCH --time=08:00:00
+#SBATCH --output=results/cluster_logs/02d_ablation_all_three-%j.log
+#SBATCH --error=results/cluster_logs/02d_ablation_all_three-%j.log
+#
+# Single-config ablation for `all_three` with multi-threaded BLAS.
+# Same pattern as 02c but for the heavier (2000 epoch) config.
+
+set -euo pipefail
+
+mkdir -p results/cluster_logs
+
+echo "==> Job $SLURM_JOB_ID on $(hostname) at $(date -Iseconds)"
+
+if [[ ! -f results/.cluster_step0.done ]]; then
+  echo "FAIL: results/.cluster_step0.done missing." >&2
+  exit 2
+fi
+
+export PHASE2_ROOT="/projects/bgip/mae5/DTPM/DTPM_phase1/Plasma Chemistry Module/SF6_surrogate_and_LXCat/phase2_electron_kinetics"
+
+module load miniforge3-python
+set +u
+source "$(conda info --base)/etc/profile.d/conda.sh"
+conda activate dtpm-lxcat
+set -u
+
+export OMP_NUM_THREADS=8
+export MKL_NUM_THREADS=8
+export ML_DATASET_MODE=lxcat
+
+OUT_DIR="results/ml_ablation_lxcat_split"
+mkdir -p "$OUT_DIR"
+RESULT_FILE="$OUT_DIR/result_all_three.json"
+
+if [[ -f "$RESULT_FILE" ]]; then
+  echo "==> $RESULT_FILE already exists; skipping (resume)."
+  exit 0
+fi
+
+echo "==> Launching all_three training (3 seeds, OMP=$OMP_NUM_THREADS)"
+srun python3 -c "
+import sys, os, json, time
+sys.path.insert(0, 'scripts/ml')
+import ablation_study as abl
+import run_ablation_parallel as rap
+
+target = next(e for e in rap.EXPERIMENTS if e['name'] == 'all_three')
+print(f'Running config: {target}', flush=True)
+t0 = time.time()
+summary = rap._worker(target)
+wall = time.time() - t0
+out = '$RESULT_FILE'
+with open(out, 'w') as f:
+    json.dump(summary, f, indent=2)
+print(f'  [OK] all_three: nF={summary[\"nF_rmse_mean\"]:.5f}+/-{summary[\"nF_rmse_std\"]:.5f}  '
+      f'nSF6={summary[\"nSF6_rmse_mean\"]:.5f}  ({wall:.0f}s)', flush=True)
+print(f'  Wrote: {out}', flush=True)
+"
+
+if [[ ! -f "$RESULT_FILE" ]]; then
+  echo "FAIL: $RESULT_FILE not produced." >&2
+  exit 3
+fi
+
+echo "==> all_three complete at $(date -Iseconds)"

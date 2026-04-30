@@ -1,0 +1,6 @@
+==> Job 17972014 on cn061.delta.ncsa.illinois.edu at 2026-04-30T00:54:45-05:00
+==> Launching reg_only training (3 seeds, OMP=8)
+Running config: {'name': 'reg_only', 'bias': False, 'reg': True, 'epochs': 1500}
+  [OK] reg_only: nF=0.01948+/-0.00199  nSF6=0.01940  (9910s)
+  Wrote: results/ml_ablation_lxcat_split/result_reg_only.json
+==> reg_only complete at 2026-04-30T03:50:40-05:00

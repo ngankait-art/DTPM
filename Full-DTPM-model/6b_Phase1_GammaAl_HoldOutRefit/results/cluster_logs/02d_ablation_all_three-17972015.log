@@ -1,0 +1,6 @@
+==> Job 17972015 on cn061.delta.ncsa.illinois.edu at 2026-04-30T00:54:45-05:00
+==> Launching all_three training (3 seeds, OMP=8)
+Running config: {'name': 'all_three', 'bias': True, 'reg': True, 'epochs': 2000}
+  [OK] all_three: nF=0.00557+/-0.00051  nSF6=0.00297  (12499s)
+  Wrote: results/ml_ablation_lxcat_split/result_all_three.json
+==> all_three complete at 2026-04-30T04:30:44-05:00

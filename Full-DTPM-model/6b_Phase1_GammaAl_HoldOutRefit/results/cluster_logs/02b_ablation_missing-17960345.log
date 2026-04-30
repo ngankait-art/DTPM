@@ -1,2 +1,7 @@
 ==> Job 17960345 on cn061.delta.ncsa.illinois.edu at 2026-04-29T15:11:22-05:00
 ==> Launching ablation (configs=reg_only,all_three, workers=2)
+========================================================================
+  Parallel ablation — mode=lxcat
+  2 configs x 3 seeds, 2 workers
+  Output: /projects/bgip/mae5/DTPM/DTPM_phase1/Full-DTPM-model/6b_Phase1_GammaAl_HoldOutRefit/results/ml_ablation_lxcat_missing
+========================================================================
