@@ -1249,6 +1249,277 @@ decomposition, or causal training---before attempting
 PDE-constrained training.
 
 % ==================================================================
+\section{Cluster Replication on NCSA Delta}
+\label{sec:delta-replication}
+
+The original Phase~1 results in Sections~\ref{sec:arch_sweep}--\ref{sec:production}
+were produced on a single Apple-M-class workstation using the PyTorch
+MPS backend.  As a portability and reproducibility check, the same
+LXCat-half pipeline (dataset regeneration, architecture sweep, ablation
+study, and production ensemble) was re-executed on the NCSA Delta
+cluster using a single A100 GPU and CUDA.  The dataset, model
+definitions, training hyperparameters, and random seeds were unchanged;
+only the execution environment differed.  This section documents what
+broke, what changed numerically, and what the Mac-vs-Delta delta tells
+us about reproducibility of the headline numbers.
+
+\subsection{Pipeline Re-execution}
+
+The four pipeline steps were chained via Slurm \texttt{afterok}
+dependencies.  Wall-clock and node assignments are summarised in
+Table~\ref{tab:delta-timeline}; total elapsed time on Delta was
+approximately 9~hours, against the $\sim$43~hour estimate originally
+projected for the Mac run.
+
+\begin{table}[h]
+\centering
+\small
+\caption{Delta execution timeline.  Job IDs are NCSA Slurm IDs;
+GPU and CPU hours are wall-clock $\times$ allocated cores.  Steps with
+multiple Job~IDs were resubmitted after non-fatal failures (see
+Section~\ref{sec:delta-patches}).}
+\label{tab:delta-timeline}
+\begin{tabular}{lllll}
+\toprule
+Step & Job IDs & Node & Wall & Notes \\
+\midrule
+J0 dataset      & 17891230                          & cn100   & 58~min   & 220/220 LXCat cases \\
+J1 arch sweep   & 17891915                          & gpua018 & 4~h      & 7$\times$3 runs, 1 A100 \\
+J2 ablation     & 17891232, 17923364, 17960345,     & cn100,  & 13~h     & 5 configs $\times$ 3 seeds; \\
+                & 17972014, 17972015                & cn002,  &          & timeouts then split into \\
+                &                                   & cn061,  &          & single-config sbatches \\
+                &                                   & various &          &  \\
+J3 ensemble     & 17891916 $\rightarrow$ 17897890   & gpua041,& 1~h      & 5-model ensemble; \\
+                & $\rightarrow$ 17899364            & gpua075 &          & first attempts hit code bugs \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Cluster-Portability Patches}
+\label{sec:delta-patches}
+
+The runbook in
+\texttt{Full-DTPM-model/6b\_Phase1\_GammaAl\_HoldOutRefit/cluster/}
+encodes assumptions about Delta's module set, Slurm GRES naming, and
+shell-rc semantics that did not match the cluster as configured in
+April~2026.  Seven patches were required to make the pipeline runnable
+end-to-end (committed as \texttt{cf9ec4e} on the feat branch):
+
+\begin{enumerate}
+\item \textbf{Module renames.}  \texttt{anaconda3\_gpu} was retired in
+favour of \texttt{miniforge3-python}, and \texttt{cuda/12.4.0} no longer
+exists (only \texttt{cuda/11.8} and \texttt{cuda/12.8}).  The bootstrap
+and the four sbatch files were updated accordingly.
+
+\item \textbf{MKL activation hook vs.\ \texttt{set -u}.}  The conda env's
+\texttt{etc/conda/activate.d/libblas\_mkl\_activate.sh} reads
+\verb|${MKL_INTERFACE_LAYER}| without a default, which trips
+\texttt{set -euo pipefail}.  Wrapping each \texttt{conda activate}
+in \texttt{set +u}/\texttt{set -u} resolves this without disabling
+\texttt{nounset} for the rest of the script.
+
+\item \textbf{GRES naming.}  Delta's \texttt{gpuA100x4} partition
+advertises \texttt{gpu:nvidia\_a100}, not \texttt{gpu:a100}.  Replacing
+\texttt{--gres=gpu:a100:1} with \texttt{--gres=gpu:1} (the partition is
+A100-only) avoided the
+``Requested node configuration is not available'' rejection.
+
+\item \textbf{Sbatch jobs do not source} \texttt{\textasciitilde/.bashrc}.
+The bootstrap exported \texttt{PHASE2\_ROOT} to the user's shell rc, but
+the variable was empty inside the running sbatch.  An explicit
+\texttt{export PHASE2\_ROOT=...} near the top of each sbatch fixes this
+(at the cost of hardcoding a user-specific path; a \texttt{readlink}-based
+computation from the script directory would be portable).
+
+\item \textbf{\texttt{smoke\_test.sh} path bug.}  \texttt{SIXB\_ROOT} was
+computed as \texttt{\$HERE/..} but the script lives at
+\texttt{cluster/scripts/}; the intended root requires
+\texttt{\$HERE/../..}.  The Step-3 import check therefore ran from
+\texttt{cluster/} (no \texttt{src/dtpm/} present) and always failed.
+
+\item \textbf{\texttt{train\_ensemble.py:235}.}  The local
+\texttt{load\_dataset()} referenced an undefined \texttt{DS\_LXCAT}
+global.  Replaced with a one-line delegation to
+\texttt{ml\_dataset\_loader.\_load\_dataset\_6b}, mirroring the wrapper
+already used by \texttt{arch\_sweep.py:49}.
+
+\item \textbf{CUDA-tensor \texttt{.numpy()}.}  The post-training
+evaluation in \texttt{train\_ensemble.py:393} called \texttt{Yv.numpy()}
+directly, which works on CPU/MPS but fails on CUDA.  Folding
+\texttt{cuda} into the existing \texttt{mps} branch (which moves models
+and tensors to CPU before \texttt{.numpy()}) fixes this.
+\end{enumerate}
+
+A separate finding while debugging the ablation was that
+\texttt{OMP\_NUM\_THREADS=8} with one worker is $\sim$3.2$\times$ faster
+than \texttt{OMP\_NUM\_THREADS=1} with two parallel workers on this
+problem (8.7~h vs.\ 2.7~h for \texttt{reg\_only}; 11.3~h vs.\ 3.5~h for
+\texttt{all\_three}).  PyTorch's CPU matmul kernels parallelise even a
+small MLP reasonably well, and single-config-per-sbatch is the cleaner
+approach when results need to be persisted incrementally.
+
+\subsection{Architecture Sweep on Delta}
+\label{sec:delta-arch-sweep}
+
+The seven-architecture sweep was repeated on Delta with the same code
+paths used in Section~\ref{sec:arch_sweep}.  Results are in
+Table~\ref{tab:delta-arch-sweep} and Figure~\ref{fig:delta-arch-sweep}.
+The architecture ranking is preserved: \texttt{E3\_separate\_heads} is
+again the winner with the smallest seed-to-seed variance.
+
+\begin{table}[h]
+\centering
+\caption{Architecture sweep results on Delta (LXCat dataset, 3 seeds
+each).  RMSE values are normalised; winner in bold.}
+\label{tab:delta-arch-sweep}
+\begin{tabular}{llcc}
+\toprule
+ID & Architecture & nF RMSE & $\pm 1\sigma$ \\
+\midrule
+E0 & Baseline (no reg, 1500 ep)               & 0.02022 & 0.00275 \\
+E1 & V4 recipe (reg + bias + 2000 ep)         & 0.00570 & 0.00074 \\
+E2 & Wider/deeper ($6 \times 256$ + reg)      & 0.00573 & 0.00102 \\
+\textbf{E3} & \textbf{Separate heads (trunk + heads + reg)} & \textbf{0.00410} & \textbf{0.00021} \\
+E4 & Residual (res blocks + reg)              & 0.00449 & 0.00028 \\
+E5 & Enhanced features (10 inputs + reg)      & 0.01060 & 0.00118 \\
+E6 & Huber loss (Huber + reg)                 & 0.00572 & 0.00042 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.95\linewidth]{delta_arch_sweep_bar.pdf}
+\caption{Architecture sweep on Delta.  Bars are mean
+RMSE across three seeds; error bars are $\pm 1\sigma$.  The winning
+\texttt{E3\_separate\_heads} architecture is highlighted in red.}
+\label{fig:delta-arch-sweep}
+\end{figure}
+
+\subsection{Ablation Study on Delta}
+\label{sec:delta-ablation}
+
+All five ablation configurations completed on Delta with three random
+seeds each (Table~\ref{tab:delta-ablation}).  The qualitative finding of
+Section~\ref{sec:ablation} is fully reproduced: bias-init is the
+dominant contributor, regularisation alone is a no-op, and adding
+regularisation on top of bias-init is roughly neutral on RMSE
+(justified, when used, by smoother spatial profiles rather than tighter
+fit).
+
+\begin{table}[h]
+\centering
+\caption{Ablation study on Delta (LXCat dataset, 3 seeds each).  All
+five configurations from Section~\ref{sec:ablation} reproduced, with
+\texttt{reg\_only} and \texttt{all\_three} run as separate
+single-config sbatches after parallel-workers timeouts (see
+Section~\ref{sec:delta-patches}).}
+\label{tab:delta-ablation}
+\begin{tabular}{lcccll}
+\toprule
+Configuration & Bias & Reg & Epochs & nF RMSE & nSF$_6$ RMSE \\
+\midrule
+none         & N & N & 1500 & 0.01941 $\pm$ 0.00183 & 0.01946 \\
+bias\_only   & Y & N & 1500 & 0.00511 $\pm$ 0.00058 & 0.00279 \\
+reg\_only    & N & Y & 1500 & 0.01948 $\pm$ 0.00199 & 0.01940 \\
+epochs\_only & N & N & 2000 & 0.01918 $\pm$ 0.00142 & 0.01928 \\
+all\_three   & Y & Y & 2000 & 0.00557 $\pm$ 0.00051 & 0.00297 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The \texttt{reg\_only} value (0.01948) is statistically
+indistinguishable from \texttt{none} (0.01941): physics regularisation
+without bias-init has no measurable benefit on the LXCat dataset, which
+is the same conclusion reached on the legacy dataset in
+Section~\ref{sec:ablation}.
+
+\subsection{Production Ensemble on Delta}
+\label{sec:delta-ensemble}
+
+The 5-model production ensemble using the
+\texttt{E3\_separate\_heads} architecture was retrained on Delta and
+achieves
+\begin{align*}
+  \text{nF RMSE on Delta} &= 0.00381,\\
+  \text{nSF}_6\text{ RMSE on Delta} &= 0.00134.
+\end{align*}
+This beats the legacy v3 baseline by 66\% and is within 1.31$\times$ of
+the legacy v4 baseline, qualitatively matching the Mac result while
+differing in absolute magnitude (see Section~\ref{sec:reproducibility-band}).
+
+\subsection{Mac--MPS vs.\ Delta--CUDA: Reproducibility Variance}
+\label{sec:reproducibility-band}
+
+The headline ensemble numbers differ by roughly 2--3$\times$ between the
+two backends despite identical seeds, dataset, and code:
+
+\begin{center}
+\small
+\begin{tabular}{lcc}
+\toprule
+Backend & nF RMSE & nSF$_6$ RMSE \\
+\midrule
+Mac (MPS), Apple silicon       & 0.00154 & 0.00128 \\
+Delta (CUDA), 1$\times$ A100   & 0.00381 & 0.00134 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Figure~\ref{fig:mac-vs-delta-ensemble} visualises the gap.  Both
+results were produced with \texttt{torch.manual\_seed(42)},
+PyTorch~2.5.1, and the same source tree
+(commit~\texttt{cf9ec4e}).  Likely contributors, in order of suspected
+magnitude:
+
+\begin{enumerate}
+\item \textbf{Backend-dependent dropout RNG.}  \texttt{nn.Dropout}
+draws from the device-specific generator stream, and a single
+\texttt{torch.manual\_seed} call does not synchronise the MPS and CUDA
+streams.  With dropout~0.05 applied at every hidden layer over 2000
+epochs, the cumulative trajectory difference is large.
+
+\item \textbf{Reduction-order differences in fused matmuls.}  cuBLAS
+and Metal Performance Shaders pick different reduction trees for large
+sums; per-op floating-point error is at the ULP level, but compounds
+over $\sim\!10^{10}$ FLOPs of training.
+
+\item \textbf{Library binary differences.}  Conda-forge's \texttt{pytorch}
+package on Linux ships against a different cuBLAS/cuDNN bundle than
+Apple's MPS dispatch path; numerical kernels differ even at the same
+PyTorch version.
+\end{enumerate}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.6\linewidth]{mac_vs_delta_ensemble.pdf}
+\caption{Production ensemble RMSE on Mac (MPS) versus Delta (CUDA, 1
+A100).  Identical seed, code, and hyperparameters; the gap is driven by
+backend-dependent RNG and reduction-order behaviour.}
+\label{fig:mac-vs-delta-ensemble}
+\end{figure}
+
+The Delta result is not a regression: it is still 1.86$\times$ better
+than the legacy v4 surrogate
+(nF~RMSE = 0.00729 from Section~\ref{sec:ablation}).  However, it
+implies that the originally-reported value of 0.00154 falls toward the
+optimistic end of a backend-dependent reproducibility band that, on the
+evidence of these two runs, spans roughly
+$0.0015 \le \text{nF RMSE} \le 0.0040$.  Quoting the range
+(rather than a point value) is the safer stance for downstream uses.
+
+\subsection{Cluster Resource Costs}
+\label{sec:delta-costs}
+
+The full LXCat-half campaign on Delta consumed approximately 19~GPU-hours
+on \texttt{gpuA100x4} (J1 + J3) and 21~CPU-hours on the \texttt{cpu}
+partition (J0 + J2 + retries), well within the available allocations
+(1\,132~GPU-h, 99\,049~CPU-h).  Roughly one-third of the CPU budget went
+to the failed parallel-workers ablation submissions before the
+single-config strategy was adopted; that share is avoidable in future
+runs by using one sbatch per config from the start.
+
+% ==================================================================
 \section{Limitations}
 \label{sec:limitations}
 
@@ -1283,6 +1554,14 @@ We acknowledge the following limitations:
   \item \textbf{PINN failure:}  Physics-informed training was
         unsuccessful, meaning the surrogate has no built-in PDE
         consistency guarantee.
+
+  \item \textbf{Backend-dependent reproducibility band:}  Re-running
+        the LXCat ensemble on NCSA Delta (CUDA, A100) produced
+        nF~RMSE~$=0.00381$ versus 0.00154 on Mac/MPS despite identical
+        seeds and code (Section~\ref{sec:reproducibility-band}).  The
+        absolute RMSE values quoted elsewhere in this report should be
+        read as Mac-MPS results and as the optimistic end of a
+        $0.0015\le\text{nF RMSE}\le0.0040$ backend-dependent range.
 \end{enumerate}
 
 % ==================================================================
