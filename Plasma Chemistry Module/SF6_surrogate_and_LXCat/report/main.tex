@@ -179,6 +179,27 @@ profile that drives the discharge.
   \label{fig:em_power}
 \end{figure}
 
+\paragraph{Phase-1 6b refitting since main.pdf v1.}
+The solver underlying the LXCat dataset in this report differs from
+main.pdf v1 in two material ways.  First, the bottom-boundary BC map
+in \texttt{build\_geometry\_mask} was corrected to split the
+\(j=0\) row into \texttt{BC\_WAFER} (\(r \le 0.075\,\mathrm{m}\),
+silicon) and \texttt{BC\_AL\_TOP} (\(r > 0.075\,\mathrm{m}\),
+aluminium pedestal-top / chamber-floor annulus).  Prior code labelled
+the entire bottom as \texttt{BC\_WAFER}, undercounting the Al
+F-sink by an annulus of area \(\sim 0.017\,\mathrm{m}^2\) (about
+96\,\% of the wafer area).  Second, a hold-out refit of
+\(\gamma_\mathrm{Al}\) was attempted on the corrected BC map: fitted
+on the 90\,\% SF\textsubscript{6} bias-on condition, the resulting
+\(\gamma_\mathrm{Al}^*\) \emph{failed} all three held-out
+compositions (residuals change sign across the composition axis,
+from \(-21.7\,\%\) at 90\,\% SF\textsubscript{6} to \(+30\,\%\) at
+30\,\% SF\textsubscript{6}), indicating that no scalar
+\(\gamma_\mathrm{Al}\) closes the Mettler residual.  Both findings
+are documented in the 6b workspace and motivate the LXCat surrogate
+runs reported here, where the rate-coefficient set is the only
+varying knob.
+
 % ==================================================================
 \section{Representative Solver Output}
 \label{sec:sim_recap}
@@ -1329,6 +1350,16 @@ We acknowledge the following limitations:
   \item \textbf{PINN failure:}  Physics-informed training was
         unsuccessful, meaning the surrogate has no built-in PDE
         consistency guarantee.
+
+  \item \textbf{Backend-dependent reproducibility band.}  The headline
+        nF~RMSE of 0.00154 (Section~\ref{sec:production}) was obtained
+        on Apple MPS; an independent Delta/CUDA re-run of the same
+        recipe yields 0.0038 (a $\sim$2.5$\times$ shift), placing the
+        v1 result at the optimistic end of a 0.0015--0.0040
+        portability band.  The architecture choice (E3) and
+        qualitative findings (bias-init dominance, regularisation
+        alone is counter-productive) are identical across backends;
+        the absolute scaling is not.
 \end{enumerate}
 
 % ==================================================================
