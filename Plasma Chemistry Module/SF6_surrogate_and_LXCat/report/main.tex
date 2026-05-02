@@ -51,19 +51,21 @@ root causes, while data-only training converges readily
 surrogates.  Second, a systematic surrogate development progressed
 through four generations---v1 (nF RMSE 0.133), v2 (0.111), v3
 (0.023), v4 (0.003)---via data enrichment, physics regularisation, and
-ensemble uncertainty quantification, achieving a $531\times$ speedup
+ensemble uncertainty quantification, achieving a $524\times$ speedup
 over the legacy solver.  Third, integration of LXCat/Biagi
 cross-section data revealed that the electron temperature increases by
 56\% and electron density decreases by 69\%, while F density is
 unchanged.  A controlled architecture sweep (7 experiments, 3 seeds
 each) identified the E3\_separate\_heads topology as the winner, and a
-5-model production ensemble achieves nF RMSE $= 0.00154$ and
-nSF\textsubscript{6} RMSE $= 0.00128$---a 47\% improvement over the
-legacy v4 surrogate.  Ablation reveals output-bias initialisation as
-the dominant factor (83\% of RMSE reduction).  The surrogate delivers
-an $874\times$ speedup over the LXCat solver.  Limitations are
-discussed candidly, including a 36\% systematic error in absolute F
-density versus published measurements.
+5-model production ensemble achieves nF RMSE $= 0.00381$ and
+nSF\textsubscript{6} RMSE $= 0.00134$---a 66\% improvement on nF over
+the v3 LXCat baseline and a $\sim$2$\times$ reduction on
+nSF\textsubscript{6} relative to the legacy v4 surrogate, while
+matching v4 on nF within $1.31\times$.  Ablation reveals output-bias
+initialisation as the dominant factor (74\% of RMSE reduction).  The
+surrogate delivers a $972\times$ speedup over the LXCat solver.
+Limitations are discussed candidly, including a 36\% systematic error
+in absolute F density versus published measurements.
 \end{abstract}
 
 \newpage
@@ -430,7 +432,7 @@ This ensures that the network output starts near the correct order of
 magnitude ($\sim 10^{19}$--$10^{20}\;\si{\per\cubic\metre}$),
 dramatically accelerating convergence.  As shown in
 Section~\ref{sec:ablation}, this single design choice accounts for
-83\% of the total RMSE improvement.
+roughly 74\% of the total RMSE reduction in the LXCat ablation.
 
 % ==================================================================
 \section{LXCat Cross-Section Integration}
@@ -552,43 +554,45 @@ of the normalised F-density RMSE.
     ID & Architecture & nF RMSE & $\pm\,1\sigma$ \\
     \midrule
     E0 & Baseline (no reg, 1500 ep)
-       & 0.01901 & 0.00393 \\
+       & 0.02022 & 0.00275 \\
     E1 & V4 recipe (reg + bias + 2000 ep)
-       & 0.00377 & 0.00056 \\
+       & 0.00570 & 0.00074 \\
     E2 & Wider/deeper ($6\times256$ + reg)
-       & 0.00390 & 0.00099 \\
+       & 0.00573 & 0.00102 \\
     E3 & \textbf{Separate heads} (trunk + heads + reg)
-       & \textbf{0.00210} & \textbf{0.00015} \\
+       & \textbf{0.00410} & \textbf{0.00021} \\
     E4 & Residual (res blocks + reg)
-       & 0.00244 & 0.00066 \\
+       & 0.00449 & 0.00028 \\
     E5 & Enhanced features (10 inputs + reg)
-       & 0.00957 & 0.00180 \\
+       & 0.01060 & 0.00118 \\
     E6 & Huber loss (Huber + reg)
-       & 0.00394 & 0.00083 \\
+       & 0.00572 & 0.00042 \\
     \bottomrule
   \end{tabular}
 \end{table}
 
 \subsection{Analysis}
 
-\textbf{E3\_separate\_heads} achieves the lowest mean RMSE (0.00210)
-with the smallest seed-to-seed variance ($\sigma = 0.00015$),
+\textbf{E3\_separate\_heads} achieves the lowest mean RMSE (0.00410)
+with the smallest seed-to-seed variance ($\sigma = 0.00021$),
 indicating both accuracy and training stability.  Key observations:
 \begin{itemize}
-  \item E4 (residual) is a close second but with $4.4\times$ larger
-        variance, making it less reliable.
+  \item E4 (residual) is a close second but with a wider seed-to-seed
+        spread, making it less reliable.
   \item Simply making the network wider and deeper (E2) provides no
         benefit over the v4 recipe (E1), confirming that capacity is
         not the bottleneck.
   \item Expanding the feature set (E5) \emph{hurts} performance
-        ($4.6\times$ worse than E3), likely due to the curse of
+        ($2.6\times$ worse than E3), likely due to the curse of
         dimensionality on the modest training set.
   \item Huber loss (E6) offers no advantage over MSE in this
         application.
 \end{itemize}
 
-The single-model E3 nF RMSE of 0.0021 already beats the legacy v4's
-0.0029, confirming that the architecture change alone closes the gap.
+The single-model E3 nF~RMSE of 0.00410 closes most of the gap to
+the legacy v4 surrogate (1.4$\times$), and on nSF\textsubscript{6} the
+same architecture delivers best-in-class
+$0.00168 \pm 0.00013$, comfortably below the v4 baseline of 0.0027.
 
 \subsection{E3 Architecture}
 
@@ -628,17 +632,17 @@ Table~\ref{tab:ablation}.
 \begin{table}[H]
   \centering
   \caption{Ablation study.  Improvement is relative to the ``none''
-           baseline (nF RMSE = 0.01830).}
+           baseline (nF RMSE = 0.01941).}
   \label{tab:ablation}
   \begin{tabular}{lcc}
     \toprule
     Configuration & nF RMSE & Improvement \\
     \midrule
-    None (baseline)     & 0.01830 & ---   \\
-    Bias only           & 0.00314 & +83\% \\
-    Regularisation only & 0.01888 & $-3$\%\\
-    Epochs only (2000)  & 0.01610 & +12\% \\
-    All three           & 0.00385 & +79\% \\
+    None (baseline)     & 0.01941 & ---   \\
+    Bias only           & 0.00511 & +74\% \\
+    Regularisation only & 0.01948 & $-0.4$\%\\
+    Epochs only (2000)  & 0.01918 & +1\% \\
+    All three           & 0.00557 & +71\% \\
     \bottomrule
   \end{tabular}
 \end{table}
@@ -648,27 +652,28 @@ Table~\ref{tab:ablation}.
 The ablation reveals a clear hierarchy:
 
 \paragraph{Bias initialisation is the dominant factor.}
-Adding output-bias initialisation alone reduces the RMSE from 0.01830
-to 0.00314---an 83\% improvement.  Without this, the network spends
-its first hundreds of epochs merely shifting the output mean from
-near-zero to the correct order of magnitude
-($\sim 10^{19}$--$10^{20}$~m$^{-3}$), during which time the spatial
-structure signal is overwhelmed by the magnitude error.
+Adding output-bias initialisation alone reduces the RMSE from 0.01941
+to 0.00511---a 74\% improvement and the only single-factor lever that
+moves the result by more than a few percent.  Without this, the
+network spends its first hundreds of epochs merely shifting the output
+mean from near-zero to the correct order of magnitude ($\sim 10^{19}$--
+$10^{20}$~m$^{-3}$), during which time the spatial structure signal
+is overwhelmed by the magnitude error.
 
 \paragraph{Regularisation alone is useless.}
 Adding smoothness, bounds, and wafer-smoothness penalties without bias
-initialisation yields nF RMSE = 0.01888---marginally \emph{worse}
-than the baseline ($-3\%$).  The regularisation constrains the spatial
-structure before the network has found the correct magnitude, actually
-impeding convergence.
+initialisation yields nF RMSE = 0.01948---essentially indistinguishable
+from the baseline ($-0.4\%$).  The regularisation constrains the
+spatial structure before the network has found the correct magnitude,
+neither helping nor hurting convergence in this regime.
 
-\paragraph{Extended training provides a modest gain.}
-Increasing from 1500 to 2000 epochs yields a 12\% improvement (0.01610
-vs.\ 0.01830), confirming that the baseline was slightly undertrained
-but that the fundamental bottleneck was initialisation, not epochs.
+\paragraph{Extended training provides essentially no gain.}
+Increasing from 1500 to 2000 epochs alone moves nF RMSE from 0.01941
+to 0.01918 (a 1\% improvement), confirming that the fundamental
+bottleneck is initialisation, not epoch budget.
 
 \paragraph{The ``all three'' configuration is slightly worse than
-bias-only.}  nF RMSE = 0.00385 vs.\ 0.00314 for bias-only, because
+bias-only.}  nF RMSE = 0.00557 vs.\ 0.00511 for bias-only, because
 the regularisation terms slightly increase the data-fit loss.  This
 is an acceptable trade-off: the regularised model produces smoother,
 more physically plausible spatial profiles despite the marginal RMSE
@@ -681,13 +686,18 @@ increase.
 The winning E3 architecture was retrained as a 5-model ensemble,
 achieving:
 \begin{align}
-  \text{nF RMSE}              &= 0.00154, \label{eq:nf_rmse} \\
-  \text{nSF}_6\text{ RMSE}    &= 0.00128. \label{eq:nsf6_rmse}
+  \text{nF RMSE}              &= 0.00381, \label{eq:nf_rmse} \\
+  \text{nSF}_6\text{ RMSE}    &= 0.00134. \label{eq:nsf6_rmse}
 \end{align}
-This represents a \textbf{47\% improvement} over the legacy
-surrogate\_v4 (nF RMSE = 0.00292).  The ensemble was trained with the
-Adam optimiser and cosine-annealing learning-rate schedule for 2000
-epochs with a batch size of 4096.
+This is a \textbf{66\% improvement on nF} over the v3 LXCat baseline
+(nF~RMSE = 0.0112) and an \textbf{83\% improvement on
+nSF\textsubscript{6}} over the same baseline (0.0081).  Against the
+legacy surrogate\_v4, the current ensemble matches nF within
+$1.31\times$ (0.00381 vs.\ 0.0029) while reducing
+nSF\textsubscript{6}~RMSE by $\sim$\textbf{2$\times$} (0.00134
+vs.\ 0.0027).  The ensemble was trained with the Adam optimiser and a
+cosine-annealing learning-rate schedule for 2000 epochs with a batch
+size of 4096.
 
 \subsection{Diagnostics}
 
@@ -731,18 +741,23 @@ tightly around the identity line across four orders of magnitude.
   \label{fig:pred_vs_true}
 \end{figure}
 
-\subsection{Training Dynamics}
+\subsection{Per-Model Validation Loss}
 
-Figure~\ref{fig:loss_curves} shows the training and validation loss
-curves.  The cosine-annealing schedule produces periodic loss
-reductions; no over-fitting is observed.
+Figure~\ref{fig:loss_curves} reports the best validation loss reached
+by each of the 5 ensemble members.  The between-seed spread is tight
+($4.18 \times 10^{-5}$ to $6.41 \times 10^{-5}$, ratio of $\sim$1.5),
+indicating that the E3 architecture trains stably under the v4 recipe
+and that the gain from ensembling comes from averaging out residual
+seed noise rather than from rescuing failed training runs.
 
 \begin{figure}[H]
   \centering
-  \includegraphics[width=0.6\textwidth]{surrogate_v4_loss_curves.png}
-  \caption{Training and validation loss curves for the production
-           ensemble.  The cosine-annealing schedule produces periodic
-           loss reductions; no over-fitting is observed.}
+  \includegraphics[width=0.6\textwidth]{surrogate_v4_per_model_val_loss.png}
+  \caption{Per-model best validation loss across the 5-model
+           production ensemble.  The dashed line marks the mean and
+           the shaded band is $\pm 1\sigma$; all five seeds finish
+           within a tight band, supporting averaging as the appropriate
+           combiner.}
   \label{fig:loss_curves}
 \end{figure}
 
@@ -799,31 +814,25 @@ breaking down the error by reactor region.
 The absence of systematic spatial bias confirms that the surrogate
 does not favour any particular region of the reactor.
 
-\subsection{Benchmark Profiles}
+\subsection{Surrogate vs.\ Solver at a Representative Operating Point}
 
-Figure~\ref{fig:benchmarks} compares surrogate and solver profiles at
-selected operating points.  The surrogate faithfully reproduces both
-the profile shapes and absolute magnitudes.
+Figure~\ref{fig:bench_overlay} overlays the radial F-density profile
+at the wafer predicted by the production ensemble against the
+fluid-solver ground truth at $P_\mathrm{rf} = 700$~W,
+$p = 10$~mTorr, pure SF\textsubscript{6}.  The ensemble mean tracks
+the solver across the entire radius; the $\pm 1\sigma$ inter-model
+band is narrow and inflates only at the extremes where data is
+sparser, consistent with the spatial residual map in
+Figure~\ref{fig:residuals}.
 
 \begin{figure}[H]
   \centering
-  \begin{subfigure}[t]{0.48\textwidth}
-    \centering
-    \includegraphics[width=\textwidth]{benchmark_neutrals.png}
-    \caption{Neutral species benchmark.}
-    \label{fig:bench_neutrals}
-  \end{subfigure}
-  \hfill
-  \begin{subfigure}[t]{0.48\textwidth}
-    \centering
-    \includegraphics[width=\textwidth]{benchmark_charged.png}
-    \caption{Charged species benchmark.}
-    \label{fig:bench_charged}
-  \end{subfigure}
-  \caption{Surrogate vs.\ solver profiles at selected operating points
-           for neutral and charged species.  The surrogate faithfully
-           reproduces both the profile shapes and absolute magnitudes.}
-  \label{fig:benchmarks}
+  \includegraphics[width=0.6\textwidth]{surrogate_vs_solver_overlay.png}
+  \caption{Surrogate ensemble mean ($\pm 1\sigma$) versus solver radial
+           F-density profile at the wafer for the representative
+           operating point P\textsubscript{rf}~=~\SI{700}{\watt},
+           p~=~10~mTorr, pure SF\textsubscript{6}.}
+  \label{fig:bench_overlay}
 \end{figure}
 
 % ==================================================================
@@ -951,15 +960,16 @@ machine-learning baselines.
     Polynomial (degree 3)          & 0.051  \\
     Polynomial (degree 4)          & 0.039  \\
     Gaussian Process (3000 points) & 0.006  \\
-    MLP ensemble (this work)       & 0.0015 \\
+    MLP ensemble (this work)       & 0.0038 \\
     \bottomrule
   \end{tabular}
 \end{table}
 
-The MLP ensemble outperforms all baselines by wide margins.
-The Gaussian process (nF RMSE = 0.006) is competitive but limited to
-small training sets due to cubic scaling.  Even degree-4 polynomials
-(nF RMSE = 0.039) are $26\times$ worse than the production ensemble.
+The MLP ensemble outperforms all baselines.  The Gaussian process
+(nF RMSE = 0.006) is competitive on this metric but limited to small
+training sets due to cubic scaling.  Degree-4 polynomials
+(nF RMSE = 0.039) are $\sim$10$\times$ worse than the production
+ensemble.
 
 \subsection{Speedup}
 \label{sec:speedup}
@@ -976,22 +986,24 @@ integration.
   \caption{Solver vs.\ surrogate wall-clock times for a single
 operating-point evaluation.  The two solvers differ only in the
 electron-impact rate-coefficient set; the surrogate is the same
-5-model E3\_separate\_heads ensemble in both rows.}
+5-model E3\_separate\_heads ensemble in both rows.  Surrogate time is
+the mean of 200 timed forward passes (after a 20-pass warm-up) over an
+inside-mask of 1\,780 cells per operating point.}
   \label{tab:speedup}
   \begin{tabular}{lccc}
     \toprule
     Solver & Mean time & Surrogate time & Speedup \\
     \midrule
-    Legacy & \SI{7.76}{\second} & \SI{14.6}{\milli\second}
-           & $531\times$ \\
-    LXCat  & \SI{14.4}{\second} & \SI{16.5}{\milli\second}
-           & $874\times$ \\
+    Legacy & \SI{7.76}{\second} & \SI{14.8}{\milli\second}
+           & $524\times$ \\
+    LXCat  & \SI{14.4}{\second} & \SI{14.8}{\milli\second}
+           & $972\times$ \\
     \bottomrule
   \end{tabular}
 \end{table}
 
 The surrogate evaluates an entire (\(P_\mathrm{rf}\), \(p\),
-\(x_\mathrm{Ar}\)) operating point in under \SI{17}{\milli\second}---two
+\(x_\mathrm{Ar}\)) operating point in under \SI{15}{\milli\second}---two
 to three orders of magnitude faster than the corresponding fluid-solver
 integration, depending on which cross-section set the solver uses.  This
 is the principal practical contribution of the work: the cost of an
@@ -1017,7 +1029,7 @@ into interactive ones:
         surrogate it is seconds, opening the door to closed-loop recipe
         tuning against an experimental cost function.
   \item \textbf{Real-time control and digital-twin use.}  At
-        \SI{14.6}{\milli\second}/eval, the surrogate is fast enough to
+        \SI{14.8}{\milli\second}/eval, the surrogate is fast enough to
         sit inside a control or feedback loop running at $\sim$\SI{60}{\hertz},
         which the underlying solver categorically cannot.
   \item \textbf{Sensitivity propagation.}  Monte-Carlo propagation of
@@ -1026,10 +1038,10 @@ into interactive ones:
         \SI{25}{\minute} job with the surrogate.
 \end{itemize}
 
-The amortised cost of training the production ensemble (a few CPU/GPU
-hours, dominated by the architecture sweep) breaks even against the
-solver after roughly 1--2 thousand surrogate evaluations.  Anything
-beyond a one-off operating point therefore comes out ahead.
+The amortised cost of training the production ensemble (a few
+core-hours, dominated by the architecture sweep) breaks even against
+the solver after roughly 1--2 thousand surrogate evaluations.
+Anything beyond a one-off operating point therefore comes out ahead.
 
 % ==================================================================
 \section{Parameter Sensitivity and Sweep Results}
@@ -1192,11 +1204,11 @@ Table~\ref{tab:compute} provides a detailed breakdown.
     Dataset generation (LXCat~v3) & 221 cases & 0.2
       & 0 failures \\
     Architecture sweep (E0--E6) & 21 & 11.4
-      & E3 wins: nF\,=\,0.00210 \\
+      & E3 wins: nF\,=\,0.00410 \\
     Ablation study & 15 & 21.8
-      & bias\_only: nF\,=\,0.00314 \\
+      & bias\_only: nF\,=\,0.00511 \\
     Production ensemble & 5 & 7.9
-      & nF\,=\,0.00154 \\
+      & nF\,=\,0.00381 \\
     Transfer learning & 6 & 17.7
       & No benefit \\
     Mixed-physics training & 3 & 19.4
@@ -1208,7 +1220,7 @@ Table~\ref{tab:compute} provides a detailed breakdown.
     Mesh convergence & 6 & $<$0.1
       & 1.86\% nF error \\
     Speedup measurement & 40 & $<$0.1
-      & 531$\times$ / 874$\times$ \\
+      & 524$\times$ / 972$\times$ \\
     Spatial error analysis & --- & $<$0.1
       & Uniform across regions \\
     Literature validation & 10 & $<$0.1
@@ -1244,10 +1256,9 @@ questions: ``Did you try transfer learning?'' (yes---no benefit),
 hurts both), and ``Does predicting $T_e$ help?'' (no---it hurts
 nF by 11\%).
 
-All training ran on Apple MPS (GPU) for the architecture sweep and
-production ensemble, and on CPU for ablation and supplementary
-experiments.  Multiple experiments ran in parallel to reduce
-wall-clock time.
+Architecture sweep and production ensemble training used a single
+accelerator; ablation and supplementary experiments ran on CPU.
+Multiple experiments ran in parallel to reduce wall-clock time.
 
 % ==================================================================
 \section{Discussion}
@@ -1271,20 +1282,22 @@ improvements in final error.
 \subsection{Separate Heads vs.\ Shared Output}
 
 The E3 architecture outperforms the shared-output baseline (E1) by
-44\% in nF RMSE (0.00210 vs.\ 0.00377).  The separate heads allow
-each species to develop specialised nonlinear mappings while still
-benefiting from shared spatial features in the trunk.  The skip
-connection provides a direct gradient path from inputs to heads,
+$\sim$28\% in nF RMSE (0.00410 vs.\ 0.00570).  The separate heads
+allow each species to develop specialised nonlinear mappings while
+still benefiting from shared spatial features in the trunk.  The
+skip connection provides a direct gradient path from inputs to heads,
 improving training stability (smallest $\sigma$ across all
 architectures).
 
 \subsection{Role of Ensemble Averaging}
 
-The production ensemble further reduces RMSE from 0.00210 (single best
-seed) to 0.00154 (5-model ensemble average), a 27\% improvement.
-Ensemble averaging smooths out seed-dependent noise and provides
-calibrated uncertainty estimates that are largest where gradients are
-steepest (Figure~\ref{fig:uncertainty}).
+The production ensemble reduces RMSE from 0.00410 (single best seed
+mean across the architecture sweep) to 0.00381 (5-model ensemble
+average), a $\sim$7\% improvement.  Most of the value of ensembling
+in this regime is calibrated uncertainty estimation (largest where
+gradients are steepest, Figure~\ref{fig:uncertainty}) rather than
+RMSE reduction; seed-to-seed noise is already small for this
+architecture.
 
 \subsection{LXCat vs.\ Legacy: The Central Insight}
 
@@ -1294,8 +1307,9 @@ $3.85\times$ RMSE gap between LXCat and legacy surrogates could have
 been misinterpreted as evidence that LXCat physics is harder to
 learn.  The statistical analysis proved otherwise: the gap was
 entirely a training-recipe artefact.  Once the recipe was upgraded
-(E3 architecture, bias initialisation), the LXCat surrogate
-\emph{outperformed} the legacy one by 47\%.
+(E3 architecture, bias initialisation), the LXCat surrogate matches
+the legacy one on nF (within $1.31\times$) while improving
+nSF\textsubscript{6} by roughly $2\times$.
 
 This has a practical consequence: when migrating a surrogate to new
 physics (e.g., different cross-section sets, additional chemistry),
@@ -1350,16 +1364,6 @@ We acknowledge the following limitations:
   \item \textbf{PINN failure:}  Physics-informed training was
         unsuccessful, meaning the surrogate has no built-in PDE
         consistency guarantee.
-
-  \item \textbf{Backend-dependent reproducibility band.}  The headline
-        nF~RMSE of 0.00154 (Section~\ref{sec:production}) was obtained
-        on Apple MPS; an independent Delta/CUDA re-run of the same
-        recipe yields 0.0038 (a $\sim$2.5$\times$ shift), placing the
-        v1 result at the optimistic end of a 0.0015--0.0040
-        portability band.  The architecture choice (E3) and
-        qualitative findings (bias-init dominance, regularisation
-        alone is counter-productive) are identical across backends;
-        the absolute scaling is not.
 \end{enumerate}
 
 % ==================================================================
@@ -1414,14 +1418,17 @@ investigation have been completed:
 
   \item \textbf{Supervised surrogates succeed.}  A systematic
         development from v1 (nF RMSE = 0.133) to the production
-        ensemble (nF RMSE = 0.00154) achieved a $86\times$ error
+        ensemble (nF RMSE = 0.00381) achieved a $35\times$ error
         reduction.  The E3\_separate\_heads architecture wins a
         7-experiment, 3-seed sweep.  Output-bias initialisation is the
-        dominant training factor (83\% of RMSE reduction);
+        dominant training factor (74\% of RMSE reduction);
         regularisation without it is useless.  The 5-model production
-        ensemble achieves nF RMSE = 0.00154 and nSF\textsubscript{6}
-        RMSE = 0.00128, beating the legacy v4 by 47\%, with a
-        $531\times$/$874\times$ speedup over the legacy/LXCat solvers.
+        ensemble achieves nF RMSE = 0.00381 and nSF\textsubscript{6}
+        RMSE = 0.00134---a 66\% improvement on nF over the v3 LXCat
+        baseline and a $\sim$2$\times$ reduction on
+        nSF\textsubscript{6} relative to the legacy v4 surrogate,
+        while matching v4 on nF within $1.31\times$, with a
+        $524\times$/$972\times$ speedup over the legacy/LXCat solvers.
 
   \item \textbf{LXCat integration reveals that training recipe
         matters more than physics.}  Biagi cross sections shift $T_e$
