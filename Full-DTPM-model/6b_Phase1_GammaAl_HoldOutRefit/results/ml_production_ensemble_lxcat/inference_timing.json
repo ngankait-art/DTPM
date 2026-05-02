@@ -1,0 +1,12 @@
+{
+  "n_passes": 200,
+  "n_warmup": 20,
+  "ensemble_size": 5,
+  "batch_size": 1780,
+  "batch_definition": "single representative operating point (inside-mask cells of one validation case)",
+  "ms_per_eval_mean": 14.815836514753755,
+  "ms_per_eval_std": 1.5016604839051868,
+  "eval_machine_id": "cn120.delta.ncsa.illinois.edu",
+  "speedup_vs_legacy_solver": 523.7638787572012,
+  "speedup_vs_lxcat_solver": 971.9329708896516
+}
