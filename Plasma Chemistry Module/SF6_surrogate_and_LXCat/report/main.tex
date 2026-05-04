@@ -814,24 +814,47 @@ breaking down the error by reactor region.
 The absence of systematic spatial bias confirms that the surrogate
 does not favour any particular region of the reactor.
 
-\subsection{Surrogate vs.\ Solver at a Representative Operating Point}
+\subsection{Benchmark Profiles: Surrogate vs.\ Solver}
 
-Figure~\ref{fig:bench_overlay} overlays the radial F-density profile
-at the wafer predicted by the production ensemble against the
-fluid-solver ground truth at $P_\mathrm{rf} = 700$~W,
-$p = 10$~mTorr, pure SF\textsubscript{6}.  The ensemble mean tracks
-the solver across the entire radius; the $\pm 1\sigma$ inter-model
-band is narrow and inflates only at the extremes where data is
-sparser, consistent with the spatial residual map in
-Figure~\ref{fig:residuals}.
+Figure~\ref{fig:benchmarks} compares the production ensemble against
+the 2D solver across operating-point sweeps for the two species the
+surrogate predicts.  Solid lines are the solver; dashed lines (with
+markers) are the surrogate ensemble mean; the shaded bands are the
+$\pm 1\sigma$ inter-model spread.  The surrogate tracks the solver
+across the entire \SI{200}{\watt}--\SI{1200}{\watt} power range and
+the 3--20~mTorr pressure range, with the
+$\pm 1\sigma$ band narrow throughout.
 
 \begin{figure}[H]
   \centering
-  \includegraphics[width=0.6\textwidth]{surrogate_vs_solver_overlay.png}
-  \caption{Surrogate ensemble mean ($\pm 1\sigma$) versus solver radial
-           F-density profile at the wafer for the representative
-           operating point P\textsubscript{rf}~=~\SI{700}{\watt},
-           p~=~10~mTorr, pure SF\textsubscript{6}.}
+  \includegraphics[width=\textwidth]{surrogate_vs_solver_neutrals_benchmark.png}
+  \caption{Surrogate vs.\ solver benchmark for volume-averaged neutral
+           densities.  (a) Power sweep at $p = 10~mTorr$,
+           pure SF\textsubscript{6}.  (b) Pressure sweep at
+           $P_\mathrm{rf} = \SI{700}{\watt}$, pure SF\textsubscript{6}.
+           Solid: solver; dashed (with markers): surrogate ensemble
+           mean; shaded band: ensemble $\pm 1\sigma$.  Surrogate
+           outputs are nF and nSF\textsubscript{6}; charged-species
+           prediction is outside the surrogate's two-output design
+           and is not benchmarked here (Section~\ref{sec:limitations}).}
+  \label{fig:benchmarks}
+\end{figure}
+
+Figure~\ref{fig:bench_overlay} provides a complementary spatial view
+at a single operating point ($P_\mathrm{rf} = \SI{700}{\watt}$,
+$p = 10~mTorr$, pure SF\textsubscript{6}): the
+surrogate-predicted radial F-density profile at the wafer overlaid on
+the solver ground truth.  The ensemble mean tracks the solver across
+the entire radius; the band inflates only at the radial extremes
+where training data is sparser.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.7\textwidth]{surrogate_vs_solver_overlay.png}
+  \caption{Surrogate ensemble mean ($\pm 1\sigma$) versus solver
+           radial F-density profile at the wafer for
+           $P_\mathrm{rf} = \SI{700}{\watt}$,
+           $p = 10~mTorr$, pure SF\textsubscript{6}.}
   \label{fig:bench_overlay}
 \end{figure}
 
@@ -1053,35 +1076,17 @@ These also serve as test cases for the surrogate.
 
 \begin{figure}[H]
   \centering
-  \begin{subfigure}[t]{0.48\textwidth}
-    \centering
-    \includegraphics[width=\textwidth]{neutral_power_2D.png}
-    \caption{Neutral density vs.\ RF power.}
-    \label{fig:neutral_power}
-  \end{subfigure}
-  \hfill
-  \begin{subfigure}[t]{0.48\textwidth}
-    \centering
-    \includegraphics[width=\textwidth]{neutral_pressure_2D.png}
-    \caption{Neutral density vs.\ pressure.}
-    \label{fig:neutral_pressure}
-  \end{subfigure}
-  \\[6pt]
-  \begin{subfigure}[t]{0.48\textwidth}
-    \centering
-    \includegraphics[width=\textwidth]{charged_power_2D.png}
-    \caption{Charged species vs.\ RF power.}
-    \label{fig:charged_power}
-  \end{subfigure}
-  \hfill
-  \begin{subfigure}[t]{0.48\textwidth}
-    \centering
-    \includegraphics[width=\textwidth]{charged_pressure_2D.png}
-    \caption{Charged species vs.\ pressure.}
-    \label{fig:charged_pressure}
-  \end{subfigure}
-  \caption{Parameter sweeps showing the dependence of neutral and
-           charged species on RF power and gas pressure.}
+  \includegraphics[width=\textwidth]{parameter_sweeps_clean.png}
+  \caption{Parameter sweeps from the 2D solver.  Top row: volume-averaged
+           neutral densities (SF\textsubscript{6}, SF\textsubscript{5},
+           SF\textsubscript{4}, SF\textsubscript{3}, SF\textsubscript{2},
+           F, F\textsubscript{2}) vs.\ RF power (a) at
+           $p = 10~mTorr$ and vs.\ pressure (b) at
+           $P_\mathrm{rf} = \SI{700}{\watt}$.  Bottom row:
+           charged-species densities ($n_e$, $n_+$, $n_-$) over the same
+           power (c) and pressure (d) sweeps.  All cases are pure
+           SF\textsubscript{6}; densities are volume-averaged over the
+           inside-mask cells of the reactor.}
   \label{fig:sweeps}
 \end{figure}
 

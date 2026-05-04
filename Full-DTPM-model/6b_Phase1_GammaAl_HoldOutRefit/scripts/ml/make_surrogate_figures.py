@@ -230,6 +230,240 @@ def fig_residuals_spatial(meta, Yv_np, mean_np, val_d, std_np):
         save(fig, f"surrogate_v4_diagnostics_{tag}")
 
 
+def _load_case_field(case_id, field):
+    p = os.path.join(DATASET_DIR, case_id, f"{field}.npy")
+    if not os.path.exists(p):
+        return None
+    return np.load(p)
+
+
+def _vol_avg_inside(field, inside):
+    """Volume-average a 2D (Nr,Nz) field over the inside-mask cells."""
+    return float(np.mean(field[inside]))
+
+
+def fig_surrogate_vs_solver_neutrals_benchmark(models):
+    """Surrogate vs solver volume-averaged density vs (power, pressure) for
+    the two species the surrogate predicts.  Replacement for Figure 15 of
+    the original v1 report — same visual style, but the legend is explicit
+    about which curve is solver and which is surrogate."""
+    rc, zc, inside = mdl.get_mesh()
+
+    powers = [200, 300, 400, 500, 600, 700, 800, 900, 1000, 1100, 1200]
+    pressures = [3.0, 5.0, 10.0, 15.0, 20.0]
+    P_FIXED = 10.0
+    P_FIXED_W = 700
+
+    def case_id(P, p, ar=0.0):
+        return f"P{int(P):04d}W_p{int(p):02d}mT_xAr{int(round(ar*100)):03d}"
+
+    def predict_avg(P, p, ar=0.0):
+        Nr, Nz = inside.shape
+        rg, zg = np.meshgrid(rc, zc, indexing="ij")
+        r_in = rg[inside].astype(np.float32)
+        z_in = zg[inside].astype(np.float32)
+        n = r_in.size
+        R_PROC = 0.105
+        Z_TOP = 0.234
+        X = torch.from_numpy(np.column_stack([
+            r_in / R_PROC, z_in / Z_TOP,
+            np.full(n, P / 1200, dtype=np.float32),
+            np.full(n, p / 20, dtype=np.float32),
+            np.full(n, ar, dtype=np.float32),
+        ]))
+        with torch.no_grad():
+            preds = torch.stack([m(X) for m in models]).numpy()
+        # Predicted log10 density per ensemble member; convert to linear,
+        # volume-average, then log10 again so we plot in same units as solver.
+        lin = 10 ** preds
+        per_member_avg = lin.mean(axis=1)  # (M, 2)
+        ens_log = np.log10(np.clip(per_member_avg, 1.0, None))
+        return ens_log.mean(axis=0), ens_log.std(axis=0)
+
+    def solver_avg(case, field):
+        f = _load_case_field(case, field)
+        if f is None:
+            return np.nan
+        f = np.clip(f, 1.0, None)
+        return np.log10(_vol_avg_inside(f, inside))
+
+    # Power sweep at p=10 mTorr, pure SF6
+    P_arr = []
+    sol_nF = []; sol_nSF6 = []
+    sur_nF = []; sur_nSF6 = []
+    sur_nF_sd = []; sur_nSF6_sd = []
+    for P in powers:
+        cid = case_id(P, P_FIXED, 0.0)
+        sol_nF.append(solver_avg(cid, "nF"))
+        sol_nSF6.append(solver_avg(cid, "nSF6"))
+        m, s = predict_avg(P, P_FIXED, 0.0)
+        sur_nF.append(m[0]);  sur_nF_sd.append(s[0])
+        sur_nSF6.append(m[1]); sur_nSF6_sd.append(s[1])
+        P_arr.append(P)
+    P_arr = np.array(P_arr)
+    sol_nF = np.array(sol_nF); sol_nSF6 = np.array(sol_nSF6)
+    sur_nF = np.array(sur_nF); sur_nSF6 = np.array(sur_nSF6)
+    sur_nF_sd = np.array(sur_nF_sd); sur_nSF6_sd = np.array(sur_nSF6_sd)
+
+    # Pressure sweep at P=700W, pure SF6
+    p_arr = []
+    psol_nF = []; psol_nSF6 = []
+    psur_nF = []; psur_nSF6 = []
+    psur_nF_sd = []; psur_nSF6_sd = []
+    for p in pressures:
+        cid = case_id(P_FIXED_W, p, 0.0)
+        psol_nF.append(solver_avg(cid, "nF"))
+        psol_nSF6.append(solver_avg(cid, "nSF6"))
+        m, s = predict_avg(P_FIXED_W, p, 0.0)
+        psur_nF.append(m[0]);  psur_nF_sd.append(s[0])
+        psur_nSF6.append(m[1]); psur_nSF6_sd.append(s[1])
+        p_arr.append(p)
+    p_arr = np.array(p_arr)
+    psol_nF = np.array(psol_nF); psol_nSF6 = np.array(psol_nSF6)
+    psur_nF = np.array(psur_nF); psur_nSF6 = np.array(psur_nSF6)
+    psur_nF_sd = np.array(psur_nF_sd); psur_nSF6_sd = np.array(psur_nSF6_sd)
+
+    fig, axes = plt.subplots(1, 2, figsize=(13, 5.0))
+    cF = "#d62728"
+    cSF6 = "#1f77b4"
+
+    ax = axes[0]
+    ax.plot(P_arr, sol_nF, "-", color=cF, lw=2.0, label=r"$n_\mathrm{F}$ — solver")
+    ax.plot(P_arr, sur_nF, "--", color=cF, lw=1.6,
+            marker="o", ms=4, label=r"$n_\mathrm{F}$ — surrogate (mean)")
+    ax.fill_between(P_arr, sur_nF - sur_nF_sd, sur_nF + sur_nF_sd,
+                    color=cF, alpha=0.20, label=r"$n_\mathrm{F}$ ensemble $\pm\sigma$")
+    ax.plot(P_arr, sol_nSF6, "-", color=cSF6, lw=2.0,
+            label=r"$n_{\mathrm{SF}_6}$ — solver")
+    ax.plot(P_arr, sur_nSF6, "--", color=cSF6, lw=1.6,
+            marker="s", ms=4, label=r"$n_{\mathrm{SF}_6}$ — surrogate (mean)")
+    ax.fill_between(P_arr, sur_nSF6 - sur_nSF6_sd, sur_nSF6 + sur_nSF6_sd,
+                    color=cSF6, alpha=0.20,
+                    label=r"$n_{\mathrm{SF}_6}$ ensemble $\pm\sigma$")
+    ax.set_xlabel("RF power (W)", fontsize=12)
+    ax.set_ylabel(r"$\log_{10}$ volume-averaged density (cm$^{-3}$)", fontsize=12)
+    ax.set_title("(a) Power sweep — p = 10 mTorr, pure SF$_6$", fontsize=12)
+    ax.grid(alpha=0.3, linestyle=":")
+    ax.legend(frameon=True, fontsize=9, loc="best", ncol=2)
+    ax.tick_params(labelsize=10)
+
+    ax = axes[1]
+    ax.plot(p_arr, psol_nF, "-", color=cF, lw=2.0, label=r"$n_\mathrm{F}$ — solver")
+    ax.plot(p_arr, psur_nF, "--", color=cF, lw=1.6,
+            marker="o", ms=4, label=r"$n_\mathrm{F}$ — surrogate (mean)")
+    ax.fill_between(p_arr, psur_nF - psur_nF_sd, psur_nF + psur_nF_sd,
+                    color=cF, alpha=0.20, label=r"$n_\mathrm{F}$ ensemble $\pm\sigma$")
+    ax.plot(p_arr, psol_nSF6, "-", color=cSF6, lw=2.0,
+            label=r"$n_{\mathrm{SF}_6}$ — solver")
+    ax.plot(p_arr, psur_nSF6, "--", color=cSF6, lw=1.6,
+            marker="s", ms=4, label=r"$n_{\mathrm{SF}_6}$ — surrogate (mean)")
+    ax.fill_between(p_arr, psur_nSF6 - psur_nSF6_sd, psur_nSF6 + psur_nSF6_sd,
+                    color=cSF6, alpha=0.20,
+                    label=r"$n_{\mathrm{SF}_6}$ ensemble $\pm\sigma$")
+    ax.set_xlabel("Gas pressure (mTorr)", fontsize=12)
+    ax.set_ylabel(r"$\log_{10}$ volume-averaged density (cm$^{-3}$)", fontsize=12)
+    ax.set_title(f"(b) Pressure sweep — P$_\\mathrm{{rf}}$ = {P_FIXED_W} W, pure SF$_6$",
+                 fontsize=12)
+    ax.grid(alpha=0.3, linestyle=":")
+    ax.legend(frameon=True, fontsize=9, loc="best", ncol=2)
+    ax.tick_params(labelsize=10)
+
+    fig.suptitle("Surrogate vs. solver benchmark — volume-averaged densities",
+                 fontsize=13, y=1.02)
+    fig.tight_layout()
+    save(fig, "surrogate_vs_solver_neutrals_benchmark")
+
+
+def fig_parameter_sweeps_clean():
+    """Publication-grade replacement for Figure 20.  Drops the squeezed
+    reactor-schematic strips and shows full-width 1D trend plots for both
+    neutral and charged species across power and pressure sweeps."""
+    rc, zc, inside = mdl.get_mesh()
+
+    powers = [200, 300, 400, 500, 600, 700, 800, 900, 1000, 1100, 1200]
+    pressures = [3.0, 5.0, 10.0, 15.0, 20.0]
+    P_FIXED = 10.0
+    P_FIXED_W = 700
+
+    NEUTRALS = [("nSF6", r"SF$_6$", "#e41a1c"),
+                ("nSF5", r"SF$_5$", "#ff7f00"),
+                ("nSF4", r"SF$_4$", "#ffd700"),
+                ("nSF3", r"SF$_3$", "#4daf4a"),
+                ("nSF2", r"SF$_2$", "#377eb8"),
+                ("nF",   r"F",      "#984ea3"),
+                ("nF2",  r"F$_2$",  "#a65628")]
+    CHARGED = [("ion_ne", r"$n_e$",  "#1f77b4"),
+               ("ion_n+", r"$n_+$",  "#d62728"),
+               ("ion_n-", r"$n_-$",  "#2ca02c")]
+
+    def case_id(P, p, ar=0.0):
+        return f"P{int(P):04d}W_p{int(p):02d}mT_xAr{int(round(ar*100)):03d}"
+
+    def avg_log10(case, field):
+        f = _load_case_field(case, field)
+        if f is None:
+            return np.nan
+        f = np.clip(f, 1.0, None)
+        return np.log10(_vol_avg_inside(f, inside))
+
+    fig, axes = plt.subplots(2, 2, figsize=(13, 9))
+
+    # (a) Neutrals vs power
+    ax = axes[0, 0]
+    for fld, lab, col in NEUTRALS:
+        y = [avg_log10(case_id(P, P_FIXED, 0.0), fld) for P in powers]
+        ax.plot(powers, y, "-o", color=col, lw=1.8, ms=5, label=lab)
+    ax.set_xlabel("RF power (W)", fontsize=12)
+    ax.set_ylabel(r"$\log_{10}$ volume-avg.\ density (cm$^{-3}$)", fontsize=12)
+    ax.set_title("(a) Neutral species vs RF power (p = 10 mTorr, pure SF$_6$)",
+                 fontsize=12)
+    ax.grid(alpha=0.3, linestyle=":")
+    ax.legend(frameon=True, fontsize=10, ncol=2, loc="best")
+    ax.tick_params(labelsize=10)
+
+    # (b) Neutrals vs pressure
+    ax = axes[0, 1]
+    for fld, lab, col in NEUTRALS:
+        y = [avg_log10(case_id(P_FIXED_W, p, 0.0), fld) for p in pressures]
+        ax.plot(pressures, y, "-s", color=col, lw=1.8, ms=5, label=lab)
+    ax.set_xlabel("Gas pressure (mTorr)", fontsize=12)
+    ax.set_ylabel(r"$\log_{10}$ volume-avg.\ density (cm$^{-3}$)", fontsize=12)
+    ax.set_title(f"(b) Neutral species vs pressure (P$_\\mathrm{{rf}}$ = {P_FIXED_W} W, pure SF$_6$)",
+                 fontsize=12)
+    ax.grid(alpha=0.3, linestyle=":")
+    ax.legend(frameon=True, fontsize=10, ncol=2, loc="best")
+    ax.tick_params(labelsize=10)
+
+    # (c) Charged vs power
+    ax = axes[1, 0]
+    for fld, lab, col in CHARGED:
+        y = [avg_log10(case_id(P, P_FIXED, 0.0), fld) for P in powers]
+        ax.plot(powers, y, "-o", color=col, lw=1.8, ms=5, label=lab)
+    ax.set_xlabel("RF power (W)", fontsize=12)
+    ax.set_ylabel(r"$\log_{10}$ volume-avg.\ density (cm$^{-3}$)", fontsize=12)
+    ax.set_title("(c) Charged species vs RF power (p = 10 mTorr, pure SF$_6$)",
+                 fontsize=12)
+    ax.grid(alpha=0.3, linestyle=":")
+    ax.legend(frameon=True, fontsize=10, loc="best")
+    ax.tick_params(labelsize=10)
+
+    # (d) Charged vs pressure
+    ax = axes[1, 1]
+    for fld, lab, col in CHARGED:
+        y = [avg_log10(case_id(P_FIXED_W, p, 0.0), fld) for p in pressures]
+        ax.plot(pressures, y, "-s", color=col, lw=1.8, ms=5, label=lab)
+    ax.set_xlabel("Gas pressure (mTorr)", fontsize=12)
+    ax.set_ylabel(r"$\log_{10}$ volume-avg.\ density (cm$^{-3}$)", fontsize=12)
+    ax.set_title(f"(d) Charged species vs pressure (P$_\\mathrm{{rf}}$ = {P_FIXED_W} W, pure SF$_6$)",
+                 fontsize=12)
+    ax.grid(alpha=0.3, linestyle=":")
+    ax.legend(frameon=True, fontsize=10, loc="best")
+    ax.tick_params(labelsize=10)
+
+    fig.tight_layout()
+    save(fig, "parameter_sweeps_clean")
+
+
 def fig_surrogate_vs_solver(models, summary):
     """Overlay solver radial F at the wafer with surrogate ±1σ band."""
     rep_case_id = "P0700W_p10mT_xAr000"
@@ -292,7 +526,19 @@ def time_inference(models, val_d):
     """Time a single operating-point evaluation: ensemble inference on the
     inside-mask cells of one case. Mirrors how the surrogate is used in
     practice (one (P_rf, p, x_Ar) tuple → full-mesh density field), which
-    is what the §10.7 solver-vs-surrogate ratio compares against."""
+    is what the §10.7 solver-vs-surrogate ratio compares against.
+
+    Skips re-timing if inference_timing.json already exists; pass
+    --retime to force a fresh measurement."""
+    out_path = os.path.join(ENS_DIR, "inference_timing.json")
+    if os.path.exists(out_path) and "--retime" not in sys.argv:
+        with open(out_path) as f:
+            cached = json.load(f)
+        print(f"  Skipping inference timing — {out_path} exists "
+              f"(ms/eval = {cached['ms_per_eval_mean']:.2f}, "
+              f"{cached['speedup_vs_legacy_solver']:.0f}×/{cached['speedup_vs_lxcat_solver']:.0f}×). "
+              f"Pass --retime to force a fresh measurement.")
+        return cached
     case_arr = np.array(val_d["case"])
     counts = np.bincount(case_arr)
     rep_idx = int(np.argmax(counts))
@@ -380,6 +626,8 @@ def main():
     fig_uncertainty(Yv_np, mean_np, std_np)
     fig_residuals_spatial(meta, Yv_np, mean_np, val_d, std_np)
     fig_surrogate_vs_solver(models, summary)
+    fig_surrogate_vs_solver_neutrals_benchmark(models)
+    fig_parameter_sweeps_clean()
 
     print("Timing inference…")
     time_inference(models, val_d)
