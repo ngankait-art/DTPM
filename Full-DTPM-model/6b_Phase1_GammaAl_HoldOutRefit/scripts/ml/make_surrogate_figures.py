@@ -373,6 +373,77 @@ def fig_surrogate_vs_solver_neutrals_benchmark(models):
     fig.tight_layout()
     save(fig, "surrogate_vs_solver_neutrals_benchmark")
 
+    # ─── Redesigned figure: absolute values + residual subpanels ──────────
+    fig = plt.figure(figsize=(13, 9))
+    gs = fig.add_gridspec(
+        2, 2,
+        height_ratios=[2.2, 1.0],
+        hspace=0.05, wspace=0.22,
+        left=0.07, right=0.98, bottom=0.08, top=0.93,
+    )
+    axTL = fig.add_subplot(gs[0, 0])  # absolute, power
+    axTR = fig.add_subplot(gs[0, 1])  # absolute, pressure
+    axBL = fig.add_subplot(gs[1, 0], sharex=axTL)  # residual, power
+    axBR = fig.add_subplot(gs[1, 1], sharex=axTR)  # residual, pressure
+
+    def _abs_panel(ax, x, sol_F, sur_F, sd_F, sol_SF6, sur_SF6, sd_SF6,
+                   xlabel, title):
+        ax.plot(x, sol_F, "-",  color=cF, lw=2.0,
+                label=r"$n_\mathrm{F}$ — solver")
+        ax.plot(x, sur_F, "--", color=cF, lw=1.6, marker="o", ms=4,
+                label=r"$n_\mathrm{F}$ — surrogate")
+        ax.fill_between(x, sur_F - sd_F, sur_F + sd_F, color=cF, alpha=0.2)
+        ax.plot(x, sol_SF6, "-",  color=cSF6, lw=2.0,
+                label=r"$n_{\mathrm{SF}_6}$ — solver")
+        ax.plot(x, sur_SF6, "--", color=cSF6, lw=1.6, marker="s", ms=4,
+                label=r"$n_{\mathrm{SF}_6}$ — surrogate")
+        ax.fill_between(x, sur_SF6 - sd_SF6, sur_SF6 + sd_SF6,
+                        color=cSF6, alpha=0.2)
+        ax.set_ylabel(r"$\log_{10}$ vol-avg density (cm$^{-3}$)", fontsize=11)
+        ax.set_title(title, fontsize=12)
+        ax.grid(alpha=0.3, linestyle=":")
+        ax.legend(frameon=True, fontsize=9, loc="best", ncol=2)
+        ax.tick_params(labelsize=10)
+        plt.setp(ax.get_xticklabels(), visible=False)
+
+    def _res_panel(ax, x, sol_F, sur_F, sd_F, sol_SF6, sur_SF6, sd_SF6,
+                   xlabel):
+        rF = sur_F - sol_F
+        rSF6 = sur_SF6 - sol_SF6
+        ax.axhline(0, color="k", lw=0.8, linestyle="-")
+        ax.plot(x, rF, "--o", color=cF, lw=1.4, ms=4,
+                label=r"$n_\mathrm{F}$ residual")
+        ax.fill_between(x, rF - sd_F, rF + sd_F, color=cF, alpha=0.2)
+        ax.plot(x, rSF6, "--s", color=cSF6, lw=1.4, ms=4,
+                label=r"$n_{\mathrm{SF}_6}$ residual")
+        ax.fill_between(x, rSF6 - sd_SF6, rSF6 + sd_SF6, color=cSF6, alpha=0.2)
+        ymax = max(np.abs(rF).max(), np.abs(rSF6).max(),
+                   sd_F.max(), sd_SF6.max()) * 1.4 + 0.005
+        ax.set_ylim(-ymax, ymax)
+        ax.set_xlabel(xlabel, fontsize=12)
+        ax.set_ylabel(r"surrogate $-$ solver", fontsize=11)
+        ax.grid(alpha=0.3, linestyle=":")
+        ax.legend(frameon=True, fontsize=9, loc="best", ncol=2)
+        ax.tick_params(labelsize=10)
+
+    _abs_panel(axTL, P_arr, sol_nF, sur_nF, sur_nF_sd,
+               sol_nSF6, sur_nSF6, sur_nSF6_sd,
+               "RF power (W)",
+               "(a) Power sweep — p = 10 mTorr, pure SF$_6$")
+    _abs_panel(axTR, p_arr, psol_nF, psur_nF, psur_nF_sd,
+               psol_nSF6, psur_nSF6, psur_nSF6_sd,
+               "Gas pressure (mTorr)",
+               f"(b) Pressure sweep — P$_\\mathrm{{rf}}$ = {P_FIXED_W} W, pure SF$_6$")
+    _res_panel(axBL, P_arr, sol_nF, sur_nF, sur_nF_sd,
+               sol_nSF6, sur_nSF6, sur_nSF6_sd, "RF power (W)")
+    _res_panel(axBR, p_arr, psol_nF, psur_nF, psur_nF_sd,
+               psol_nSF6, psur_nSF6, psur_nSF6_sd, "Gas pressure (mTorr)")
+
+    fig.suptitle("Surrogate vs. solver benchmark with residuals "
+                 "(top: absolute log-density; bottom: surrogate $-$ solver, $\\pm\\sigma$ band)",
+                 fontsize=13)
+    save(fig, "surrogate_vs_solver_neutrals_benchmark_residuals")
+
 
 def fig_parameter_sweeps_clean():
     """Publication-grade replacement for Figure 20.  Drops the squeezed

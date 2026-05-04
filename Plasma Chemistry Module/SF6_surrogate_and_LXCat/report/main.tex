@@ -818,31 +818,42 @@ does not favour any particular region of the reactor.
 
 Figure~\ref{fig:benchmarks} compares the production ensemble against
 the 2D solver across operating-point sweeps for the two species the
-surrogate predicts.  Solid lines are the solver; dashed lines (with
-markers) are the surrogate ensemble mean; the shaded bands are the
-$\pm 1\sigma$ inter-model spread.  The surrogate tracks the solver
-across the entire \SI{200}{\watt}--\SI{1200}{\watt} power range and
-the 3--20~mTorr pressure range, with the
-$\pm 1\sigma$ band narrow throughout.
+surrogate predicts.  The figure uses a two-row layout per sweep so
+that agreement and disagreement are both legible: the top row plots
+absolute volume-averaged log-density (solver as solid lines, surrogate
+ensemble mean as dashed lines with markers, ensemble $\pm 1\sigma$ as
+the shaded band); the bottom row plots the residual
+``surrogate $-$ solver'' with a horizontal zero reference and the
+same $\pm 1\sigma$ band.  Across the entire
+\SI{200}{\watt}--\SI{1200}{\watt} power range and the 3--20~mTorr
+pressure range, residuals on log-density stay within $\pm 0.05$ for
+nF and $\pm 0.04$ for nSF\textsubscript{6}, well inside the
+$\pm 1\sigma$ ensemble band.
 
 \begin{figure}[H]
   \centering
-  \includegraphics[width=\textwidth]{surrogate_vs_solver_neutrals_benchmark.png}
-  \caption{Surrogate vs.\ solver benchmark for volume-averaged neutral
-           densities.  (a) Power sweep at $p = 10~mTorr$,
-           pure SF\textsubscript{6}.  (b) Pressure sweep at
+  \includegraphics[width=\textwidth]{surrogate_vs_solver_neutrals_benchmark_residuals.png}
+  \caption{Surrogate vs.\ solver benchmark with explicit residual
+           subpanels.  (a) Power sweep at $p = 10$~mTorr, pure
+           SF\textsubscript{6}.  (b) Pressure sweep at
            $P_\mathrm{rf} = \SI{700}{\watt}$, pure SF\textsubscript{6}.
-           Solid: solver; dashed (with markers): surrogate ensemble
-           mean; shaded band: ensemble $\pm 1\sigma$.  Surrogate
+           Top row: absolute log-density --- solver (solid) vs.\
+           surrogate ensemble mean (dashed with markers) and the
+           ensemble $\pm 1\sigma$ band.  Bottom row: residual
+           surrogate $-$ solver, with the same $\pm 1\sigma$ band
+           shown around each residual curve.  The surrogate's two
            outputs are nF and nSF\textsubscript{6}; charged-species
            prediction is outside the surrogate's two-output design
-           and is not benchmarked here (Section~\ref{sec:limitations}).}
+           and is not benchmarked here
+           (Section~\ref{sec:limitations}).  Multi-species
+           solver-side benchmarking against the 0D Lallement
+           reference appears in Section~\ref{sec:validation}.}
   \label{fig:benchmarks}
 \end{figure}
 
 Figure~\ref{fig:bench_overlay} provides a complementary spatial view
 at a single operating point ($P_\mathrm{rf} = \SI{700}{\watt}$,
-$p = 10~mTorr$, pure SF\textsubscript{6}): the
+$p = 10$~mTorr, pure SF\textsubscript{6}): the
 surrogate-predicted radial F-density profile at the wafer overlaid on
 the solver ground truth.  The ensemble mean tracks the solver across
 the entire radius; the band inflates only at the radial extremes
@@ -854,7 +865,7 @@ where training data is sparser.
   \caption{Surrogate ensemble mean ($\pm 1\sigma$) versus solver
            radial F-density profile at the wafer for
            $P_\mathrm{rf} = \SI{700}{\watt}$,
-           $p = 10~mTorr$, pure SF\textsubscript{6}.}
+           $p = 10$~mTorr, pure SF\textsubscript{6}.}
   \label{fig:bench_overlay}
 \end{figure}
 
@@ -965,6 +976,53 @@ correctly but has systematic offsets in absolute values.
            measured quantities.  The model captures trends
            correctly but has systematic offsets in absolute values.}
   \label{fig:abs_validation}
+\end{figure}
+
+\subsection{Solver Validation: 2D Model vs.\ 0D Lallement Reference}
+\label{sec:solver_validation_0D}
+
+To check the chemistry implementation in the 2D fluid solver
+independently of the surrogate, we compare its volume-averaged
+species densities against the well-established 0D global model of
+\citet{lallement2009} on the same TEL geometry.  This comparison is
+\emph{solver-side only} (no surrogate involved): both curves are
+solver outputs, plotted across power and pressure sweeps for
+neutral species (Figure~\ref{fig:solver_val_neutrals}) and charged
+species (Figure~\ref{fig:solver_val_charged}).  In each panel,
+solid curves are the 2D TEL model and dashed curves are the 0D
+Lallement reference.  Agreement across all nine neutral species and
+the principal charged-species channels confirms that the 2D
+chemistry network is consistent with the established reduced model
+within reactor-averaged uncertainties.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{benchmark_neutrals.png}
+  \caption{Solver validation for neutral species: 2D TEL fluid
+           model (solid) compared to the 0D Lallement reference
+           (dashed) across power and pressure sweeps.  All nine
+           neutrals (SF\textsubscript{6}, SF\textsubscript{5},
+           SF\textsubscript{4}, SF\textsubscript{3},
+           SF\textsubscript{2}, SF, F, F\textsubscript{2}, S) shown
+           on a common log-density axis.  This is solver-vs-solver,
+           not surrogate-vs-solver --- the surrogate predicts only
+           nF and nSF\textsubscript{6} (Figure~\ref{fig:benchmarks}
+           and Section~\ref{sec:limitations}).}
+  \label{fig:solver_val_neutrals}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{benchmark_charged.png}
+  \caption{Solver validation for charged species: 2D TEL model
+           (solid) vs.\ 0D Lallement reference (dashed) for
+           electron density $n_e$, total positive ion density
+           $n_+$, total negative ion density $n_-$, electron
+           temperature $T_e$, and electronegativity $\alpha = n_-/n_e$.
+           Power and pressure sweeps shown.  As above, this is a
+           2D-vs-0D solver consistency check; the surrogate does
+           not predict charged species.}
+  \label{fig:solver_val_charged}
 \end{figure}
 
 \subsection{ML Baselines}
@@ -1081,7 +1139,7 @@ These also serve as test cases for the surrogate.
            neutral densities (SF\textsubscript{6}, SF\textsubscript{5},
            SF\textsubscript{4}, SF\textsubscript{3}, SF\textsubscript{2},
            F, F\textsubscript{2}) vs.\ RF power (a) at
-           $p = 10~mTorr$ and vs.\ pressure (b) at
+           $p = 10$~mTorr and vs.\ pressure (b) at
            $P_\mathrm{rf} = \SI{700}{\watt}$.  Bottom row:
            charged-species densities ($n_e$, $n_+$, $n_-$) over the same
            power (c) and pressure (d) sweeps.  All cases are pure
