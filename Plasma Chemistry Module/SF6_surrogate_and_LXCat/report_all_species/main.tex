@@ -30,10 +30,10 @@
   for SF\textsubscript{6}/Ar ICP Etch Modelling}
 
 \author{%
-  Z.\ Ngan \\
-  \textit{ngankait@gmail.com}}
+  M.\ Abdelghany$^{*}$ \and Z.\ Ngan \\
+  \textit{$^{*}$muabdelghany@gmail.com,\quad ngankait@gmail.com}}
 
-\date{April 2026}
+\date{5 May 2026}
 
 % ------------------------------------------------------------------
 \begin{document}
@@ -932,11 +932,42 @@ error in linear density.
   \end{tabular}
 \end{table}
 
-Multi-species power and pressure sweeps for the neutral and charged
-panels are shown in Figures~\ref{fig:all_species_neutrals_power}--%
-\ref{fig:all_species_charged_pressure}.  In each panel solid is the
-2D solver and dashed (with markers and a $\pm 1\sigma$ band) is the
-surrogate ensemble mean.
+Two visual presentations are provided.  Figures~\ref{fig:all_neutrals_consolidated}
+and~\ref{fig:all_charged_consolidated} are \emph{consolidated overlays}:
+all neutrals (resp.\ all charged species) are plotted on a single set
+of axes per panel so the cross-species range and ordering are
+immediately visible.  Solid lines are the solver, dashed lines (with
+markers) are the surrogate ensemble mean; species are distinguished by
+colour and marker.  Figures~\ref{fig:all_species_neutrals_power}--%
+\ref{fig:all_species_charged_pressure} provide the same data as a
+per-species grid, with one panel per species and the $\pm 1\sigma$
+ensemble band shaded around each surrogate curve.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{fig_all_species_neutrals_consolidated.png}
+  \caption{All neutral species, surrogate vs.\ 2D solver, single
+           consolidated panel per sweep.  (a) Power sweep at
+           $p = 10$~mTorr; (b) pressure sweep at
+           $P_\mathrm{rf} = 700$~W; both pure SF$_6$.  Solid: solver;
+           dashed (markers): surrogate ensemble mean.  Species are
+           distinguished by colour and marker (legend).}
+  \label{fig:all_neutrals_consolidated}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{fig_all_species_charged_consolidated.png}
+  \caption{All charged species (electrons, total positive ions, total
+           negative ions, plus the principal ion channels), surrogate
+           vs.\ 2D solver, single consolidated panel per sweep.
+           Layout and conventions as in
+           Figure~\ref{fig:all_neutrals_consolidated}.  Electron
+           temperature $T_e$ is plotted separately in the per-species
+           grid (Figure~\ref{fig:all_species_charged_power}) because
+           it has different units (eV) than the densities (cm$^{-3}$).}
+  \label{fig:all_charged_consolidated}
+\end{figure}
 
 \begin{figure}[H]
   \centering

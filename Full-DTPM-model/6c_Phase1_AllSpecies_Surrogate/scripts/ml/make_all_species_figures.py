@@ -203,6 +203,99 @@ def fig_grid(data, species_list, sweep, xlabel, title, outname,
     print(f"Wrote {pdf}")
 
 
+def _fmt_species_label(sp):
+    if sp == "ion_ne":
+        return r"$n_e$"
+    if sp == "ion_n+":
+        return r"$n_{+}$"
+    if sp == "ion_n-":
+        return r"$n_{-}$"
+    if sp.startswith("ion_"):
+        s = sp[4:]
+        s = s.replace("SF6", "SF$_6$").replace("SF5", "SF$_5$") \
+             .replace("SF4", "SF$_4$").replace("SF3", "SF$_3$") \
+             .replace("SF2", "SF$_2$")
+        s = s.replace("+", "$^{+}$").replace("-", "$^{-}$")
+        return s
+    if sp == "Te":
+        return r"$T_e$"
+    return sp.replace("nSF6", "SF$_6$").replace("nSF5", "SF$_5$") \
+             .replace("nSF4", "SF$_4$").replace("nSF3", "SF$_3$") \
+             .replace("nSF2", "SF$_2$").replace("nSF", "SF") \
+             .replace("nF2", "F$_2$").replace("nF", "F").replace("nS", "S")
+
+
+def fig_consolidated(data, species_list, title, outname,
+                     palette="tab10"):
+    """One figure, 2 panels (power left, pressure right), all species
+    overlaid on each panel.  Solid = solver, dashed = surrogate ensemble
+    mean.  Publication-grade styling: large fonts, distinct colour
+    cycle, white background, thin grid, no shading (clutter)."""
+    cmap = plt.get_cmap("tab20" if len(species_list) > 10 else palette)
+    colors = [cmap(i / max(len(species_list) - 1, 1))
+              if cmap.N >= 256 else cmap(i % cmap.N)
+              for i in range(len(species_list))]
+    markers = ["o", "s", "^", "D", "v", "<", ">", "P", "X",
+               "p", "h", "H", "*", "d"]
+    available = [sp for sp in species_list if sp in data]
+
+    fig, (axL, axR) = plt.subplots(1, 2, figsize=(14, 5.5))
+    fig.subplots_adjust(left=0.07, right=0.84, top=0.90, bottom=0.13,
+                        wspace=0.22)
+
+    for k, sp in enumerate(available):
+        col = colors[k]
+        mk = markers[k % len(markers)]
+        lab = _fmt_species_label(sp)
+        # Power sweep (left)
+        d = data[sp]["power"]
+        axL.plot(d["P"], d["sol"], "-", color=col, lw=1.8)
+        axL.plot(d["P"], d["sur"], "--", color=col, lw=1.4,
+                 marker=mk, ms=5, label=lab)
+        # Pressure sweep (right)
+        d = data[sp]["pressure"]
+        axR.plot(d["p"], d["sol"], "-", color=col, lw=1.8)
+        axR.plot(d["p"], d["sur"], "--", color=col, lw=1.4,
+                 marker=mk, ms=5)
+
+    for ax, x_label, panel_title in [
+        (axL, "RF power (W)",
+         "(a) Power sweep — $p$ = 10 mTorr, pure SF$_6$"),
+        (axR, "Gas pressure (mTorr)",
+         "(b) Pressure sweep — $P_\\mathrm{rf}$ = 700 W, pure SF$_6$"),
+    ]:
+        ax.set_xlabel(x_label, fontsize=13)
+        ax.set_ylabel(r"$\log_{10}$ volume-averaged density (cm$^{-3}$)",
+                      fontsize=13)
+        ax.set_title(panel_title, fontsize=13)
+        ax.grid(alpha=0.30, linestyle=":", linewidth=0.7)
+        ax.tick_params(labelsize=11)
+
+    # Add a single legend block for species (right of right panel)
+    handles, labels = axL.get_legend_handles_labels()
+    fig.legend(handles, labels, loc="center right",
+               bbox_to_anchor=(0.995, 0.5), frameon=True, fontsize=11,
+               title="Species", title_fontsize=12, ncol=1)
+
+    # Add a separate legend for solid/dashed convention
+    from matplotlib.lines import Line2D
+    style_handles = [
+        Line2D([0], [0], color="black", lw=1.8, ls="-",  label="Solver"),
+        Line2D([0], [0], color="black", lw=1.4, ls="--",
+               marker="o", ms=5, label="Surrogate"),
+    ]
+    axL.legend(handles=style_handles, loc="best", frameon=True,
+               fontsize=10, title="Curve type", title_fontsize=11)
+
+    fig.suptitle(title, fontsize=15, y=0.985)
+    pdf = os.path.join(FIG_DIR, f"{outname}.pdf")
+    png = os.path.join(FIG_DIR, f"{outname}.png")
+    fig.savefig(pdf, bbox_inches="tight")
+    fig.savefig(png, dpi=200, bbox_inches="tight")
+    plt.close(fig)
+    print(f"Wrote {pdf}")
+
+
 def fig_rmse_summary(data, outname="fig_all_species_rmse_summary"):
     sp_in_order = [sp for sp in ALL if sp in data]
     rmse = [data[sp]["summary"]["metrics"]["rmse"] for sp in sp_in_order]
@@ -319,6 +412,16 @@ def main():
     fig_grid(charged_data, CHARGED + EXTRA, "pressure", "Pressure (mTorr)",
              "Charged species + T$_e$ — pressure sweep at P$_\\mathrm{rf}$=700 W, pure SF$_6$",
              "fig_all_species_charged_pressure", ncols=4)
+
+    # Consolidated single-axes overlays (publication grade)
+    fig_consolidated(neutrals_data, NEUTRALS,
+                     "Neutral species — surrogate vs. solver "
+                     "(solid: solver, dashed: surrogate ensemble mean)",
+                     "fig_all_species_neutrals_consolidated")
+    fig_consolidated(charged_data, CHARGED,
+                     "Charged species — surrogate vs. solver "
+                     "(solid: solver, dashed: surrogate ensemble mean)",
+                     "fig_all_species_charged_consolidated")
 
     fig_rmse_summary(all_data)
 
