@@ -1,0 +1,49 @@
+==> Job 18053107 on gpua093.delta.ncsa.illinois.edu at 2026-05-04T19:23:28-05:00
+==> SPECIES=nSF3
+==> Launching trainer for nSF3
+============================================================
+  Per-species ensemble training
+  Species:    nSF3
+  Output dir: results/ml_production_ensemble_all_species/nSF3
+  Ensemble:   5 seeds × 2000 epochs
+==> Loading dataset…
+  train cells: 332860; val cells: 58740; cases: 220
+  bias-init (log-mean): 19.0477
+  device: CUDA
+  === STARTING MODEL 0/5 (seed=42) ===
+    [nSF3 seed=42] ep=    0 t=0.09387 v=0.01278
+    [nSF3 seed=42] ep=  400 t=0.00002 v=0.00017
+    [nSF3 seed=42] ep=  800 t=0.00001 v=0.00017
+    [nSF3 seed=42] ep= 1200 t=0.00000 v=0.00018
+    [nSF3 seed=42] ep= 1600 t=0.00000 v=0.00021
+  === FINISHED MODEL 0/5 | best val = 0.000128 ===
+  === STARTING MODEL 1/5 (seed=179) ===
+    [nSF3 seed=179] ep=    0 t=0.07219 v=0.00671
+    [nSF3 seed=179] ep=  400 t=0.00003 v=0.00017
+    [nSF3 seed=179] ep=  800 t=0.00001 v=0.00012
+    [nSF3 seed=179] ep= 1200 t=0.00000 v=0.00011
+    [nSF3 seed=179] ep= 1600 t=0.00000 v=0.00011
+  === FINISHED MODEL 1/5 | best val = 0.000079 ===
+  === STARTING MODEL 2/5 (seed=316) ===
+    [nSF3 seed=316] ep=    0 t=0.07846 v=0.01042
+    [nSF3 seed=316] ep=  400 t=0.00002 v=0.00015
+    [nSF3 seed=316] ep=  800 t=0.00001 v=0.00020
+    [nSF3 seed=316] ep= 1200 t=0.00000 v=0.00021
+    [nSF3 seed=316] ep= 1600 t=0.00000 v=0.00021
+  === FINISHED MODEL 2/5 | best val = 0.000121 ===
+  === STARTING MODEL 3/5 (seed=453) ===
+    [nSF3 seed=453] ep=    0 t=0.08764 v=0.00869
+    [nSF3 seed=453] ep=  400 t=0.00002 v=0.00008
+    [nSF3 seed=453] ep=  800 t=0.00001 v=0.00009
+    [nSF3 seed=453] ep= 1200 t=0.00000 v=0.00008
+    [nSF3 seed=453] ep= 1600 t=0.00000 v=0.00007
+  === FINISHED MODEL 3/5 | best val = 0.000069 ===
+  === STARTING MODEL 4/5 (seed=590) ===
+    [nSF3 seed=590] ep=    0 t=0.08460 v=0.00820
+    [nSF3 seed=590] ep=  400 t=0.00002 v=0.00012
+    [nSF3 seed=590] ep=  800 t=0.00001 v=0.00010
+    [nSF3 seed=590] ep= 1200 t=0.00000 v=0.00008
+    [nSF3 seed=590] ep= 1600 t=0.00000 v=0.00008
+  === FINISHED MODEL 4/5 | best val = 0.000077 ===
+==> Wrote results/ml_production_ensemble_all_species/nSF3/summary.json: RMSE=0.00189
+==> Training for nSF3 complete at 2026-05-04T20:17:12-05:00

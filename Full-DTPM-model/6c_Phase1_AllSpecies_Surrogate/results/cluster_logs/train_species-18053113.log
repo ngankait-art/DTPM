@@ -1,0 +1,49 @@
+==> Job 18053113 on gpua093.delta.ncsa.illinois.edu at 2026-05-04T19:24:27-05:00
+==> SPECIES=ion_ne
+==> Launching trainer for ion_ne
+============================================================
+  Per-species ensemble training
+  Species:    ion_ne
+  Output dir: results/ml_production_ensemble_all_species/ion_ne
+  Ensemble:   5 seeds × 2000 epochs
+==> Loading dataset…
+  train cells: 332860; val cells: 58740; cases: 220
+  bias-init (log-mean): 15.6489
+  device: CUDA
+  === STARTING MODEL 0/5 (seed=42) ===
+    [ion_ne seed=42] ep=    0 t=0.17960 v=0.05063
+    [ion_ne seed=42] ep=  400 t=0.00014 v=0.00025
+    [ion_ne seed=42] ep=  800 t=0.00010 v=0.00020
+    [ion_ne seed=42] ep= 1200 t=0.00009 v=0.00019
+    [ion_ne seed=42] ep= 1600 t=0.00007 v=0.00016
+  === FINISHED MODEL 0/5 | best val = 0.000152 ===
+  === STARTING MODEL 1/5 (seed=179) ===
+    [ion_ne seed=179] ep=    0 t=0.14707 v=0.01895
+    [ion_ne seed=179] ep=  400 t=0.00012 v=0.00023
+    [ion_ne seed=179] ep=  800 t=0.00009 v=0.00018
+    [ion_ne seed=179] ep= 1200 t=0.00008 v=0.00017
+    [ion_ne seed=179] ep= 1600 t=0.00007 v=0.00015
+  === FINISHED MODEL 1/5 | best val = 0.000141 ===
+  === STARTING MODEL 2/5 (seed=316) ===
+    [ion_ne seed=316] ep=    0 t=0.18520 v=0.04482
+    [ion_ne seed=316] ep=  400 t=0.00015 v=0.00030
+    [ion_ne seed=316] ep=  800 t=0.00011 v=0.00025
+    [ion_ne seed=316] ep= 1200 t=0.00009 v=0.00024
+    [ion_ne seed=316] ep= 1600 t=0.00008 v=0.00024
+  === FINISHED MODEL 2/5 | best val = 0.000224 ===
+  === STARTING MODEL 3/5 (seed=453) ===
+    [ion_ne seed=453] ep=    0 t=0.14155 v=0.01438
+    [ion_ne seed=453] ep=  400 t=0.00012 v=0.00026
+    [ion_ne seed=453] ep=  800 t=0.00009 v=0.00021
+    [ion_ne seed=453] ep= 1200 t=0.00008 v=0.00017
+    [ion_ne seed=453] ep= 1600 t=0.00007 v=0.00017
+  === FINISHED MODEL 3/5 | best val = 0.000161 ===
+  === STARTING MODEL 4/5 (seed=590) ===
+    [ion_ne seed=590] ep=    0 t=0.17261 v=0.04387
+    [ion_ne seed=590] ep=  400 t=0.00012 v=0.00027
+    [ion_ne seed=590] ep=  800 t=0.00009 v=0.00026
+    [ion_ne seed=590] ep= 1200 t=0.00008 v=0.00024
+    [ion_ne seed=590] ep= 1600 t=0.00007 v=0.00022
+  === FINISHED MODEL 4/5 | best val = 0.000201 ===
+==> Wrote results/ml_production_ensemble_all_species/ion_ne/summary.json: RMSE=0.01019
+==> Training for ion_ne complete at 2026-05-04T20:16:50-05:00

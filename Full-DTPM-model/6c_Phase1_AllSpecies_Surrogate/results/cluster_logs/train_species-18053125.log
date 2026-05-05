@@ -1,0 +1,49 @@
+==> Job 18053125 on gpua027.delta.ncsa.illinois.edu at 2026-05-04T19:33:06-05:00
+==> SPECIES=Te
+==> Launching trainer for Te
+============================================================
+  Per-species ensemble training
+  Species:    Te
+  Output dir: results/ml_production_ensemble_all_species/Te
+  Ensemble:   5 seeds × 2000 epochs
+==> Loading dataset…
+  train cells: 332860; val cells: 58740; cases: 220
+  bias-init (log-mean): 0.4779
+  device: CUDA
+  === STARTING MODEL 0/5 (seed=42) ===
+    [Te seed=42] ep=    0 t=2.31262 v=1.05858
+    [Te seed=42] ep=  400 t=0.35330 v=0.82049
+    [Te seed=42] ep=  800 t=0.18474 v=0.80608
+    [Te seed=42] ep= 1200 t=0.12003 v=0.84182
+    [Te seed=42] ep= 1600 t=0.08593 v=0.83860
+  === FINISHED MODEL 0/5 | best val = 0.741597 ===
+  === STARTING MODEL 1/5 (seed=179) ===
+    [Te seed=179] ep=    0 t=3.21174 v=1.05936
+    [Te seed=179] ep=  400 t=0.33620 v=0.77521
+    [Te seed=179] ep=  800 t=0.18201 v=0.81519
+    [Te seed=179] ep= 1200 t=0.10284 v=0.82762
+    [Te seed=179] ep= 1600 t=0.07722 v=0.80086
+  === FINISHED MODEL 1/5 | best val = 0.694569 ===
+  === STARTING MODEL 2/5 (seed=316) ===
+    [Te seed=316] ep=    0 t=1.94563 v=1.08951
+    [Te seed=316] ep=  400 t=0.40997 v=0.88775
+    [Te seed=316] ep=  800 t=0.20400 v=0.90613
+    [Te seed=316] ep= 1200 t=0.12461 v=0.83544
+    [Te seed=316] ep= 1600 t=0.09412 v=0.81285
+  === FINISHED MODEL 2/5 | best val = 0.739934 ===
+  === STARTING MODEL 3/5 (seed=453) ===
+    [Te seed=453] ep=    0 t=2.70952 v=1.08402
+    [Te seed=453] ep=  400 t=0.41518 v=0.79373
+    [Te seed=453] ep=  800 t=0.20378 v=0.82297
+    [Te seed=453] ep= 1200 t=0.12464 v=0.79789
+    [Te seed=453] ep= 1600 t=0.10000 v=0.79431
+  === FINISHED MODEL 3/5 | best val = 0.699678 ===
+  === STARTING MODEL 4/5 (seed=590) ===
+    [Te seed=590] ep=    0 t=2.78031 v=1.15760
+    [Te seed=590] ep=  400 t=0.39921 v=0.85307
+    [Te seed=590] ep=  800 t=0.22989 v=0.86262
+    [Te seed=590] ep= 1200 t=0.14847 v=0.89592
+    [Te seed=590] ep= 1600 t=0.10853 v=0.88002
+  === FINISHED MODEL 4/5 | best val = 0.730432 ===
+==> Wrote results/ml_production_ensemble_all_species/Te/summary.json: RMSE=0.00938
+==> Training for Te complete at 2026-05-04T20:22:11-05:00

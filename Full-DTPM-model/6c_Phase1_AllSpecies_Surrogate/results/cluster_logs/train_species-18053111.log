@@ -1,0 +1,49 @@
+==> Job 18053111 on gpua014.delta.ncsa.illinois.edu at 2026-05-04T19:24:30-05:00
+==> SPECIES=nF2
+==> Launching trainer for nF2
+============================================================
+  Per-species ensemble training
+  Species:    nF2
+  Output dir: results/ml_production_ensemble_all_species/nF2
+  Ensemble:   5 seeds × 2000 epochs
+==> Loading dataset…
+  train cells: 332860; val cells: 58740; cases: 220
+  bias-init (log-mean): 16.9634
+  device: CUDA
+  === STARTING MODEL 0/5 (seed=42) ===
+    [nF2 seed=42] ep=    0 t=0.06941 v=0.00327
+    [nF2 seed=42] ep=  400 t=0.00001 v=0.00050
+    [nF2 seed=42] ep=  800 t=0.00000 v=0.00055
+    [nF2 seed=42] ep= 1200 t=0.00000 v=0.00063
+    [nF2 seed=42] ep= 1600 t=0.00000 v=0.00070
+  === FINISHED MODEL 0/5 | best val = 0.000235 ===
+  === STARTING MODEL 1/5 (seed=179) ===
+    [nF2 seed=179] ep=    0 t=0.05403 v=0.00284
+    [nF2 seed=179] ep=  400 t=0.00002 v=0.00042
+    [nF2 seed=179] ep=  800 t=0.00000 v=0.00034
+    [nF2 seed=179] ep= 1200 t=0.00000 v=0.00032
+    [nF2 seed=179] ep= 1600 t=0.00000 v=0.00033
+  === FINISHED MODEL 1/5 | best val = 0.000300 ===
+  === STARTING MODEL 2/5 (seed=316) ===
+    [nF2 seed=316] ep=    0 t=0.05648 v=0.00369
+    [nF2 seed=316] ep=  400 t=0.00001 v=0.00037
+    [nF2 seed=316] ep=  800 t=0.00000 v=0.00034
+    [nF2 seed=316] ep= 1200 t=0.00000 v=0.00035
+    [nF2 seed=316] ep= 1600 t=0.00000 v=0.00037
+  === FINISHED MODEL 2/5 | best val = 0.000260 ===
+  === STARTING MODEL 3/5 (seed=453) ===
+    [nF2 seed=453] ep=    0 t=0.07389 v=0.00395
+    [nF2 seed=453] ep=  400 t=0.00001 v=0.00037
+    [nF2 seed=453] ep=  800 t=0.00001 v=0.00036
+    [nF2 seed=453] ep= 1200 t=0.00000 v=0.00037
+    [nF2 seed=453] ep= 1600 t=0.00000 v=0.00040
+  === FINISHED MODEL 3/5 | best val = 0.000194 ===
+  === STARTING MODEL 4/5 (seed=590) ===
+    [nF2 seed=590] ep=    0 t=0.06501 v=0.00395
+    [nF2 seed=590] ep=  400 t=0.00001 v=0.00039
+    [nF2 seed=590] ep=  800 t=0.00000 v=0.00047
+    [nF2 seed=590] ep= 1200 t=0.00000 v=0.00055
+    [nF2 seed=590] ep= 1600 t=0.00000 v=0.00065
+  === FINISHED MODEL 4/5 | best val = 0.000264 ===
+==> Wrote results/ml_production_ensemble_all_species/nF2/summary.json: RMSE=0.00572
+==> Training for nF2 complete at 2026-05-04T20:16:36-05:00

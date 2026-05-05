@@ -1,0 +1,49 @@
+==> Job 18053117 on gpua018.delta.ncsa.illinois.edu at 2026-05-04T19:27:06-05:00
+==> SPECIES=ion_F-
+==> Launching trainer for ion_F-
+============================================================
+  Per-species ensemble training
+  Species:    ion_F-
+  Output dir: results/ml_production_ensemble_all_species/ion_F-
+  Ensemble:   5 seeds × 2000 epochs
+==> Loading dataset…
+  train cells: 332860; val cells: 58740; cases: 220
+  bias-init (log-mean): 16.8158
+  device: CUDA
+  === STARTING MODEL 0/5 (seed=42) ===
+    [ion_F- seed=42] ep=    0 t=0.16695 v=0.04087
+    [ion_F- seed=42] ep=  400 t=0.00007 v=0.00018
+    [ion_F- seed=42] ep=  800 t=0.00004 v=0.00015
+    [ion_F- seed=42] ep= 1200 t=0.00003 v=0.00014
+    [ion_F- seed=42] ep= 1600 t=0.00002 v=0.00011
+  === FINISHED MODEL 0/5 | best val = 0.000105 ===
+  === STARTING MODEL 1/5 (seed=179) ===
+    [ion_F- seed=179] ep=    0 t=0.13387 v=0.01427
+    [ion_F- seed=179] ep=  400 t=0.00007 v=0.00021
+    [ion_F- seed=179] ep=  800 t=0.00003 v=0.00017
+    [ion_F- seed=179] ep= 1200 t=0.00002 v=0.00016
+    [ion_F- seed=179] ep= 1600 t=0.00002 v=0.00015
+  === FINISHED MODEL 1/5 | best val = 0.000135 ===
+  === STARTING MODEL 2/5 (seed=316) ===
+    [ion_F- seed=316] ep=    0 t=0.16758 v=0.03150
+    [ion_F- seed=316] ep=  400 t=0.00008 v=0.00027
+    [ion_F- seed=316] ep=  800 t=0.00005 v=0.00026
+    [ion_F- seed=316] ep= 1200 t=0.00003 v=0.00023
+    [ion_F- seed=316] ep= 1600 t=0.00002 v=0.00021
+  === FINISHED MODEL 2/5 | best val = 0.000203 ===
+  === STARTING MODEL 3/5 (seed=453) ===
+    [ion_F- seed=453] ep=    0 t=0.12724 v=0.01361
+    [ion_F- seed=453] ep=  400 t=0.00005 v=0.00021
+    [ion_F- seed=453] ep=  800 t=0.00003 v=0.00021
+    [ion_F- seed=453] ep= 1200 t=0.00002 v=0.00019
+    [ion_F- seed=453] ep= 1600 t=0.00002 v=0.00020
+  === FINISHED MODEL 3/5 | best val = 0.000150 ===
+  === STARTING MODEL 4/5 (seed=590) ===
+    [ion_F- seed=590] ep=    0 t=0.16171 v=0.03779
+    [ion_F- seed=590] ep=  400 t=0.00007 v=0.00027
+    [ion_F- seed=590] ep=  800 t=0.00004 v=0.00019
+    [ion_F- seed=590] ep= 1200 t=0.00002 v=0.00017
+    [ion_F- seed=590] ep= 1600 t=0.00001 v=0.00016
+  === FINISHED MODEL 4/5 | best val = 0.000151 ===
+==> Wrote results/ml_production_ensemble_all_species/ion_F-/summary.json: RMSE=0.00393
+==> Training for ion_F- complete at 2026-05-04T20:16:36-05:00

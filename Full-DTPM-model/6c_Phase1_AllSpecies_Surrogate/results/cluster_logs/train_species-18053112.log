@@ -1,0 +1,49 @@
+==> Job 18053112 on gpua014.delta.ncsa.illinois.edu at 2026-05-04T19:24:30-05:00
+==> SPECIES=nS
+==> Launching trainer for nS
+============================================================
+  Per-species ensemble training
+  Species:    nS
+  Output dir: results/ml_production_ensemble_all_species/nS
+  Ensemble:   5 seeds × 2000 epochs
+==> Loading dataset…
+  train cells: 332860; val cells: 58740; cases: 220
+  bias-init (log-mean): 17.7177
+  device: CUDA
+  === STARTING MODEL 0/5 (seed=42) ===
+    [nS seed=42] ep=    0 t=0.10553 v=0.01580
+    [nS seed=42] ep=  400 t=0.00001 v=0.00084
+    [nS seed=42] ep=  800 t=0.00001 v=0.00075
+    [nS seed=42] ep= 1200 t=0.00000 v=0.00078
+    [nS seed=42] ep= 1600 t=0.00000 v=0.00082
+  === FINISHED MODEL 0/5 | best val = 0.000359 ===
+  === STARTING MODEL 1/5 (seed=179) ===
+    [nS seed=179] ep=    0 t=0.08935 v=0.01436
+    [nS seed=179] ep=  400 t=0.00001 v=0.00078
+    [nS seed=179] ep=  800 t=0.00001 v=0.00084
+    [nS seed=179] ep= 1200 t=0.00000 v=0.00090
+    [nS seed=179] ep= 1600 t=0.00000 v=0.00096
+  === FINISHED MODEL 1/5 | best val = 0.000327 ===
+  === STARTING MODEL 2/5 (seed=316) ===
+    [nS seed=316] ep=    0 t=0.10225 v=0.01144
+    [nS seed=316] ep=  400 t=0.00001 v=0.00100
+    [nS seed=316] ep=  800 t=0.00001 v=0.00102
+    [nS seed=316] ep= 1200 t=0.00000 v=0.00103
+    [nS seed=316] ep= 1600 t=0.00000 v=0.00104
+  === FINISHED MODEL 2/5 | best val = 0.000516 ===
+  === STARTING MODEL 3/5 (seed=453) ===
+    [nS seed=453] ep=    0 t=0.09544 v=0.01299
+    [nS seed=453] ep=  400 t=0.00002 v=0.00060
+    [nS seed=453] ep=  800 t=0.00001 v=0.00062
+    [nS seed=453] ep= 1200 t=0.00000 v=0.00073
+    [nS seed=453] ep= 1600 t=0.00000 v=0.00079
+  === FINISHED MODEL 3/5 | best val = 0.000454 ===
+  === STARTING MODEL 4/5 (seed=590) ===
+    [nS seed=590] ep=    0 t=0.09003 v=0.00934
+    [nS seed=590] ep=  400 t=0.00001 v=0.00070
+    [nS seed=590] ep=  800 t=0.00001 v=0.00058
+    [nS seed=590] ep= 1200 t=0.00000 v=0.00061
+    [nS seed=590] ep= 1600 t=0.00000 v=0.00066
+  === FINISHED MODEL 4/5 | best val = 0.000404 ===
+==> Wrote results/ml_production_ensemble_all_species/nS/summary.json: RMSE=0.00966
+==> Training for nS complete at 2026-05-04T20:17:12-05:00
